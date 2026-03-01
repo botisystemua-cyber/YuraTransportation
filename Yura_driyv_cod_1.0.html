@@ -1035,11 +1035,14 @@
                     });
                 }
                 deliveries = items;
-                deliveries.forEach(function(item) {
-                    var itemId = currentRouteType === 'delivery' ? item.internalNumber : item.rowNum;
+                deliveries.forEach(function(item, idx) {
+                    // Унікальний ключ для кожної карточки (навіть при дублікатах ID)
+                    item._statusKey = currentRouteType === 'delivery'
+                        ? 'del_' + item.internalNumber + '_' + idx
+                        : 'pas_' + item.rowNum + '_' + idx;
                     var apiStatus = currentRouteType === 'delivery' ? item.status : item.driverStatus;
                     if (apiStatus && apiStatus !== 'pending') {
-                        deliveryStatuses[itemId] = apiStatus;
+                        deliveryStatuses[item._statusKey] = apiStatus;
                     }
                 });
                 saveStatuses();
@@ -1056,8 +1059,7 @@
             var total = deliveries.length;
             var inProgress = 0, completed = 0, cancelled = 0;
             deliveries.forEach(function(item) {
-                var itemId = currentRouteType === 'delivery' ? item.internalNumber : item.rowNum;
-                var status = deliveryStatuses[itemId] || 'pending';
+                var status = deliveryStatuses[item._statusKey] || 'pending';
                 if (status === 'in-progress') inProgress++;
                 else if (status === 'completed') completed++;
                 else if (status === 'cancelled') cancelled++;
@@ -1092,7 +1094,7 @@
             var list = document.getElementById('deliveriesList');
             list.innerHTML = '';
             var filteredDeliveries = deliveries.filter(function(delivery) {
-                var status = deliveryStatuses[delivery.internalNumber] || 'pending';
+                var status = deliveryStatuses[delivery._statusKey] || 'pending';
                 if (currentFilter === 'all') return true;
                 return status === currentFilter;
             });
@@ -1101,8 +1103,8 @@
                 return;
             }
             filteredDeliveries.forEach(function(delivery, idx) {
-                var globalIndex = deliveries.findIndex(function(d) { return d.internalNumber === delivery.internalNumber; });
-                var status = deliveryStatuses[delivery.internalNumber] || 'pending';
+                var globalIndex = deliveries.indexOf(delivery);
+                var status = deliveryStatuses[delivery._statusKey] || 'pending';
                 var statusIcon = status === 'completed' ? '&#9989;' : status === 'cancelled' ? '&#10060;' : status === 'in-progress' ? '&#128260;' : '&#9203;';
                 var isNew = newDeliveries.includes(delivery.internalNumber);
                 var card = document.createElement('div');
@@ -1110,6 +1112,7 @@
                 if (isNew) card.classList.add('is-new');
                 var canUndo = status === 'completed' || status === 'cancelled';
                 var safeId = escapeHtml(delivery.internalNumber);
+                var safeStatusKey = escapeHtml(delivery._statusKey);
                 var uid = 'del_' + idx;
                 var safePhone = escapeHtml(delivery.phone);
                 var safeAddress = escapeHtml(delivery.address);
@@ -1157,17 +1160,17 @@
                         '<button class="btn-small-card" onclick="toggleExpand(\'' + uid + '\')">&#128194; Деталі</button>' +
                     '</div>' +
                     '<div class="status-buttons-card">' +
-                        '<button class="status-btn-card status-in-progress-btn" onclick="setDeliveryStatus(\'' + safeId + '\',\'in-progress\')">&#128260;</button>' +
-                        '<button class="status-btn-card status-completed-btn" onclick="setDeliveryStatus(\'' + safeId + '\',\'completed\')">&#9989;</button>' +
-                        '<button class="status-btn-card status-cancelled-btn" onclick="showCancelReason(\'' + uid + '\',\'' + safeId + '\')">&#10060;</button>' +
-                        '<button class="status-btn-card status-undo-btn" onclick="undoStatus(\'' + safeId + '\')" ' + (canUndo ? '' : 'disabled') + '>&#8617;</button>' +
+                        '<button class="status-btn-card status-in-progress-btn" onclick="setDeliveryStatus(\'' + safeStatusKey + '\',\'in-progress\')">&#128260;</button>' +
+                        '<button class="status-btn-card status-completed-btn" onclick="setDeliveryStatus(\'' + safeStatusKey + '\',\'completed\')">&#9989;</button>' +
+                        '<button class="status-btn-card status-cancelled-btn" onclick="showCancelReason(\'' + uid + '\',\'' + safeStatusKey + '\')">&#10060;</button>' +
+                        '<button class="status-btn-card status-undo-btn" onclick="undoStatus(\'' + safeStatusKey + '\')" ' + (canUndo ? '' : 'disabled') + '>&#8617;</button>' +
                     '</div>' +
                     '<div class="card-expandable" id="expand-' + uid + '">' +
                         renderExpandedInfoDelivery(delivery) +
                     '</div>' +
                     '<div class="cancel-reason" id="cancel-' + uid + '">' +
                         '<textarea id="reason-' + uid + '" placeholder="Причина скасування..."></textarea>' +
-                        '<button class="btn-submit-cancel" onclick="submitCancellationByUid(\'' + uid + '\',\'' + safeId + '\')">Підтвердити скасування</button>' +
+                        '<button class="btn-submit-cancel" onclick="submitCancellationByUid(\'' + uid + '\',\'' + safeStatusKey + '\')">Підтвердити скасування</button>' +
                     '</div>';
                 list.appendChild(card);
             });
@@ -1228,7 +1231,7 @@
             var list = document.getElementById('deliveriesList');
             list.innerHTML = '';
             var filteredPassengers = deliveries.filter(function(passenger) {
-                var status = deliveryStatuses[passenger.rowNum] || 'pending';
+                var status = deliveryStatuses[passenger._statusKey] || 'pending';
                 if (currentFilter === 'all') return true;
                 return status === currentFilter;
             });
@@ -1237,11 +1240,10 @@
                 return;
             }
             filteredPassengers.forEach(function(passenger, index) {
-                var uniqueId = passenger.rowNum;
                 var uid = 'pas_' + index;
-                var status = deliveryStatuses[uniqueId] || 'pending';
+                var status = deliveryStatuses[passenger._statusKey] || 'pending';
                 var statusIcon = status === 'completed' ? '&#9989;' : status === 'cancelled' ? '&#10060;' : status === 'in-progress' ? '&#128260;' : '&#9203;';
-                var isNew = newDeliveries.includes(uniqueId);
+                var isNew = newDeliveries.includes(passenger.rowNum);
                 var card = document.createElement('div');
                 card.className = 'delivery-card status-' + status;
                 if (isNew) card.classList.add('is-new');
@@ -1251,6 +1253,7 @@
                 var safeTo = escapeHtml(passenger.to);
                 var safePhone = escapeHtml(passenger.phone);
                 var safeId = escapeHtml(passenger.id);
+                var safeStatusKey = escapeHtml(passenger._statusKey);
                 card.innerHTML = '<div class="card-row">' +
                         '<div class="delivery-number ' + (isNew ? 'new' : '') + '">' + (index + 1) + '</div>' +
                         '<div class="card-main-info">' +
@@ -1277,17 +1280,17 @@
                         '<button class="btn-small-card" onclick="toggleExpand(\'' + uid + '\')">&#128194; Деталі</button>' +
                     '</div>' +
                     '<div class="status-buttons-card">' +
-                        '<button class="status-btn-card status-in-progress-btn" onclick="setPassengerStatus(' + uniqueId + ',\'in-progress\')">&#128260;</button>' +
-                        '<button class="status-btn-card status-completed-btn" onclick="setPassengerStatus(' + uniqueId + ',\'completed\')">&#9989;</button>' +
-                        '<button class="status-btn-card status-cancelled-btn" onclick="showCancelReason(\'' + uid + '\',' + uniqueId + ')">&#10060;</button>' +
-                        '<button class="status-btn-card status-undo-btn" onclick="undoStatusPassenger(' + uniqueId + ')" ' + (canUndo ? '' : 'disabled') + '>&#8617;</button>' +
+                        '<button class="status-btn-card status-in-progress-btn" onclick="setPassengerStatus(\'' + safeStatusKey + '\',\'in-progress\')">&#128260;</button>' +
+                        '<button class="status-btn-card status-completed-btn" onclick="setPassengerStatus(\'' + safeStatusKey + '\',\'completed\')">&#9989;</button>' +
+                        '<button class="status-btn-card status-cancelled-btn" onclick="showCancelReason(\'' + uid + '\',\'' + safeStatusKey + '\')">&#10060;</button>' +
+                        '<button class="status-btn-card status-undo-btn" onclick="undoStatusPassenger(\'' + safeStatusKey + '\')" ' + (canUndo ? '' : 'disabled') + '>&#8617;</button>' +
                     '</div>' +
                     '<div class="card-expandable" id="expand-' + uid + '">' +
                         renderExpandedInfoPassenger(passenger) +
                     '</div>' +
                     '<div class="cancel-reason" id="cancel-' + uid + '">' +
                         '<textarea id="reason-' + uid + '" placeholder="Причина скасування..."></textarea>' +
-                        '<button class="btn-submit-cancel" onclick="submitCancellationPassenger(' + uniqueId + ',\'' + uid + '\')">Підтвердити скасування</button>' +
+                        '<button class="btn-submit-cancel" onclick="submitCancellationPassenger(\'' + safeStatusKey + '\',\'' + uid + '\')">Підтвердити скасування</button>' +
                     '</div>';
                 list.appendChild(card);
             });
@@ -1349,13 +1352,14 @@
                 }, 100);
             }
         }
-        function setDeliveryStatus(deliveryId, status) {
-            deliveryStatuses[deliveryId] = status;
+        function setDeliveryStatus(statusKey, status) {
+            deliveryStatuses[statusKey] = status;
             saveStatuses();
             renderDeliveries();
             updateStats();
-            var delivery = deliveries.find(function(d) { return d.internalNumber === deliveryId; });
+            var delivery = deliveries.find(function(d) { return d._statusKey === statusKey; });
             if (!delivery) return;
+            var deliveryId = delivery.internalNumber;
             var logData = {
                 date: new Date().toLocaleDateString('uk-UA'),
                 time: new Date().toLocaleTimeString('uk-UA'),
@@ -1385,24 +1389,25 @@
                 showToast('Помилка: ' + err.message);
             });
         }
-        function submitCancellationByUid(uid, deliveryId) {
+        function submitCancellationByUid(uid, statusKey) {
             var reason = document.getElementById('reason-' + uid).value.trim();
             if (!reason) {
                 showToast('Введи причину скасування');
                 return;
             }
-            submitCancellation(deliveryId, reason);
+            submitCancellation(statusKey, reason);
         }
-        function submitCancellation(deliveryId, reasonOverride) {
+        function submitCancellation(statusKey, reasonOverride) {
             var reason = reasonOverride || '';
             if (!reason) {
                 showToast('Введи причину скасування');
                 return;
             }
             if (!confirm('Ви точно хочете скасувати цю посилку?')) return;
-            var delivery = deliveries.find(function(d) { return d.internalNumber === deliveryId; });
+            var delivery = deliveries.find(function(d) { return d._statusKey === statusKey; });
             if (!delivery) return;
-            deliveryStatuses[deliveryId] = 'cancelled';
+            var deliveryId = delivery.internalNumber;
+            deliveryStatuses[statusKey] = 'cancelled';
             saveStatuses();
             renderDeliveries();
             updateStats();
@@ -1431,19 +1436,20 @@
                 showToast('Помилка: ' + err.message);
             });
         }
-        function undoStatus(deliveryId) {
-            var currentStatus = deliveryStatuses[deliveryId];
+        function undoStatus(statusKey) {
+            var currentStatus = deliveryStatuses[statusKey];
             if (currentStatus !== 'completed' && currentStatus !== 'cancelled') return;
             var confirmMsg = currentStatus === 'completed'
                 ? 'Змінити статус ГОТОВО на ОЧІКУЄ?'
                 : 'Змінити статус СКАСОВАНО на ОЧІКУЄ?';
             if (!confirm(confirmMsg)) return;
-            deliveryStatuses[deliveryId] = 'pending';
+            deliveryStatuses[statusKey] = 'pending';
             saveStatuses();
             renderDeliveries();
             updateStats();
-            var delivery = deliveries.find(function(d) { return d.internalNumber === deliveryId; });
+            var delivery = deliveries.find(function(d) { return d._statusKey === statusKey; });
             if (!delivery) return;
+            var deliveryId = delivery.internalNumber;
             var logData = {
                 date: new Date().toLocaleDateString('uk-UA'),
                 time: new Date().toLocaleTimeString('uk-UA'),
@@ -1465,24 +1471,24 @@
                 if (data.success) showToast('Статус відмінено');
                 else {
                     showToast('Помилка');
-                    deliveryStatuses[deliveryId] = currentStatus;
+                    deliveryStatuses[statusKey] = currentStatus;
                     saveStatuses();
                     renderDeliveries();
                 }
             })
             .catch(function(err) {
                 showToast('Помилка: ' + err.message);
-                deliveryStatuses[deliveryId] = currentStatus;
+                deliveryStatuses[statusKey] = currentStatus;
                 saveStatuses();
                 renderDeliveries();
             });
         }
-        function setPassengerStatus(rowNumber, status) {
-            deliveryStatuses[rowNumber] = status;
+        function setPassengerStatus(statusKey, status) {
+            deliveryStatuses[statusKey] = status;
             saveStatuses();
             renderDeliveries();
             updateStats();
-            var passenger = deliveries.find(function(d) { return d.rowNum === rowNumber; });
+            var passenger = deliveries.find(function(d) { return d._statusKey === statusKey; });
             if (!passenger) return;
             // updateDriverStatus → пише mark + кольори в Sheet + логи
             fetch(CONFIG.PASSENGER_API_URL, {
@@ -1512,16 +1518,16 @@
                 showToast('Помилка: ' + err.message);
             });
         }
-        function submitCancellationPassenger(rowNumber, uid) {
-            var reason = document.getElementById('reason-' + (uid || rowNumber)).value.trim();
+        function submitCancellationPassenger(statusKey, uid) {
+            var reason = document.getElementById('reason-' + (uid || statusKey)).value.trim();
             if (!reason) {
                 showToast('Введи причину скасування');
                 return;
             }
             if (!confirm('Ви точно хочете скасувати цього пасажира?')) return;
-            var passenger = deliveries.find(function(d) { return d.rowNum === rowNumber; });
+            var passenger = deliveries.find(function(d) { return d._statusKey === statusKey; });
             if (!passenger) return;
-            deliveryStatuses[rowNumber] = 'cancelled';
+            deliveryStatuses[statusKey] = 'cancelled';
             saveStatuses();
             renderDeliveries();
             updateStats();
@@ -1549,15 +1555,15 @@
                 showToast('Помилка: ' + err.message);
             });
         }
-        function undoStatusPassenger(rowNumber) {
-            var currentStatus = deliveryStatuses[rowNumber];
+        function undoStatusPassenger(statusKey) {
+            var currentStatus = deliveryStatuses[statusKey];
             if (currentStatus !== 'completed' && currentStatus !== 'cancelled') return;
             var confirmMsg = currentStatus === 'completed'
                 ? 'Змінити статус ГОТОВО на ОЧІКУЄ?'
                 : 'Змінити статус СКАСОВАНО на ОЧІКУЄ?';
             if (!confirm(confirmMsg)) return;
-            var passenger = deliveries.find(function(d) { return d.rowNum === rowNumber; });
-            deliveryStatuses[rowNumber] = 'pending';
+            var passenger = deliveries.find(function(d) { return d._statusKey === statusKey; });
+            deliveryStatuses[statusKey] = 'pending';
             saveStatuses();
             renderDeliveries();
             updateStats();
@@ -1582,14 +1588,14 @@
                     showToast('Статус відмінено');
                 } else {
                     showToast('Помилка');
-                    deliveryStatuses[rowNumber] = currentStatus;
+                    deliveryStatuses[statusKey] = currentStatus;
                     saveStatuses();
                     renderDeliveries();
                 }
             })
             .catch(function(err) {
                 showToast('Помилка: ' + err.message);
-                deliveryStatuses[rowNumber] = currentStatus;
+                deliveryStatuses[statusKey] = currentStatus;
                 saveStatuses();
                 renderDeliveries();
             });
