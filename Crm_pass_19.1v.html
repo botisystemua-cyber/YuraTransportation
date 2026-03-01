@@ -1818,6 +1818,9 @@
         <button class="bulk-sidebar-btn" onclick="openBulkVehicleModal()">
             <span class="btn-icon">🚐</span> Призначити авто
         </button>
+        <button class="bulk-sidebar-btn" onclick="bulkRemoveVehicle()" style="background:rgba(156,163,175,0.3);color:#6b7280;">
+            <span class="btn-icon">❓</span> Без авто
+        </button>
         <button class="bulk-sidebar-btn" onclick="bulkOptimize()">
             <span class="btn-icon">⚡</span> Оптимізація
         </button>
@@ -1872,6 +1875,7 @@
         <div class="bulk-buttons">
             <button class="bulk-btn select-all" onclick="selectAllVisible()">☑️ Всі</button>
             <button class="bulk-btn vehicle" onclick="openBulkVehicleModal()" style="background:rgba(59,130,246,0.4);">🚐 Авто</button>
+            <button class="bulk-btn" onclick="bulkRemoveVehicle()" style="background:rgba(156,163,175,0.4);color:#374151;">❓ Без</button>
             <button class="bulk-btn optimize" onclick="bulkOptimize()">⚡ Опт</button>
             <button class="bulk-btn route" onclick="bulkMoveToRoute()" style="background:rgba(249,115,22,0.4);">🚀 Маршрут</button>
             <button class="bulk-btn" onclick="openTagModal()" style="background:rgba(139,92,246,0.4);">🏷️ Тег</button>
@@ -4378,6 +4382,26 @@ function bulkAssignVehicle(vehicleId) {
     updateAllCounts();
     updateVehiclesList();
     showToast(`🚐 ${veh.name} призначено: ${count}`);
+}
+
+function bulkRemoveVehicle() {
+    let count = 0;
+    selectedIds.forEach(uid => {
+        const p = findPassengerByUid(uid);
+        if (p && !['archived','refused','transferred','deleted'].includes(p.status)) {
+            p.vehicle = '';
+            updatePassengerOnServer(p);
+            count++;
+        }
+    });
+    if (!count) return showToast('⚠️ Немає кого змінити');
+    saveSettings();
+    render();
+    updateBulkBar();
+    updateAllCounts();
+    updateVehiclesList();
+    updatePcVehiclesList();
+    showToast(`❓ Без авто: ${count}`);
 }
 
 function bulkMoveToRoute() {
