@@ -1818,9 +1818,6 @@
         <button class="bulk-sidebar-btn" onclick="openBulkVehicleModal()">
             <span class="btn-icon">🚐</span> Призначити авто
         </button>
-        <button class="bulk-sidebar-btn" onclick="bulkRemoveVehicle()" style="background:rgba(156,163,175,0.3);color:#6b7280;">
-            <span class="btn-icon">❓</span> Без авто
-        </button>
         <button class="bulk-sidebar-btn" onclick="bulkOptimize()">
             <span class="btn-icon">⚡</span> Оптимізація
         </button>
@@ -1875,7 +1872,6 @@
         <div class="bulk-buttons">
             <button class="bulk-btn select-all" onclick="selectAllVisible()">☑️ Всі</button>
             <button class="bulk-btn vehicle" onclick="openBulkVehicleModal()" style="background:rgba(59,130,246,0.4);">🚐 Авто</button>
-            <button class="bulk-btn" onclick="bulkRemoveVehicle()" style="background:rgba(156,163,175,0.4);color:#374151;">❓ Без</button>
             <button class="bulk-btn optimize" onclick="bulkOptimize()">⚡ Опт</button>
             <button class="bulk-btn route" onclick="bulkMoveToRoute()" style="background:rgba(249,115,22,0.4);">🚀 Маршрут</button>
             <button class="bulk-btn" onclick="openTagModal()" style="background:rgba(139,92,246,0.4);">🏷️ Тег</button>
@@ -4328,9 +4324,11 @@ let selectedBulkVehicleId = null;
 function openBulkVehicleModal() {
     selectedBulkVehicleId = null;
     document.getElementById('bulkVehicleCount').textContent = selectedIds.size;
-    document.getElementById('bulkVehicleList').innerHTML = vehicles.map(v =>
+    const noVehicleItem = `<div class="vehicle-select-item" id="vsi_none" onclick="selectBulkVehicle('none')" style="cursor:pointer;border:2px solid transparent;transition:all 0.2s;background:rgba(156,163,175,0.1);"><span class="vehicle-select-name" style="color:#6b7280;">❓ Без авто</span><span class="vehicle-select-info" style="color:#9ca3af;">Зняти призначення</span></div>`;
+    const vehicleItems = vehicles.map(v =>
         `<div class="vehicle-select-item" id="vsi_${v.id}" onclick="selectBulkVehicle('${v.id}')" style="cursor:pointer;border:2px solid transparent;transition:all 0.2s;"><span class="vehicle-select-name">🚐 ${v.name}</span><span class="vehicle-select-info">${v.seats} місць</span></div>`
     ).join('');
+    document.getElementById('bulkVehicleList').innerHTML = noVehicleItem + vehicleItems;
     const confirmBtn = document.getElementById('bulkVehicleConfirmBtn');
     confirmBtn.disabled = true;
     confirmBtn.style.opacity = '0.5';
@@ -4346,8 +4344,9 @@ function selectBulkVehicle(vehicleId) {
     });
     const selectedEl = document.getElementById('vsi_' + vehicleId);
     if (selectedEl) {
-        selectedEl.style.borderColor = 'var(--info)';
-        selectedEl.style.background = '#f0f7ff';
+        const isNone = vehicleId === 'none';
+        selectedEl.style.borderColor = isNone ? '#9ca3af' : 'var(--info)';
+        selectedEl.style.background = isNone ? 'rgba(156,163,175,0.15)' : '#f0f7ff';
     }
     // Активуємо кнопку підтвердження
     const confirmBtn = document.getElementById('bulkVehicleConfirmBtn');
@@ -4357,6 +4356,10 @@ function selectBulkVehicle(vehicleId) {
 
 function confirmBulkAssignVehicle() {
     if (!selectedBulkVehicleId) return showToast('⚠️ Оберіть авто');
+    if (selectedBulkVehicleId === 'none') {
+        bulkRemoveVehicle();
+        return;
+    }
     bulkAssignVehicle(selectedBulkVehicleId);
 }
 
@@ -4396,6 +4399,7 @@ function bulkRemoveVehicle() {
     });
     if (!count) return showToast('⚠️ Немає кого змінити');
     saveSettings();
+    closeModal('bulkVehicleModal');
     render();
     updateBulkBar();
     updateAllCounts();
