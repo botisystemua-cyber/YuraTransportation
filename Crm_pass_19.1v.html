@@ -2264,21 +2264,76 @@ document.addEventListener('DOMContentLoaded', () => {
     loadSettings();
     renderCalendars();
 
-    // Відновлюємо останній вибраний таб або "Нові ліди" за замовчуванням
-    if (lastTab === 'ua-eu' || lastTab === 'eu-ua' || lastTab === 'all') {
-        setDirection(lastTab);
-    } else {
-        showNewLeads();
-    }
+    // Завантажуємо дані одразу з таблиці (єдине джерело правди)
+    showLoader('Завантаження пасажирів...', '');
+    fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({ action: 'getAll' })
+    })
+    .then(r => r.json())
+    .then(data => {
+        hideLoader();
+        if (data.success && data.passengers) {
+            passengers = data.passengers.map(p => {
+                let normalizedStatus = (p.status || '').toString().toLowerCase().trim();
+                if (!normalizedStatus) normalizedStatus = 'new';
+                return {
+                    id: p.id || 'srv_' + p.rowNum,
+                    date: normalizeDate(p.date),
+                    name: p.name || '',
+                    phone: p.phone || '',
+                    phoneReg: p.phoneReg || '',
+                    from: p.from || '',
+                    to: p.to || '',
+                    seats: p.seats || 1,
+                    payment: p.payment || '',
+                    percent: p.percent || '',
+                    mark: p.mark || '',
+                    dispatcher: p.dispatcher || '',
+                    weight: p.weight || '',
+                    vehicle: p.vehicle || '',
+                    timing: p.timing || '',
+                    dateReg: normalizeDate(p.dateReg),
+                    note: p.note || '',
+                    direction: p.direction,
+                    status: normalizedStatus,
+                    statusDate: p.statusDate || '',
+                    isNew: p.isNew,
+                    isNew24h: p.isNew,
+                    _sheet: p.sheet,
+                    _rowNum: p.rowNum
+                };
+            });
+        }
 
-    updateVehiclesList();
-    updateAllCounts();
+        // Відновлюємо останній вибраний таб або "Нові ліди" за замовчуванням
+        if (lastTab === 'ua-eu' || lastTab === 'eu-ua' || lastTab === 'all') {
+            setDirection(lastTab);
+        } else {
+            showNewLeads();
+        }
 
-    // Синхронізуємо авто з сервера (підтягуємо нові аркуші)
-    syncVehiclesFromServer().then(() => updateAllCounts());
+        updateVehiclesList();
+        updateAllCounts();
+        updatePcVehiclesList();
 
-    // Перевірка перевищення місткості при завантаженні (з затримкою)
-    setTimeout(() => checkAllCapacityWarnings(), 2000);
+        // Синхронізуємо авто з сервера (підтягуємо нові аркуші)
+        syncVehiclesFromServer().then(() => updateAllCounts());
+
+        setTimeout(() => checkAllCapacityWarnings(), 500);
+    })
+    .catch(err => {
+        hideLoader();
+        console.error('Init load error:', err);
+        showToast('❌ Помилка завантаження');
+        // Показуємо порожній стан
+        if (lastTab === 'ua-eu' || lastTab === 'eu-ua' || lastTab === 'all') {
+            setDirection(lastTab);
+        } else {
+            showNewLeads();
+        }
+    });
 
     // Періодична перевірка кожні 5 хвилин
     setInterval(() => checkAllCapacityWarnings(), 300000);
@@ -2397,8 +2452,8 @@ function playNotificationSound() {
     }
 }
 
-function loadSettings() { try { const s = JSON.parse(localStorage.getItem('yuraCrmV16')||'{}'); if(s.colSettings)colSettings=s.colSettings; if(s.passengers)passengers=s.passengers; if(s.lastTab)lastTab=s.lastTab; } catch(e){} }
-function saveSettings() { localStorage.setItem('yuraCrmV16', JSON.stringify({colSettings,passengers,lastTab})); }
+function loadSettings() { try { const s = JSON.parse(localStorage.getItem('yuraCrmV16')||'{}'); if(s.colSettings)colSettings=s.colSettings; if(s.lastTab)lastTab=s.lastTab; } catch(e){} }
+function saveSettings() { localStorage.setItem('yuraCrmV16', JSON.stringify({colSettings,lastTab})); }
 
 // SIDE MENU
 function openSideMenu() { document.getElementById('sideMenu').classList.add('open'); document.getElementById('sideMenuOverlay').classList.add('show'); renderMobileCalendar(); updateMobileVehicles(); }

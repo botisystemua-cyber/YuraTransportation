@@ -2155,24 +2155,74 @@ let undoHistory = []; // Історія для відміни дій
 document.addEventListener('DOMContentLoaded', () => {
     loadSettings();
     renderCalendars();
-    
+
     // За замовчуванням показуємо нові ліди
     filters.showNewOnly = true;
     document.getElementById('pcNewLeads')?.classList.add('active');
     document.getElementById('mobileNewLeads')?.classList.add('active');
     const navLabel = document.getElementById('navPackagesLabel');
     if (navLabel) navLabel.textContent = '🆕 Нові';
-    
-    render();
-    updateVehiclesList();
-    updateAllCounts();
-    
-    // Перевірка перевищення місткості при завантаженні (з затримкою)
-    setTimeout(() => checkAllCapacityWarnings(), 2000);
-    
+
+    // Завантажуємо дані одразу з таблиці (єдине джерело правди)
+    showLoader('Завантаження посилок...', '');
+    fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({ action: 'getAll' })
+    })
+    .then(r => r.json())
+    .then(data => {
+        hideLoader();
+        if (data.success && data.packages) {
+            packages = data.packages.map(p => {
+                let normalizedStatus = (p.status || '').toString().toLowerCase().trim();
+                return {
+                    id: p.id || 'srv_' + p.rowNum,
+                    name: p.name || '',
+                    phone: p.phone || '',
+                    phoneReg: p.phoneReg || '',
+                    address: p.address || '',
+                    vo: p.vo || '',
+                    number: p.number || '',
+                    ttn: p.ttn || '',
+                    weight: p.weight || '',
+                    amount: p.amount || '',
+                    payStatus: p.payStatus || '',
+                    payment: p.payment || '',
+                    parcelStatus: p.parcelStatus || '',
+                    vehicle: p.vehicle || '',
+                    timing: p.timing || '',
+                    dateReg: normalizeDate(p.dateReg),
+                    dateReceive: normalizeDate(p.dateReceive),
+                    smsNote: p.smsNote || '',
+                    photo: p.photo || '',
+                    note: p.note || '',
+                    direction: p.direction,
+                    status: normalizedStatus,
+                    statusDate: p.dateArchive || '',
+                    isNew: p.isNew,
+                    isNew24h: p.isNew,
+                    _sheet: p.sheet,
+                    _rowNum: p.rowNum
+                };
+            });
+        }
+        render();
+        updateVehiclesList();
+        updateAllCounts();
+        updatePcVehiclesList();
+        setTimeout(() => checkAllCapacityWarnings(), 500);
+    })
+    .catch(err => {
+        hideLoader();
+        console.error('Init load error:', err);
+        showToast('❌ Помилка завантаження');
+        render();
+    });
+
     // Періодична перевірка кожні 5 хвилин
     setInterval(() => checkAllCapacityWarnings(), 300000);
-    
+
     // Тихе авто-оновлення кожні 60 секунд
     setInterval(() => silentSync(), 60000);
 });
@@ -2290,8 +2340,8 @@ function playNotificationSound() {
     }
 }
 
-function loadSettings() { try { const s = JSON.parse(localStorage.getItem('yuraCrmPackagesV1')||'{}'); if(s.colSettings)colSettings=s.colSettings; if(s.packages)packages=s.packages; if(s.hiddenCols)hiddenCols=new Set(s.hiddenCols); if(s.columnLabels){Object.keys(s.columnLabels).forEach(k=>{if(ALL_COLUMNS[k])ALL_COLUMNS[k].label=s.columnLabels[k];});} } catch(e){} }
-function saveSettings() { const columnLabels={}; Object.keys(ALL_COLUMNS).forEach(k=>{columnLabels[k]=ALL_COLUMNS[k].label;}); localStorage.setItem('yuraCrmPackagesV1', JSON.stringify({colSettings,packages,vehicles,columnLabels,hiddenCols:[...hiddenCols]})); }
+function loadSettings() { try { const s = JSON.parse(localStorage.getItem('yuraCrmPackagesV1')||'{}'); if(s.colSettings)colSettings=s.colSettings; if(s.hiddenCols)hiddenCols=new Set(s.hiddenCols); if(s.columnLabels){Object.keys(s.columnLabels).forEach(k=>{if(ALL_COLUMNS[k])ALL_COLUMNS[k].label=s.columnLabels[k];});} } catch(e){} }
+function saveSettings() { const columnLabels={}; Object.keys(ALL_COLUMNS).forEach(k=>{columnLabels[k]=ALL_COLUMNS[k].label;}); localStorage.setItem('yuraCrmPackagesV1', JSON.stringify({colSettings,vehicles,columnLabels,hiddenCols:[...hiddenCols]})); }
 
 // SIDE MENU
 function openSideMenu() { document.getElementById('sideMenu').classList.add('open'); document.getElementById('sideMenuOverlay').classList.add('show'); renderMobileCalendar(); updateMobileVehicles(); }
