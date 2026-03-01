@@ -668,8 +668,10 @@
 
         /* Right panel - vehicle + actions */
         .card-right-panel { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 6px; border-left: 1px solid var(--border); flex-shrink: 0; min-width: 40px; }
-        .card-vehicle-badge { background: var(--info); color: white; padding: 4px 8px; border-radius: 4px; font-size: 9px; font-weight: 600; white-space: nowrap; text-align: center; cursor: default; }
+        .card-vehicle-badge { background: var(--info); color: white; padding: 4px 8px; border-radius: 4px; font-size: 9px; font-weight: 600; white-space: nowrap; text-align: center; cursor: pointer; }
+        .card-vehicle-badge:hover { background: var(--primary); }
         .card-vehicle-badge.empty { background: var(--bg-main); color: var(--text-secondary); border: 1px dashed var(--text-secondary); }
+        .card-vehicle-badge.empty:hover { background: var(--info); color: white; border-style: solid; }
         .card-actions-toggle { width: 28px; height: 28px; border: none; border-radius: 6px; background: var(--bg-main); cursor: pointer; font-size: 10px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; }
         .card-actions-toggle:hover { background: var(--primary); color: white; }
         .card-actions-toggle.open { background: var(--primary); color: white; transform: rotate(180deg); }
@@ -809,11 +811,8 @@
         .btn-map { background: var(--info); color: white; }
         .btn-edit { background: var(--warning); color: white; }
         
-        /* Vehicle badge - тільки відображення */
-        .card-vehicle { }
-        .card-vehicle-badge { background: var(--info); color: white; padding: 4px 8px; border-radius: 4px; font-size: 9px; font-weight: 600; white-space: nowrap; text-align: center; cursor: default; }
-        .card-vehicle-badge.empty { background: var(--bg-main); color: var(--text-secondary); }
-        
+        .card-vehicle { position: relative; }
+
         /* DRAG HANDLE */
         .drag-handle { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; cursor: grab; color: var(--text-secondary); opacity: 0.4; padding: 12px 6px; background: var(--bg-main); border-right: 1px solid var(--border); }
         .drag-handle:hover { opacity: 1; background: #e8eaed; }
@@ -2892,10 +2891,14 @@ function render() {
         const payStatusBadge = p.payStatus ? `<span class="card-pay-badge ${payStatusClass?payStatusClass:'neutral'}">${p.payStatus}</span>` : '';
         const paymentBadge = p.payment ? `<span class="card-pay-badge neutral">${p.payment}</span>` : '';
 
-        // Vehicle
+        // Vehicle - з dropdown для призначення авто
+        const vehDropdownItems = vehicles.map(vi =>
+            `<div class="vehicle-dropdown-item ${p.vehicle === vi.name || p.vehicle === vi.id ? 'active' : ''}" onclick="event.stopPropagation();quickAssignVehicle('${uk}','${vi.id}')">${vi.name}</div>`
+        ).join('');
         const vehicleBadge = veh
-            ? `<span class="card-vehicle-badge">${veh.name}</span>`
-            : `<span style="opacity:0.3;font-size:10px">${ALL_COLUMNS['vehicle']?.label||'Авто'}</span>`;
+            ? `<span class="card-vehicle-badge" onclick="event.stopPropagation();toggleCardVehicle('${uk}')">${veh.name}</span>`
+            : `<span class="card-vehicle-badge empty" onclick="event.stopPropagation();toggleCardVehicle('${uk}')">${ALL_COLUMNS['vehicle']?.label||'Авто'}</span>`;
+        const vehicleDropdownHtml = `<div class="vehicle-dropdown" id="vd_${uk}">${vehDropdownItems}<div class="vehicle-dropdown-item" onclick="event.stopPropagation();quickAssignVehicle('${uk}','')" style="color:var(--warning);">❌ Зняти авто</div></div>`;
         const orderNum = isRouteView ? `<span class="order-num">${idx + 1}</span>` : '';
         const notGeocodedClass = p._notGeocoded ? 'not-geocoded-card' : '';
 
@@ -2988,7 +2991,7 @@ function render() {
                     <!-- ROW 2: Phone | АВТО | Amount | DateReceive -->
                     <div class="cg-row">
                         ${cc('phone','cg-main',`${phoneRaw ? `<span class="cg-val-phone" onclick="event.stopPropagation()" onmousedown="event.stopPropagation()">${phoneDisplay}${cpBtn(phoneRaw)}${edBtn('phone')}</span>` : `${ph('phone')}${edBtn('phone')}`}`)}
-                        ${cc('vehicle','cg-sm',`${vehicleBadge}`)}
+                        ${cc('vehicle','cg-sm',`<div class="card-vehicle">${vehicleBadge}${vehicleDropdownHtml}</div>`)}
                         ${cc('amount','cg-sm',`${priceDisplay ? `<span class="cg-val-price">${priceDisplay}</span>${edBtn('amount')}` : `${ph('amount')}${edBtn('amount')}`}`)}
                         ${cc('dateReceive','cg-sm',`${dateRecvDisplay ? `<span class="cg-val-date">${dateRecvDisplay}</span>${edBtn('dateReceive')}` : `${ph('dateReceive')}${edBtn('dateReceive')}`}`)}
                     </div>
@@ -3105,6 +3108,8 @@ function toggleDetails(uid) {
         document.querySelector(`[data-uid="${openActionsId}"] .card-actions-toggle`)?.classList.remove('open');
         openActionsId = null;
     }
+    // Закриваємо vehicle dropdown
+    document.querySelectorAll('.vehicle-dropdown').forEach(d => d.classList.remove('show'));
     if (openDetailsId && openDetailsId !== uid) {
         const prevCard = document.querySelector(`[data-uid="${openDetailsId}"]`);
         if (prevCard) prevCard.classList.remove('details-open');
@@ -3117,7 +3122,7 @@ function toggleDetails(uid) {
     document.querySelector(`[data-uid="${uid}"] .new-tag`)?.remove();
 }
 
-function toggleActions(uid) { 
+function toggleActions(uid) {
     // Закриваємо дії інших карток
     if (openActionsId && openActionsId !== uid) {
         document.querySelector(`[data-uid="${openActionsId}"] .card-actions`)?.classList.remove('show');
@@ -3130,9 +3135,43 @@ function toggleActions(uid) {
         document.querySelector(`[data-uid="${openDetailsId}"] .card-details`)?.classList.remove('show');
         openDetailsId = null;
     }
+    // Закриваємо vehicle dropdown
+    document.querySelectorAll('.vehicle-dropdown').forEach(d => d.classList.remove('show'));
     openActionsId = openActionsId === uid ? null : uid;
     document.querySelector(`[data-uid="${uid}"] .card-actions`)?.classList.toggle('show', openActionsId === uid);
     document.querySelector(`[data-uid="${uid}"] .card-actions-toggle`)?.classList.toggle('open', openActionsId === uid);
+}
+
+// Відкрити/закрити dropdown авто на картці
+function toggleCardVehicle(uid) {
+    document.querySelectorAll('.vehicle-dropdown').forEach(d => {
+        if (d.id !== 'vd_' + uid) d.classList.remove('show');
+    });
+    const dd = document.getElementById('vd_' + uid);
+    if (dd) dd.classList.toggle('show');
+}
+
+// Швидке призначення авто з dropdown на картці
+function quickAssignVehicle(uid, vehicleId) {
+    const p = findPackageByUid(uid);
+    if (!p) return;
+    if (vehicleId) {
+        const veh = vehicles.find(v => v.id === vehicleId);
+        if (!veh) return showToast('❌ Авто не знайдено');
+        p.vehicle = veh.name;
+        if (p.status === 'new') p.status = 'work';
+        showToast(`🚐 ${veh.name}`);
+    } else {
+        p.vehicle = '';
+        showToast('❌ Авто знято');
+    }
+    updatePackageOnServer(p);
+    saveSettings();
+    document.querySelectorAll('.vehicle-dropdown').forEach(d => d.classList.remove('show'));
+    render();
+    updateAllCounts();
+    updateVehiclesList();
+    updatePcVehiclesList();
 }
 
 // Toggle extra fields section per card
@@ -3837,10 +3876,10 @@ function renderRoutePassengers() {
         const payStatusBadge = p.payStatus ? `<span class="card-pay-badge ${payStatusClass||'neutral'}">${p.payStatus}</span>` : '';
         const paymentBadge = p.payment ? `<span class="card-pay-badge neutral">${p.payment}</span>` : '';
 
-        // Vehicle badge
+        // Vehicle badge (route view - display only)
         const vehicleBadge = veh
-            ? `<span class="card-vehicle-badge">${veh.name}</span>`
-            : `<span class="card-vehicle-badge">${p._vehicleName || '—'}</span>`;
+            ? `<span class="card-vehicle-badge" style="cursor:default;">${veh.name}</span>`
+            : `<span class="card-vehicle-badge" style="cursor:default;">${p._vehicleName || '—'}</span>`;
 
         // Driver status badge (compact for right panel)
         let driverStatusBadge = '<span class="status-badge pending" style="font-size:10px;padding:2px 5px;">⏳</span>';
