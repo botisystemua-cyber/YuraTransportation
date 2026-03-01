@@ -2347,7 +2347,6 @@ function silentSync() {
                 const key = `${sp._sheet}_${sp._rowNum}`;
                 const local = localMap[key];
                 if (local) {
-                    if (!sp.vehicle && local.vehicle) sp.vehicle = local.vehicle;
                     if (!sp.status && local.status) sp.status = local.status;
                     if (local.prevStatus) sp.prevStatus = local.prevStatus;
                     if (local.archiveType) sp.archiveType = local.archiveType;
@@ -2801,7 +2800,7 @@ function updateMobileVehicles() {
     if (!el) return;
     el.innerHTML = vehicles.map(v => {
         const _cl = ['archived','refused','transferred','deleted'];
-        const count = passengers.filter(p => p.vehicle === v.id && !_cl.includes(p.status)).length;
+        const count = passengers.filter(p => (p.vehicle === v.id || p.vehicle === v.name) && !_cl.includes(p.status)).length;
         const active = filters.vehicle === v.id;
         return `<div class="side-menu-item ${active?'active':''}" onclick="mobileSetVehicle('${v.id}')"><span class="side-menu-item-left">🚐 ${v.name}</span><span class="side-menu-item-count">${count}</span></div>`;
     }).join('');
@@ -2869,7 +2868,11 @@ function getFilteredData() {
     
     if (!filters.showNewOnly && filters.direction && filters.direction !== 'all') data = data.filter(p => p.direction === filters.direction);
     if (filters.statusFilter) data = data.filter(p => p.status === filters.statusFilter);
-    if (filters.routeVehicle) data = data.filter(p => p.vehicle === filters.routeVehicle);
+    if (filters.routeVehicle) {
+        const rv = vehicles.find(x => x.id === filters.routeVehicle);
+        const rvName = rv ? rv.name : filters.routeVehicle;
+        data = data.filter(p => p.vehicle === filters.routeVehicle || p.vehicle === rvName);
+    }
     if (filters.search && filters.search.trim()) { 
         const s = filters.search.trim().toLowerCase();
         data = data.filter(p => {
@@ -6265,7 +6268,6 @@ function syncWithSheets() {
             serverPassengers.forEach(sp => {
                 const local = localMapSync[`${sp._sheet}_${sp._rowNum}`];
                 if (local) {
-                    if (!sp.vehicle && local.vehicle) sp.vehicle = local.vehicle;
                     if (local.prevStatus) sp.prevStatus = local.prevStatus;
                     if (local.archiveType) sp.archiveType = local.archiveType;
                 }
