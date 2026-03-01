@@ -1273,6 +1273,12 @@
         <button class="side-menu-close" onclick="closeSideMenu()">×</button>
     </div>
     <div class="side-menu-content">
+        <!-- Скинути всі фільтри -->
+        <div style="padding:8px 12px 4px;">
+            <div class="side-menu-item" onclick="resetFilters(); closeSideMenu();" style="background:linear-gradient(135deg,var(--primary),var(--info));color:white;font-weight:700;justify-content:center;cursor:pointer;border-radius:10px;padding:12px;font-size:14px;border:none;">
+                <span class="side-menu-item-left" style="color:white;justify-content:center;">🔄 Скинути всі фільтри</span>
+            </div>
+        </div>
         <!-- Напрямок -->
         <div class="side-menu-section">
             <div class="side-menu-section-header" onclick="toggleMobileSection('direction')">
@@ -1329,9 +1335,6 @@
                     <span class="side-menu-item-count" id="mobileCountNoVehicle">0</span>
                 </div>
                 <div id="mobileVehiclesList"></div>
-                <div class="side-menu-item" onclick="resetVehicleFilter(); closeSideMenu();" style="color:var(--text-secondary);font-weight:600;border-top:1px solid var(--border);margin-top:6px;justify-content:center;background:var(--bg-main);">
-                    <span class="side-menu-item-left">🔄 Скинути фільтр авто</span>
-                </div>
                 <div class="side-menu-item" onclick="openAddVehicleModal(); closeSideMenu();" style="color:var(--info);font-weight:600;border-top:1px solid var(--border);margin-top:4px;">
                     <span class="side-menu-item-left">➕ Додати авто</span>
                 </div>
@@ -1402,6 +1405,12 @@
 <div class="main-layout">
     <!-- PC SIDEBAR -->
     <aside class="pc-sidebar" id="pcSidebar">
+        <!-- Скинути всі фільтри -->
+        <div style="padding:8px 10px;">
+            <div class="pc-sidebar-item" onclick="resetFilters()" style="background:linear-gradient(135deg,var(--primary),var(--info));color:white;font-weight:700;justify-content:center;cursor:pointer;border-radius:10px;padding:10px;font-size:13px;">
+                <span>🔄 Скинути всі фільтри</span>
+            </div>
+        </div>
         <!-- Напрямок -->
         <div class="pc-sidebar-section">
             <div class="pc-sidebar-header" onclick="togglePcSection('direction')">
@@ -1458,9 +1467,6 @@
                     <span class="item-count" id="pcCountNoVehicle">0</span>
                 </div>
                 <div id="pcVehiclesList"></div>
-                <div class="pc-sidebar-item" onclick="resetVehicleFilter()" style="background:var(--bg-main);color:var(--text-secondary);font-size:12px;justify-content:center;cursor:pointer;margin-top:6px;">
-                    <span><span class="item-icon">🔄</span>Скинути фільтр авто</span>
-                </div>
                 <div class="pc-sidebar-add" onclick="openAddVehicleModal()">➕ Додати авто</div>
             </div>
         </div>
@@ -4171,7 +4177,7 @@ function updateFilterButtons() {
 }
 
 function toggleDropdown(id) { document.querySelectorAll('.dropdown-menu').forEach(d => { if(d.id !== id) d.classList.remove('show'); }); document.getElementById(id).classList.toggle('show'); if(id === 'dateDropdown') renderCalendarTo('desktopCalendar'); }
-function resetFilters() { filters.date = ''; filters.vehicle = ''; filters.showArchive = false; filters.statusFilter = ''; filters.routeVehicle = ''; routePassengers = []; routeStats = { total: 0, pending: 0, inProgress: 0, completed: 0, cancelled: 0, archived: 0 }; currentRouteVehicle = null; routeStatusFilter = 'all'; calendarDirection = 'all'; document.querySelectorAll('.cal-direction-select').forEach(s => s.value = 'all'); render(); renderCalendars(); updateVehiclesList(); updateAllCounts(); updatePcVehiclesList(); }
+function resetFilters() { filters.date = ''; filters.vehicle = ''; filters.showArchive = false; filters.statusFilter = ''; filters.routeVehicle = ''; filters.direction = 'all'; filters.showNewOnly = false; filters.specialStatus = ''; filters.search = ''; filters.statusDateFrom = ''; filters.statusDateTo = ''; const si = document.getElementById('searchInput'); if (si) si.value = ''; routePassengers = []; routeStats = { total: 0, pending: 0, inProgress: 0, completed: 0, cancelled: 0, archived: 0 }; currentRouteVehicle = null; routeStatusFilter = 'all'; calendarDirection = 'all'; document.querySelectorAll('.cal-direction-select').forEach(s => s.value = 'all'); render(); renderCalendars(); updateVehiclesList(); updateAllCounts(); updatePcVehiclesList(); if(typeof updateMobileVehicles === 'function') updateMobileVehicles(); }
 function setVehicleFilter(id) {
     // Toggle: якщо той самий фільтр — скидаємо
     if (filters.vehicle === id) {
