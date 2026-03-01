@@ -181,9 +181,9 @@
             text-align: center;
         }
         .pc-sidebar-item.active .item-count { background: rgba(255,255,255,0.25); color: white; }
-        .pc-sidebar-item.route { color: var(--success); font-weight: 600; }
-        .pc-sidebar-item.route:hover { border-color: var(--success); }
-        .pc-sidebar-item.route.active { background: var(--success); color: white; border-color: var(--success); }
+        .pc-sidebar-item.route { color: var(--orange); font-weight: 600; }
+        .pc-sidebar-item.route:hover { border-color: var(--orange); }
+        .pc-sidebar-item.route.active { background: var(--orange); color: white; border-color: var(--orange); }
         .pc-sidebar-item.optimize { color: var(--purple); font-weight: 600; }
         .pc-sidebar-item.optimize:hover { border-color: var(--purple); }
         .pc-sidebar-item.optimize.active { background: var(--purple); color: white; border-color: var(--purple); }
@@ -478,8 +478,8 @@
         .side-menu-item.active .side-menu-item-count { background: rgba(255,255,255,0.4); }
         .side-menu-item.optimize { background: rgba(139,92,246,0.3); }
         .side-menu-item.optimize:hover, .side-menu-item.optimize.active { background: rgba(139,92,246,0.5); }
-        .side-menu-item.route { background: rgba(34,197,94,0.3); }
-        .side-menu-item.route:hover, .side-menu-item.route.active { background: rgba(34,197,94,0.5); }
+        .side-menu-item.route { background: rgba(249,115,22,0.3); }
+        .side-menu-item.route:hover, .side-menu-item.route.active { background: rgba(249,115,22,0.5); }
         .side-menu-item.archive { background: rgba(107,114,128,0.3); }
         .side-menu-item.archive:hover, .side-menu-item.archive.active { background: rgba(107,114,128,0.5); }
         
@@ -586,8 +586,8 @@
         .wf-btn.active .count { background: rgba(255,255,255,0.3); color: white; }
         .wf-btn.optimize { border-color: var(--purple); color: var(--purple); }
         .wf-btn.optimize:hover, .wf-btn.optimize.active { background: var(--purple); color: white; border-color: var(--purple); }
-        .wf-btn.route { border-color: var(--success); color: var(--success); }
-        .wf-btn.route:hover, .wf-btn.route.active { background: var(--success); color: white; border-color: var(--success); }
+        .wf-btn.route { border-color: var(--orange); color: var(--orange); }
+        .wf-btn.route:hover, .wf-btn.route.active { background: var(--orange); color: white; border-color: var(--orange); }
         .wf-btn.archive { border-color: #6b7280; color: #6b7280; }
         .wf-btn.archive:hover, .wf-btn.archive.active { background: #6b7280; color: white; border-color: #6b7280; }
         .dropdown-menu { position: absolute; top: calc(100% + 4px); left: 0; background: white; border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); min-width: 280px; display: none; z-index: 300; padding: 10px; }
@@ -619,7 +619,7 @@
         .lead-card.status-new { border-left-color: var(--warning); }
         .lead-card.status-work { border-left-color: var(--info); }
         .lead-card.status-optimize { border-left-color: var(--purple); }
-        .lead-card.status-route { border-left-color: var(--success); }
+        .lead-card.status-route { border-left-color: var(--orange); }
         .lead-card.status-archived { border-left-color: #6b7280; opacity: 0.7; }
         .lead-card.status-refused { border-left-color: var(--danger); background: #fef2f2; }
         .lead-card.status-transferred { border-left-color: var(--teal); background: #f0fdfa; }
@@ -672,7 +672,7 @@
         /* Route row */
         .card-route-row { display: flex; align-items: center; min-height: 18px; }
         .card-route { font-size: 12px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
-        .card-route-arrow { color: var(--success); font-weight: 700; margin: 0 4px; }
+        .card-route-arrow { color: var(--orange); font-weight: 700; margin: 0 4px; }
         
         /* Info row: ID + Name */
         .card-info-row { display: flex; align-items: center; gap: 6px; min-height: 18px; }
@@ -716,7 +716,7 @@
         
         /* Route stats - адаптивна статистика */
         .route-stats-box { background: white; border-radius: 8px; padding: 12px; margin-bottom: 12px; box-shadow: var(--shadow); }
-        .route-header { display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; margin-bottom: 10px; background: linear-gradient(135deg, #1a3a5e 0%, #2563eb 100%); border-radius: 8px; color: white; }
+        .route-header { display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; margin-bottom: 10px; background: linear-gradient(135deg, #c2410c 0%, #f97316 100%); border-radius: 8px; color: white; }
         .route-header-name { font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .route-header-count { font-size: 13px; font-weight: 600; background: rgba(255,255,255,0.2); padding: 2px 10px; border-radius: 12px; white-space: nowrap; }
         .route-stats-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; text-align: center; }
@@ -1258,8 +1258,8 @@
         .map-options { display: flex; flex-direction: column; gap: 8px; }
         .map-option-btn { display: flex; align-items: center; gap: 12px; padding: 14px; border: 2px solid var(--border); border-radius: 8px; background: white; cursor: pointer; text-align: left; transition: all 0.2s; }
         .map-option-btn:hover { border-color: var(--primary); background: #f8fafc; }
-        .map-option-btn.route { border-color: var(--success); background: #f0fdf4; }
-        .map-option-btn.route:hover { background: var(--success); color: white; }
+        .map-option-btn.route { border-color: var(--orange); background: #fff7ed; }
+        .map-option-btn.route:hover { background: var(--orange); color: white; }
         .map-option-btn.route:hover .map-option-label { color: white; }
         .map-option-btn.route:hover .map-option-address { color: rgba(255,255,255,0.8); }
         .map-option-icon { font-size: 20px; }
@@ -1874,9 +1874,9 @@
         </div>
         <div class="bulk-buttons">
             <button class="bulk-btn select-all" onclick="selectAllVisible()">☑️ Всі</button>
-            <button class="bulk-btn vehicle" onclick="openBulkVehicleModal()">🚐 Авто</button>
+            <button class="bulk-btn vehicle" onclick="openBulkVehicleModal()" style="background:rgba(59,130,246,0.4);">🚐 Авто</button>
             <button class="bulk-btn optimize" onclick="bulkOptimize()">⚡ Опт</button>
-            <button class="bulk-btn route" onclick="bulkMoveToRoute()">🚀 Маршрут</button>
+            <button class="bulk-btn route" onclick="bulkMoveToRoute()" style="background:rgba(249,115,22,0.4);">🚀 Маршрут</button>
             <button class="bulk-btn" onclick="openTagModal()" style="background:rgba(139,92,246,0.4);">🏷️ Тег</button>
             <button class="bulk-btn notify" id="btnBulkNotify" onclick="bulkMarkNotified()" style="display:none;background:rgba(249,115,22,0.5);">🔔</button>
             <button class="bulk-btn archive" id="btnBulkArchive" onclick="bulkArchive()">📦 Архів</button>
@@ -2188,9 +2188,9 @@ let passengers = [
 const ROUTE_SPREADSHEET_ID = '1iKlD0Bj-5qB3Gc1d5ZBHscbRipcSe5xU7svqBfpB77Y';
 
 const DEFAULT_VEHICLES = [
-    {id:'v1', name:'Пас. Маршрут 1', seats:8, routeSheet:'Пас. Маршрут 1'},
-    {id:'v2', name:'Пас. Маршрут 2', seats:6, routeSheet:'Пас. Маршрут 2'},
-    {id:'v3', name:'Пас. Маршрут 3', seats:8, routeSheet:'Пас. Маршрут 3'}
+    {id:'v1', name:'Автомобіль 1', seats:8, routeSheet:'Пас. Маршрут 1'},
+    {id:'v2', name:'Автомобіль 2', seats:6, routeSheet:'Пас. Маршрут 2'},
+    {id:'v3', name:'Автомобіль 3', seats:8, routeSheet:'Пас. Маршрут 3'}
 ];
 let vehicles = DEFAULT_VEHICLES.map(v => ({...v}));
 
@@ -2221,9 +2221,12 @@ async function syncVehiclesFromServer() {
                 v.routeSheet === sheet.name || v.name === sheet.name
             );
             if (!exists) {
+                // "Пас. Маршрут 1" → "Автомобіль 1", інші — прибираємо префікс "Пас."
+                const match = sheet.name.match(/^Пас\.\s*Маршрут\s*(\d+)$/i);
+                const displayName = match ? `Автомобіль ${match[1]}` : sheet.name.replace(/^Пас\.\s*/, '');
                 vehicles.push({
                     id: 'v' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
-                    name: sheet.name.replace(/^Пас\.\s*/, ''),
+                    name: displayName,
                     seats: 8,
                     routeSheet: sheet.name
                 });
@@ -3354,7 +3357,7 @@ function updateRoutesList() {
             headers: { 'Content-Type': 'text/plain' },
             body: JSON.stringify({
                 action: 'getRoutePassengers',
-                payload: { vehicleName: v.name }
+                payload: { vehicleName: v.routeSheet || v.name }
             })
         })
         .then(r => r.json())
@@ -3364,16 +3367,16 @@ function updateRoutesList() {
                 const desktopBadge = document.querySelector(`#routesList [data-vehicle="${v.id}"] .badge`);
                 if (desktopBadge) {
                     desktopBadge.textContent = data.stats.total;
-                    desktopBadge.style.background = data.stats.total > 0 ? 'var(--success)' : 'var(--border)';
+                    desktopBadge.style.background = data.stats.total > 0 ? 'var(--orange)' : 'var(--border)';
                     desktopBadge.style.color = data.stats.total > 0 ? 'white' : 'var(--text-secondary)';
                 }
-                
+
                 // Оновлюємо badge в mobile menu
                 const mobileBadge = document.querySelector(`#mobileRoutesList [data-vehicle="${v.id}"] .side-menu-item-count`);
                 if (mobileBadge) {
                     mobileBadge.textContent = data.stats.total;
                 }
-                
+
                 // Оновлюємо badge в PC sidebar
                 const pcBadge = document.querySelector(`#pcRoutesList [data-vehicle="${v.id}"] .item-count`);
                 if (pcBadge) {
@@ -3388,34 +3391,37 @@ function updateRoutesList() {
 // Рендер списку маршрутів з локальними даними (швидко)
 function renderRoutesListLocal() {
     const routesHtml = vehicles.map(v => {
+        const routeDisplayName = (v.routeSheet || v.name).replace(/^Пас\.\s*/, '');
         const count = passengers.filter(p => (p.vehicle === v.id || p.vehicle === v.name) && p.status === 'route').length;
-        return `<div class="dropdown-item" data-vehicle="${v.id}" onclick="showVehicleRoute('${v.id}')">
-            <span>🚐 ${v.name}</span>
-            <span class="badge" style="background:${count > 0 ? 'var(--success)' : 'var(--border)'};color:${count > 0 ? 'white' : 'var(--text-secondary)'}">${count}</span>
+        return `<div class="dropdown-item" data-vehicle="${v.id}" onclick="showVehicleRoute('${v.id}')" style="color:var(--orange);">
+            <span>🚀 ${routeDisplayName}</span>
+            <span class="badge" style="background:${count > 0 ? 'var(--orange)' : 'var(--border)'};color:${count > 0 ? 'white' : 'var(--text-secondary)'}">${count}</span>
         </div>`;
     }).join('');
-    
+
     const routesList = document.getElementById('routesList');
     if (routesList) routesList.innerHTML = routesHtml;
-    
+
     // Mobile routes
     const mobileRoutesHtml = vehicles.map(v => {
+        const routeDisplayName = (v.routeSheet || v.name).replace(/^Пас\.\s*/, '');
         const count = passengers.filter(p => (p.vehicle === v.id || p.vehicle === v.name) && p.status === 'route').length;
         return `<div class="side-menu-item route ${filters.routeVehicle === v.id ? 'active' : ''}" data-vehicle="${v.id}" onclick="showVehicleRoute('${v.id}'); closeSideMenu();">
-            <span class="side-menu-item-left">🚐 ${v.name}</span>
+            <span class="side-menu-item-left">🚀 ${routeDisplayName}</span>
             <span class="side-menu-item-count">${count}</span>
         </div>`;
     }).join('');
-    
+
     const mobileRoutesList = document.getElementById('mobileRoutesList');
     if (mobileRoutesList) mobileRoutesList.innerHTML = mobileRoutesHtml;
-    
+
     // PC Sidebar routes
     const pcRoutesHtml = vehicles.map(v => {
+        const routeDisplayName = (v.routeSheet || v.name).replace(/^Пас\.\s*/, '');
         const count = passengers.filter(p => (p.vehicle === v.id || p.vehicle === v.name) && p.status === 'route').length;
         const isActive = filters.routeVehicle === v.id;
         return `<div class="pc-sidebar-item route ${isActive ? 'active' : ''}" data-vehicle="${v.id}" onclick="showVehicleRoute('${v.id}')">
-            <span><span class="item-icon">🚐</span>${v.name}</span>
+            <span><span class="item-icon">🚀</span>${routeDisplayName}</span>
             <span class="item-count">${count}</span>
         </div>`;
     }).join('');
@@ -3488,7 +3494,7 @@ function showVehicleRoute(vehicleId) {
             headers: { 'Content-Type': 'text/plain' },
             body: JSON.stringify({
                 action: 'getRoutePassengers',
-                payload: { vehicleName: v.name }
+                payload: { vehicleName: v.routeSheet || v.name }
             })
         }).then(r => r.json()),
         fetch(ROUTE_API_URL, {
@@ -3499,12 +3505,12 @@ function showVehicleRoute(vehicleId) {
     ])
     .then(([routeData, mailingData]) => {
         hideLoader();
-        
+
         // Зберігаємо mailingIds
         if (mailingData.success) {
             mailingIds = mailingData.mailingIds || [];
         }
-        
+
         if (routeData.success) {
             // Зберігаємо дані маршруту
             routePassengers = routeData.passengers.map((p, idx) => ({
@@ -3512,7 +3518,7 @@ function showVehicleRoute(vehicleId) {
                 _uid: `route_${v.id}_${idx}`,
                 _isRouteData: true,
                 _vehicleId: v.id,
-                _vehicleName: v.name
+                _vehicleName: v.routeSheet || v.name
             }));
             routeStats = routeData.stats;
             currentRouteVehicle = v;
@@ -3619,7 +3625,8 @@ async function loadAllRoutePassengers() {
                         _uid: `route_${route.name.replace(/\s+/g, '_')}_${idx}`,
                         _isRouteData: true,
                         _vehicleId: finalVehicle?.id || route.name,
-                        _vehicleName: finalVehicle?.name || route.name
+                        _vehicleName: finalVehicle?.routeSheet || finalVehicle?.name || route.name,
+                        _vehicleDisplayName: finalVehicle?.name || route.name
                     }));
                     routePassengers = routePassengers.concat(mapped);
                     
@@ -3707,7 +3714,8 @@ function renderRoutePassengers() {
     let html = '';
     
     // Статистика зверху - клікабельна, адаптивна
-    const routeHeaderName = currentRouteVehicle ? `🚐 ${currentRouteVehicle.name}` : '📋 Всі маршрути';
+    const routeSheetDisplay = currentRouteVehicle ? (currentRouteVehicle.routeSheet || currentRouteVehicle.name).replace(/^Пас\.\s*/, '') : '';
+    const routeHeaderName = currentRouteVehicle ? `🚀 ${routeSheetDisplay} (${currentRouteVehicle.name})` : '📋 Всі маршрути';
     const routeHeaderCount = `${routeStats.total} пас.`;
 
     html += `
@@ -3779,10 +3787,10 @@ function renderRoutePassengers() {
             : '';
         const notifyClass = isNotified ? 'is-notified' : '';
         
-        const veh = vehicles.find(v => v.id === p._vehicleId || v.name === p._vehicleName);
-        const vehicleBadge = veh 
-            ? `<span class="card-vehicle-badge">${veh.name}</span>` 
-            : `<span class="card-vehicle-badge">${p._vehicleName || '?'}</span>`;
+        const veh = vehicles.find(v => v.id === p._vehicleId || v.routeSheet === p._vehicleName || v.name === p._vehicleName);
+        const vehicleBadge = veh
+            ? `<span class="card-vehicle-badge">${veh.name}</span>`
+            : `<span class="card-vehicle-badge">${p._vehicleDisplayName || p._vehicleName || '?'}</span>`;
         
         const isSelected = selectedIds.has(p._uid);
         
@@ -4048,7 +4056,7 @@ function updateRoutesCounts() {
             headers: { 'Content-Type': 'text/plain' },
             body: JSON.stringify({
                 action: 'getRoutePassengers',
-                payload: { vehicleName: v.name }
+                payload: { vehicleName: v.routeSheet || v.name }
             })
         })
         .then(r => r.json())
@@ -4342,11 +4350,11 @@ function bulkMoveToRoute() {
     const withVehicle = selected.filter(p => p.vehicle);
     if (!withVehicle.length) return showToast('⚠️ Спочатку призначте авто');
     
-    // Групуємо по авто
+    // Групуємо по авто (ключ = назва аркуша маршруту)
     const byVehicle = {};
     withVehicle.forEach(p => {
         const veh = vehicles.find(v => v.id === p.vehicle || v.name === p.vehicle);
-        const vName = veh ? veh.name : p.vehicle;
+        const vName = veh ? (veh.routeSheet || veh.name) : p.vehicle;
         if (!byVehicle[vName]) byVehicle[vName] = [];
         byVehicle[vName].push(p);
     });
@@ -5668,7 +5676,7 @@ function deleteVehicle(vehicleId) {
         headers: { 'Content-Type': 'text/plain' },
         body: JSON.stringify({
             action: 'deleteRouteSheet',
-            payload: { vehicleName: v.name, force: true }
+            payload: { vehicleName: v.routeSheet || v.name, force: true }
         })
     })
     .then(r => r.json())
