@@ -1437,12 +1437,15 @@
                 <span class="section-toggle" id="toggleVehicles">▼</span>
             </div>
             <div class="side-menu-collapsible" id="mobileVehiclesSection">
-                <div class="side-menu-item" style="border-color:var(--warning);color:var(--warning);" onclick="mobileSetVehicle('none')">
+                <div class="side-menu-item" id="mobileVehicleNone" style="border-color:var(--warning);color:var(--warning);" onclick="mobileSetVehicle('none')">
                     <span class="side-menu-item-left">❓ Без авто</span>
                     <span class="side-menu-item-count" id="mobileCountNoVehicle">0</span>
                 </div>
                 <div id="mobileVehiclesList"></div>
-                <div class="side-menu-item" onclick="openAddVehicleModal(); closeSideMenu();" style="color:var(--info);font-weight:600;border-top:1px solid var(--border);margin-top:8px;">
+                <div class="side-menu-item" onclick="resetVehicleFilter(); closeSideMenu();" style="color:var(--text-secondary);font-weight:600;border-top:1px solid var(--border);margin-top:6px;justify-content:center;background:var(--bg-main);">
+                    <span class="side-menu-item-left">🔄 Скинути фільтр авто</span>
+                </div>
+                <div class="side-menu-item" onclick="openAddVehicleModal(); closeSideMenu();" style="color:var(--info);font-weight:600;border-top:1px solid var(--border);margin-top:4px;">
                     <span class="side-menu-item-left">➕ Додати авто</span>
                 </div>
             </div>
@@ -1568,6 +1571,9 @@
                     <span class="item-count" id="pcCountNoVehicle">0</span>
                 </div>
                 <div id="pcVehiclesList"></div>
+                <div class="pc-sidebar-item" onclick="resetVehicleFilter()" style="background:var(--bg-main);color:var(--text-secondary);font-size:12px;justify-content:center;cursor:pointer;margin-top:6px;">
+                    <span><span class="item-icon">🔄</span>Скинути фільтр авто</span>
+                </div>
                 <div class="pc-sidebar-add" onclick="openAddVehicleModal()">➕ Додати авто</div>
             </div>
         </div>
@@ -2632,20 +2638,38 @@ function renderCalendarTo(containerId) {
     const months = ['Січень','Лютий','Березень','Квітень','Травень','Червень','Липень','Серпень','Вересень','Жовтень','Листопад','Грудень'];
     const today = new Date().toISOString().split('T')[0];
     
-    // Рахуємо ліди та місця на дату (з урахуванням напрямку)
+    // Рахуємо ліди та місця на дату (з урахуванням напрямку та авто)
     const seatCounts = {};
     const leadCounts = {};
     const dir = filters.direction;
-    const filteredPassengers = passengers.filter(p => p.status !== 'archived').filter(p => !dir || dir === 'all' || p.direction === dir);
+    let filteredPassengers = passengers.filter(p => p.status !== 'archived').filter(p => !dir || dir === 'all' || p.direction === dir);
+
+    // Фільтр по авто для календаря
+    if (filters.vehicle && filters.vehicle !== '') {
+        if (filters.vehicle === 'none') {
+            filteredPassengers = filteredPassengers.filter(p => !p.vehicle);
+        } else {
+            const fv = vehicles.find(x => x.id === filters.vehicle);
+            const fvName = fv ? fv.name : filters.vehicle;
+            filteredPassengers = filteredPassengers.filter(p => p.vehicle === filters.vehicle || p.vehicle === fvName);
+        }
+    }
+
     filteredPassengers.forEach(p => {
         if(p.date) {
             leadCounts[p.date] = (leadCounts[p.date]||0) + 1;
             seatCounts[p.date] = (seatCounts[p.date]||0) + (parseInt(p.seats) || 1);
         }
     });
-    
-    // Загальна місткість всіх авто
-    const totalCapacity = vehicles.reduce((sum, v) => sum + (parseInt(v.seats) || 8), 0);
+
+    // Місткість: якщо обрано конкретне авто — тільки його, інакше всіх
+    let totalCapacity;
+    if (filters.vehicle && filters.vehicle !== '' && filters.vehicle !== 'none') {
+        const fv = vehicles.find(x => x.id === filters.vehicle);
+        totalCapacity = fv ? (parseInt(fv.seats) || 8) : 0;
+    } else {
+        totalCapacity = vehicles.reduce((sum, v) => sum + (parseInt(v.seats) || 8), 0);
+    }
     
     const firstDay = new Date(year, month, 1), lastDay = new Date(year, month + 1, 0);
     const startDay = (firstDay.getDay() + 6) % 7, daysInMonth = lastDay.getDate();
@@ -2859,10 +2883,32 @@ function updateMobileVehicles() {
         const active = filters.vehicle === v.id;
         return `<div class="side-menu-item ${active?'active':''}" onclick="mobileSetVehicle('${v.id}')"><span class="side-menu-item-left">🚐 ${v.name}</span><span class="side-menu-item-count">${count}</span></div>`;
     }).join('');
+
+    // Оновлюємо active стан кнопки "Без авто" в мобільному
+    const mobileNone = document.getElementById('mobileVehicleNone');
+    if (mobileNone) {
+        if (filters.vehicle === 'none') {
+            mobileNone.classList.add('active');
+        } else {
+            mobileNone.classList.remove('active');
+        }
+    }
 }
 
 function mobileFilterAll() { filters.date=''; filters.vehicle=''; filters.showArchive=false; filters.statusFilter=''; closeSideMenu(); render(); updateAllCounts(); }
-function mobileSetVehicle(id) { filters.vehicle = id; filters.statusFilter = ''; closeSideMenu(); render(); }
+function mobileSetVehicle(id) {
+    // Toggle: якщо той самий фільтр — скидаємо
+    if (filters.vehicle === id) {
+        filters.vehicle = '';
+    } else {
+        filters.vehicle = id;
+    }
+    filters.statusFilter = '';
+    closeSideMenu();
+    render();
+    renderCalendars();
+    updateMobileVehicles();
+}
 
 // DATA
 function getFieldValue(p, key) {
@@ -3427,7 +3473,7 @@ function updateAllCounts() {
 function updatePcVehiclesList() {
     const container = document.getElementById('pcVehiclesList');
     if (!container) return;
-    
+
     container.innerHTML = vehicles.map(v => {
         const _cl2 = ['archived','refused','transferred','deleted'];
         const count = passengers.filter(p => (p.vehicle === v.id || p.vehicle === v.name) && !_cl2.includes(p.status)).length;
@@ -3440,6 +3486,12 @@ function updatePcVehiclesList() {
             <button onclick="event.stopPropagation();deleteVehicle('${v.id}')" style="background:none;border:none;cursor:pointer;font-size:12px;opacity:0.5;padding:4px;" title="Видалити авто">🗑️</button>
         </div>`;
     }).join('');
+
+    // Оновлюємо active стан кнопки "Без авто"
+    const pcNone = document.getElementById('pcVehicleNone');
+    if (pcNone) {
+        pcNone.classList.toggle('active', filters.vehicle === 'none');
+    }
 }
 
 // ROUTES LIST - оновлюємо з реальними даними з таблиці
@@ -4188,17 +4240,34 @@ function updateFilterButtons() {
 
 function toggleDropdown(id) { document.querySelectorAll('.dropdown-menu').forEach(d => { if(d.id !== id) d.classList.remove('show'); }); document.getElementById(id).classList.toggle('show'); if(id === 'dateDropdown') renderCalendarTo('desktopCalendar'); }
 function resetFilters() { filters.date = ''; filters.vehicle = ''; filters.showArchive = false; filters.statusFilter = ''; filters.routeVehicle = ''; routePassengers = []; routeStats = { total: 0, pending: 0, inProgress: 0, completed: 0, cancelled: 0, archived: 0 }; currentRouteVehicle = null; routeStatusFilter = 'all'; render(); renderCalendars(); updateVehiclesList(); updateAllCounts(); updatePcVehiclesList(); }
-function setVehicleFilter(id) { 
-    filters.vehicle = id; 
-    filters.statusFilter = ''; 
+function setVehicleFilter(id) {
+    // Toggle: якщо той самий фільтр — скидаємо
+    if (filters.vehicle === id) {
+        filters.vehicle = '';
+    } else {
+        filters.vehicle = id;
+    }
+    filters.statusFilter = '';
     filters.routeVehicle = '';
     routePassengers = [];
     routeStats = { total: 0, pending: 0, inProgress: 0, completed: 0, cancelled: 0, archived: 0 };
     currentRouteVehicle = null;
     routeStatusFilter = 'all';
-    document.getElementById('vehicleDropdown')?.classList.remove('show'); 
-    render(); 
+    document.getElementById('vehicleDropdown')?.classList.remove('show');
+    render();
+    renderCalendars();
     updatePcVehiclesList();
+    updateVehiclesList();
+}
+
+// Скинути фільтр авто (кнопка під меню авто)
+function resetVehicleFilter() {
+    filters.vehicle = '';
+    render();
+    renderCalendars();
+    updatePcVehiclesList();
+    updateVehiclesList();
+    updateMobileVehicles();
 }
 function filterByStatus(status) { filters.statusFilter = filters.statusFilter === status ? '' : status; filters.showArchive = false; filters.routeVehicle = ''; routePassengers = []; routeStats = { total: 0, pending: 0, inProgress: 0, completed: 0, cancelled: 0, archived: 0 }; currentRouteVehicle = null; routeStatusFilter = 'all'; render(); updateFilterButtons(); }
 function toggleArchiveFilter() { const entering = !filters.showArchive; filters.showArchive = entering; filters.statusFilter = ''; filters.routeVehicle = ''; filters.specialStatus = ''; if (entering) { filters.date = ''; filters.showNewOnly = false; filters.search = ''; filters.statusDateFrom = ''; filters.statusDateTo = ''; const si = document.getElementById('searchInput'); if (si) si.value = ''; } routePassengers = []; routeStats = { total: 0, pending: 0, inProgress: 0, completed: 0, cancelled: 0, archived: 0 }; currentRouteVehicle = null; routeStatusFilter = 'all'; render(); updateAllCounts(); updateFilterButtons(); renderCalendars(); }
