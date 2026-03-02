@@ -6080,11 +6080,23 @@ function savePassenger() {
         // Знаходимо індекс в масиві
         const i = passengers.findIndex(p => p._sheet === existingP._sheet && p._rowNum === existingP._rowNum);
         if (i !== -1) {
-            d._sheet = passengers[i]._sheet;
-            d._rowNum = passengers[i]._rowNum;
-            passengers[i] = {...passengers[i], ...d};
-            // Оновлюємо на сервері
-            updatePassengerOnServer(passengers[i]);
+            const directionChanged = existingP.direction && d.direction !== existingP.direction;
+
+            if (directionChanged && existingP._sheet && existingP._rowNum) {
+                // Напрямок змінився — переміщуємо на інший аркуш
+                d.status = existingP.status || 'new';
+                d.order = existingP.order || passengers.length * 10;
+                passengers.splice(i, 1);
+                passengers.unshift(d);
+                movePassengerDirection(existingP, d);
+            } else {
+                // Напрямок той самий — оновлюємо на місці
+                d._sheet = passengers[i]._sheet;
+                d._rowNum = passengers[i]._rowNum;
+                passengers[i] = {...passengers[i], ...d};
+                // Оновлюємо на сервері
+                updatePassengerOnServer(passengers[i]);
+            }
         }
     } else {
         passengers.unshift(d);
@@ -6526,6 +6538,94 @@ function updatePassengerOnServer(passenger) {
     .catch(err => {
         console.error('❌ Fetch error:', err);
         showToast('❌ Помилка зв\'язку');
+    });
+}
+
+// MOVE DIRECTION — Переміщення ліда між аркушами при зміні напрямку
+function movePassengerDirection(oldPassenger, newData) {
+    showLoader('Зміна напрямку...', '');
+
+    const addPayload = {
+        action: 'addPassenger',
+        payload: {
+            direction: newData.direction,
+            initials: getUserInitials(),
+            date: newData.date,
+            from: newData.from,
+            to: newData.to,
+            seats: newData.seats,
+            name: newData.name,
+            phone: newData.phone,
+            phoneReg: newData.phoneReg,
+            mark: newData.mark,
+            payment: newData.payment,
+            percent: newData.percent,
+            dispatcher: newData.dispatcher || 'CRM',
+            weight: newData.weight,
+            vehicle: newData.vehicle,
+            timing: newData.timing,
+            dateReg: newData.dateReg,
+            note: newData.note,
+            force: true
+        }
+    };
+
+    fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify(addPayload)
+    })
+    .then(r => r.json())
+    .then(addResult => {
+        if (!addResult.success) throw new Error(addResult.error || 'Помилка додавання');
+
+        // Оновлюємо локальні дані з новим sheet/rowNum
+        const p = passengers.find(x => x.id === newData.id);
+        if (p) {
+            p.id = addResult.id;
+            p._sheet = addResult.sheet;
+            p._rowNum = addResult.rowNum;
+        }
+
+        // Якщо статус не 'new' — оновлюємо статус на новому аркуші
+        const oldStatus = oldPassenger.status || 'new';
+        const statusPromise = oldStatus !== 'new'
+            ? fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain' },
+                body: JSON.stringify({
+                    action: 'updateField',
+                    payload: { sheet: addResult.sheet, rowNum: addResult.rowNum, field: 'status', value: oldStatus }
+                })
+              }).then(r => r.json())
+            : Promise.resolve({ success: true });
+
+        return statusPromise.then(() => addResult);
+    })
+    .then(addResult => {
+        // Видаляємо старий запис з попереднього аркуша
+        return fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify({
+                action: 'deletePassengersPermanently',
+                payload: { passengers: [{ sheet: oldPassenger._sheet, rowNum: oldPassenger._rowNum }] }
+            })
+        }).then(r => r.json());
+    })
+    .then(deleteResult => {
+        hideLoader();
+        saveSettings();
+        render();
+        updateAllCounts();
+        renderCalendars();
+        showToast('✅ Напрямок змінено');
+        checkAllCapacityWarnings();
+    })
+    .catch(err => {
+        hideLoader();
+        console.error('Move direction error:', err);
+        showToast('⚠️ Помилка зміни напрямку');
     });
 }
 
