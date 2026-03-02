@@ -722,7 +722,7 @@
         .card-details .details-close-btn:hover { background: #fee2e2; color: #dc2626; border-color: #dc2626; }
 
         /* Actions panel */
-        .card-actions { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; max-height: 0; overflow: hidden; padding: 0 12px; background: white; transition: max-height 0.25s ease, padding 0.25s ease; }
+        .card-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; max-height: 0; overflow: hidden; padding: 0 12px; background: white; transition: max-height 0.25s ease, padding 0.25s ease; }
         .card-actions.show { max-height: 200px; padding: 10px 12px; border-top: 1px solid var(--border); }
         .btn-card-action { padding: 10px 6px; border: none; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 4px; }
         .btn-card-action.btn-delete { background: #fee2e2; color: #dc2626; }
@@ -1258,9 +1258,44 @@
             .card-route { font-size: 12px; }
             .card-price { font-size: 15px; }
             .details-grid { grid-template-columns: repeat(4, 1fr); }
-            .card-actions.show { grid-template-columns: repeat(5, 1fr); }
+            .card-actions.show { grid-template-columns: repeat(6, 1fr); }
             .workflow-bar { display: none; }
         }
+
+        /* ONBOARDING HINTS */
+        .onboarding-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.55); z-index: 9999;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; transition: opacity 0.3s ease;
+        }
+        .onboarding-overlay.show { opacity: 1; }
+        .onboarding-card {
+            background: white; border-radius: 16px; padding: 28px 24px;
+            max-width: 420px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center; position: relative;
+            transform: translateY(20px); transition: transform 0.3s ease;
+        }
+        .onboarding-overlay.show .onboarding-card { transform: translateY(0); }
+        .onboarding-icon { font-size: 48px; margin-bottom: 12px; }
+        .onboarding-title { font-size: 16px; font-weight: 800; color: var(--primary); margin-bottom: 8px; }
+        .onboarding-text { font-size: 13px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 20px; }
+        .onboarding-text strong { color: var(--text-primary); }
+        .onboarding-dots { display: flex; justify-content: center; gap: 8px; margin-bottom: 20px; }
+        .onboarding-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--border); transition: all 0.2s; }
+        .onboarding-dot.active { background: var(--primary); transform: scale(1.2); }
+        .onboarding-btns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+        .onboarding-btn {
+            padding: 10px 20px; border: none; border-radius: 8px; font-size: 13px;
+            font-weight: 700; cursor: pointer; font-family: inherit; transition: all 0.2s;
+        }
+        .onboarding-btn.primary { background: var(--primary); color: white; }
+        .onboarding-btn.primary:hover { background: var(--primary-dark); }
+        .onboarding-btn.secondary { background: var(--bg-main); color: var(--text-secondary); }
+        .onboarding-btn.secondary:hover { background: var(--border); }
+        .onboarding-btn.danger { background: #fee2e2; color: #dc2626; font-size: 11px; }
+        .onboarding-btn.danger:hover { background: #dc2626; color: white; }
+        .onboarding-step-num { position: absolute; top: 12px; right: 16px; font-size: 11px; color: var(--text-secondary); font-weight: 600; }
     </style>
 </head>
 <body>
@@ -3139,6 +3174,7 @@ function render() {
                 <button class="btn-card-action btn-call" onclick="event.stopPropagation();location.href='tel:${p.phone}'">📞 Дзвонити</button>
                 <button class="btn-card-action btn-msg" onclick="event.stopPropagation();window.open('https://console.smartsender.com/contacts?project=yura-transportation-131349','_blank')">💬 Писати</button>
                 <button class="btn-card-action btn-map" onclick="event.stopPropagation();openMapModal('${uk}')">🗺️ Карта</button>
+                <button class="btn-card-action btn-edit" onclick="event.stopPropagation();editPackage('${uk}')">✏️ Редагувати</button>
                 <button class="btn-card-action" style="background:#d1fae5;color:#065f46;" onclick="event.stopPropagation();restorePackageToOriginal('${uk}')">↩️ Відновити</button>
                 <button class="btn-card-action btn-delete" onclick="event.stopPropagation();deletePackage('${uk}')">🗑️ Видалити</button>
             </div>
@@ -4090,6 +4126,8 @@ function renderRoutePassengers() {
                 <button class="btn-card-action btn-call" onclick="event.stopPropagation();location.href='tel:${p.phone}'">📞 Дзвонити</button>
                 <button class="btn-card-action btn-msg" onclick="event.stopPropagation();window.open('https://console.smartsender.com/contacts?project=yura-transportation-131349','_blank')">💬 Писати</button>
                 <button class="btn-card-action btn-map" onclick="event.stopPropagation();openMapModal('${uk}')">🗺️ Карта</button>
+                <button class="btn-card-action btn-edit" onclick="event.stopPropagation();editPackage('${uk}')">✏️ Редагувати</button>
+                <button class="btn-card-action btn-delete" onclick="event.stopPropagation();showRouteDeleteChoice('${uk}')">🗑️ Видалити</button>
             </div>
         </div>`;
     });
@@ -4107,6 +4145,135 @@ function inlineRouteSave(uid, field, value) {
     const indId = 'saveInd_' + uid.replace(/[^a-zA-Z0-9]/g, '_');
     const ind = document.getElementById(indId);
     if (ind) { ind.classList.add('show'); setTimeout(() => ind.classList.remove('show'), 1500); }
+}
+
+// Видалення з маршруту — вибір дії
+function showRouteDeleteChoice(uid) {
+    const p = routePassengers.find(rp => rp._uid === uid);
+    if (!p) return;
+
+    document.getElementById('routeDeleteChoiceModal')?.remove();
+
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay show';
+    modal.id = 'routeDeleteChoiceModal';
+    modal.innerHTML = `
+        <div class="modal" style="max-width:380px;">
+            <div class="modal-header" style="background:#fee2e2;border-bottom:1px solid #fecaca;">
+                <span class="modal-title" style="color:#dc2626;">🗑️ Видалити</span>
+                <button class="modal-close" onclick="document.getElementById('routeDeleteChoiceModal').remove()">✕</button>
+            </div>
+            <div class="modal-body" style="padding:20px;">
+                <div style="text-align:center;margin-bottom:16px;">
+                    <div style="font-size:14px;font-weight:600;">${p.name || 'Без імені'}</div>
+                    <div style="font-size:12px;color:var(--text-secondary);">${p.phone || '—'}</div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:10px;">
+                    <button onclick="deleteFromRouteOnly('${uid}')" style="padding:14px;border:none;border-radius:10px;background:#f59e0b;color:white;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;">
+                        📋 Видалити з маршруту<br>
+                        <span style="font-size:11px;font-weight:400;opacity:0.9;">Посилка залишиться в головному списку</span>
+                    </button>
+                    <button onclick="deleteFromRouteAndTrash('${uid}')" style="padding:14px;border:none;border-radius:10px;background:#dc2626;color:white;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;">
+                        🗑️ Видалити в корзину<br>
+                        <span style="font-size:11px;font-weight:400;opacity:0.9;">Посилка буде архівована</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    modal.onclick = function(e) { if (e.target === modal) modal.remove(); };
+    document.body.appendChild(modal);
+}
+
+// Видалити лише з маршруту (посилка залишається в головному списку)
+function deleteFromRouteOnly(uid) {
+    document.getElementById('routeDeleteChoiceModal')?.remove();
+    const p = routePassengers.find(rp => rp._uid === uid);
+    if (!p) return;
+
+    const sheetName = currentRouteVehicle?.routeSheet || p._vehicleName;
+    if (!sheetName) return showToast('Невідомий аркуш маршруту');
+
+    showLoader('Видаляю з маршруту...', '');
+
+    fetch(ROUTE_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({
+            action: 'archivePackages',
+            packages: [{ sheet: sheetName, rowNum: p.rowNum }],
+            user: 'crm',
+            reason: 'removed_from_route'
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        hideLoader();
+        if (data.success) {
+            // Видаляємо з локального масиву маршруту
+            routePassengers = routePassengers.filter(rp => rp._uid !== uid);
+            routeStats.total = routePassengers.length;
+
+            // Повертаємо статус в головному списку назад на 'work'
+            const mainPkg = packages.find(mp => String(mp.id) === String(p.id));
+            if (mainPkg) {
+                mainPkg.status = 'work';
+                updatePackageOnServer(mainPkg);
+                saveSettings();
+            }
+
+            renderRoutePassengers();
+            updateAllCounts();
+            showToast('📋 Видалено з маршруту');
+        } else {
+            showToast('❌ ' + (data.error || 'Помилка'));
+        }
+    })
+    .catch(err => { hideLoader(); showToast('❌ Помилка мережі'); });
+}
+
+// Видалити з маршруту + в корзину (архів)
+function deleteFromRouteAndTrash(uid) {
+    document.getElementById('routeDeleteChoiceModal')?.remove();
+    const p = routePassengers.find(rp => rp._uid === uid);
+    if (!p) return;
+
+    const sheetName = currentRouteVehicle?.routeSheet || p._vehicleName;
+    if (!sheetName) return showToast('Невідомий аркуш маршруту');
+
+    showLoader('Видаляю...', '');
+
+    // 1) Архівуємо в маршруті
+    fetch(ROUTE_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({
+            action: 'archivePackages',
+            packages: [{ sheet: sheetName, rowNum: p.rowNum }],
+            user: 'crm',
+            reason: 'route_delete_trash'
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        // 2) Архівуємо в головному списку
+        const mainPkg = packages.find(mp => String(mp.id) === String(p.id));
+        if (mainPkg) {
+            mainPkg.status = 'archived';
+            mainPkg.archiveType = 'deleted';
+            mainPkg.archiveDate = new Date().toISOString().split('T')[0];
+            updatePackageOnServer(mainPkg);
+            saveSettings();
+        }
+
+        hideLoader();
+        routePassengers = routePassengers.filter(rp => rp._uid !== uid);
+        routeStats.total = routePassengers.length;
+        renderRoutePassengers();
+        updateAllCounts();
+        showToast('🗑️ Видалено в корзину');
+    })
+    .catch(err => { hideLoader(); showToast('❌ Помилка мережі'); });
 }
 
 // Фільтр по статусу в маршруті
@@ -7174,6 +7341,129 @@ document.addEventListener('click', e => {
     if (!e.target.closest('.card-vehicle-badge') && !e.target.closest('.vehicle-dropdown')) document.querySelectorAll('.vehicle-dropdown').forEach(d => d.classList.remove('show'));
     if (!e.target.closest('#navPackages') && !e.target.closest('.direction-popup')) document.getElementById('directionPopup')?.classList.remove('show');
 });
+
+// ============================================
+// ONBOARDING HINTS SYSTEM
+// ============================================
+const ONBOARDING_HINTS = [
+    {
+        icon: '👋',
+        title: 'Ласкаво просимо до CRM Посилки!',
+        text: 'Це ваша система управління посилками. Тут ви можете <strong>додавати, редагувати та відстежувати</strong> всі посилки в одному місці.'
+    },
+    {
+        icon: '☑️',
+        title: 'Вибір та масові дії',
+        text: 'Натисніть <strong>галочку</strong> на картці посилки, щоб вибрати її. При виборі зліва з\'явиться <strong>панель масових дій</strong> — архівування, призначення авто, зміна статусу та інше.'
+    },
+    {
+        icon: '✏️',
+        title: 'Редагування та видалення',
+        text: 'Натисніть <strong>▼</strong> на картці, щоб розгорнути дії. Тепер доступні кнопки <strong>Редагувати</strong> та <strong>Видалити</strong> прямо на кожній картці — і в основному списку, і в маршруті.'
+    },
+    {
+        icon: '🚀',
+        title: 'Маршрути',
+        text: 'Призначте авто посилці, потім перемістіть у <strong>маршрут</strong>. У маршруті можна видаляти посилки окремо — <strong>тільки з маршруту</strong> або <strong>повністю в корзину</strong>.'
+    },
+    {
+        icon: '📊',
+        title: 'Фільтри та пошук',
+        text: 'Використовуйте <strong>бокову панель</strong> зліва для фільтрації по даті, авто, напрямку та статусу. <strong>Пошук</strong> у хедері шукає по телефону, імені, ТТН та адресі.'
+    }
+];
+
+let onboardingStep = 0;
+
+function initOnboarding() {
+    if (localStorage.getItem('posylki_onboarding_disabled') === 'true') return;
+    if (localStorage.getItem('posylki_onboarding_seen') === 'true') return;
+
+    // Невелика затримка для завантаження сторінки
+    setTimeout(() => showOnboarding(), 800);
+}
+
+function showOnboarding() {
+    onboardingStep = 0;
+    renderOnboardingStep();
+}
+
+function renderOnboardingStep() {
+    let overlay = document.getElementById('onboardingOverlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.className = 'onboarding-overlay';
+        overlay.id = 'onboardingOverlay';
+        document.body.appendChild(overlay);
+        requestAnimationFrame(() => overlay.classList.add('show'));
+    }
+
+    const hint = ONBOARDING_HINTS[onboardingStep];
+    const total = ONBOARDING_HINTS.length;
+    const isLast = onboardingStep === total - 1;
+    const isFirst = onboardingStep === 0;
+
+    const dots = ONBOARDING_HINTS.map((_, i) =>
+        `<div class="onboarding-dot ${i === onboardingStep ? 'active' : ''}"></div>`
+    ).join('');
+
+    overlay.innerHTML = `
+        <div class="onboarding-card">
+            <span class="onboarding-step-num">${onboardingStep + 1} / ${total}</span>
+            <div class="onboarding-icon">${hint.icon}</div>
+            <div class="onboarding-title">${hint.title}</div>
+            <div class="onboarding-text">${hint.text}</div>
+            <div class="onboarding-dots">${dots}</div>
+            <div class="onboarding-btns">
+                ${!isFirst ? '<button class="onboarding-btn secondary" onclick="prevOnboardingStep()">← Назад</button>' : ''}
+                ${isLast
+                    ? '<button class="onboarding-btn primary" onclick="finishOnboarding()">Зрозуміло!</button>'
+                    : '<button class="onboarding-btn primary" onclick="nextOnboardingStep()">Далі →</button>'
+                }
+            </div>
+            <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:12px;">
+                <button class="onboarding-btn danger" onclick="disableOnboarding()">Вимкнути підказки назавжди</button>
+            </div>
+        </div>
+    `;
+}
+
+function nextOnboardingStep() {
+    if (onboardingStep < ONBOARDING_HINTS.length - 1) {
+        onboardingStep++;
+        renderOnboardingStep();
+    }
+}
+
+function prevOnboardingStep() {
+    if (onboardingStep > 0) {
+        onboardingStep--;
+        renderOnboardingStep();
+    }
+}
+
+function finishOnboarding() {
+    localStorage.setItem('posylki_onboarding_seen', 'true');
+    closeOnboarding();
+}
+
+function disableOnboarding() {
+    localStorage.setItem('posylki_onboarding_disabled', 'true');
+    localStorage.setItem('posylki_onboarding_seen', 'true');
+    closeOnboarding();
+    showToast('Підказки вимкнено. Щоб увімкнути — очистіть localStorage.');
+}
+
+function closeOnboarding() {
+    const overlay = document.getElementById('onboardingOverlay');
+    if (overlay) {
+        overlay.classList.remove('show');
+        setTimeout(() => overlay.remove(), 300);
+    }
+}
+
+// Запуск онбордингу при завантаженні
+initOnboarding();
 </script>
 </body>
 </html>
