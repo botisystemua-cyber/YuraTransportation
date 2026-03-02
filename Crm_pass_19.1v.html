@@ -3181,6 +3181,10 @@ function handleDrop(e, targetId) {
 // Хелпер: знайти пасажира по uniqueKey
 function findPassengerByUid(uid) {
     if (!uid) return null;
+    // Шукаємо в routePassengers якщо uid починається з 'route_'
+    if (uid.startsWith('route_')) {
+        return routePassengers.find(p => p._uid === uid) || null;
+    }
     if (uid.startsWith('local_')) {
         const idx = parseInt(uid.replace('local_', ''));
         const data = getFilteredData();
@@ -4739,15 +4743,16 @@ function bulkArchive() {
     const allFoundPassengers = [];
     selectedIds.forEach(uid => {
         const p = findPassengerByUid(uid);
-        if (p) {
-            allFoundPassengers.push(p);
-            if (p._sheet && p._rowNum) {
-                const item = { sheet: p._sheet, rowNum: p._rowNum };
-                if (p._isRouteData) {
-                    routePassengers.push(item);
-                } else {
-                    mainPassengers.push(item);
-                }
+        if (!p) return;
+        allFoundPassengers.push(p);
+        const sheet = p._sheet || p.sheet;
+        const rowNum = p._rowNum || p.rowNum;
+        if (sheet && rowNum) {
+            const item = { sheet, rowNum };
+            if (p._isRouteData) {
+                routePassengers.push(item);
+            } else {
+                mainPassengers.push(item);
             }
         }
     });
@@ -5070,7 +5075,7 @@ function applyStatusToSelected(status, note) {
             count++;
 
             // Оновлюємо на сервері якщо є дані
-            if (p._sheet && p._rowNum) {
+            if (p._sheet || p.sheet) {
                 updatePassengerOnServer(p);
             }
         }
@@ -6490,17 +6495,22 @@ function savePassengerToServer(passenger) {
 
 // UPDATE - Оновити пасажира на сервері
 function updatePassengerOnServer(passenger) {
-    if (!passenger._sheet || !passenger._rowNum) {
+    const pSheet = passenger._sheet || passenger.sheet;
+    const pRowNum = passenger._rowNum || passenger.rowNum;
+    if (!pSheet || !pRowNum) {
         console.warn('❌ Немає _sheet або _rowNum:', passenger);
         showToast('⚠️ Синхронізуй спочатку');
         return;
     }
 
+    const isRoute = !!passenger._isRouteData;
+    const apiUrl = isRoute ? ROUTE_API_URL : API_URL;
+
     const payload = {
         action: 'updatePassenger',
         payload: {
-            sheet: passenger._sheet,
-            rowNum: passenger._rowNum,
+            sheet: pSheet,
+            rowNum: pRowNum,
             date: passenger.date,
             from: passenger.from,
             to: passenger.to,
@@ -6522,7 +6532,7 @@ function updatePassengerOnServer(passenger) {
         }
     };
 
-    fetch(API_URL, {
+    fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain' },
         body: JSON.stringify(payload)
