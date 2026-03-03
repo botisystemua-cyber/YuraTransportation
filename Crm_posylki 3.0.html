@@ -2154,6 +2154,18 @@
 <div class="toast" id="toast"></div>
 
 <script>
+// Google Maps API init callback
+window.mapsApiReady = false;
+window.mapsDirections = null;
+function initMapsAPI() {
+    window.mapsApiReady = true;
+    window.mapsDirections = new google.maps.DirectionsService();
+    console.log('✅ Google Maps API ready');
+}
+</script>
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCthPzhD6zDM9zR-re0R2ceohyhCRdawNc&callback=initMapsAPI"></script>
+
+<script>
 const ALL_COLUMNS = {
     ttn:{label:'Номер ТТН',group:'row1'},
     weight:{label:'Вага',group:'row1'},
@@ -5315,6 +5327,64 @@ function nearestNeighborOrder(items, startCoords) {
     return tour;
 }
 
+// Ліміт Google Directions API
+const OPTIMIZE_MAX_WAYPOINTS = 23;
+
+// Оптимізація через Google Directions API (реальні дороги)
+function optimizeDirectionsClient(geocodedItems, startCoords, endCoords) {
+    return new Promise((resolve, reject) => {
+        if (!window.mapsDirections) return reject(new Error('Maps API not ready'));
+
+        let settled = false;
+        const timeout = setTimeout(() => {
+            if (!settled) {
+                settled = true;
+                reject(new Error('Directions API timeout (30s)'));
+            }
+        }, 30000);
+
+        const waypoints = geocodedItems.map(p => ({
+            location: new google.maps.LatLng(p.coords.lat, p.coords.lng),
+            stopover: true
+        }));
+
+        const origin = new google.maps.LatLng(startCoords.lat, startCoords.lng);
+        let destination, routeWaypoints;
+
+        if (endCoords) {
+            destination = new google.maps.LatLng(endCoords.lat, endCoords.lng);
+            routeWaypoints = waypoints;
+        } else {
+            destination = waypoints[waypoints.length - 1].location;
+            routeWaypoints = waypoints.slice(0, -1);
+        }
+
+        window.mapsDirections.route({
+            origin: origin,
+            destination: destination,
+            waypoints: routeWaypoints,
+            optimizeWaypoints: true,
+            travelMode: google.maps.TravelMode.DRIVING
+        }, (response, status) => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timeout);
+            if (status === 'OK') {
+                const order = response.routes[0].waypoint_order;
+                if (endCoords) {
+                    resolve(order);
+                } else {
+                    const result = order.slice();
+                    result.push(geocodedItems.length - 1);
+                    resolve(result);
+                }
+            } else {
+                reject(new Error('Directions API: ' + status));
+            }
+        });
+    });
+}
+
 function generateMapLinksClient(orderedItems, startCoords, endCoords) {
     const links = [];
     const total = orderedItems.length;
@@ -5399,9 +5469,25 @@ async function startOptimization() {
             return showToast('❌ Жодну адресу не вдалось знайти');
         }
 
-        // Nearest Neighbor
-        const order = nearestNeighborOrder(items, startCoords);
-        const orderedItems = order.map(i => items[i]);
+        // Оптимізація маршруту: спочатку Google Directions API, потім fallback на Nearest Neighbor
+        let optimizedOrder = null;
+        let method = '';
+
+        if (items.length <= OPTIMIZE_MAX_WAYPOINTS && window.mapsDirections) {
+            try {
+                optimizedOrder = await optimizeDirectionsClient(items, startCoords, endCoords);
+                method = 'Google Directions API (реальні дороги)';
+            } catch(e) {
+                console.warn('Directions API fallback:', e.message);
+            }
+        }
+
+        if (!optimizedOrder || optimizedOrder.length === 0) {
+            optimizedOrder = nearestNeighborOrder(items, startCoords);
+            method = 'Nearest Neighbor (по прямій)';
+        }
+
+        const orderedItems = optimizedOrder.map(i => items[i]);
 
         // Generate map links
         const mapLinks = generateMapLinksClient(orderedItems, startCoords, endCoords);
@@ -5422,7 +5508,7 @@ async function startOptimization() {
                 geocoded: items.length,
                 optimized: orderedItems.length
             },
-            method: `Nearest Neighbor (~${totalDist.toFixed(0)} км)`,
+            method: method + ` (~${totalDist.toFixed(0)} км)`,
             mapLinks: mapLinks,
             notGeocodedList: notGeocoded,
             orderedPassengers: orderedItems
