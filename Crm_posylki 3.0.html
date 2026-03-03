@@ -3149,7 +3149,7 @@ function render() {
                     </div>
                     <!-- ROW 3: ID | PayStatus | Payment | Note -->
                     <div class="cg-row">
-                        ${cc('id','cg-main',`${idRaw ? `<span class="cg-val-id" onclick="event.stopPropagation()">${idDisplay}${cpBtn(idRaw)}${edBtn('id')}</span>` : `${ph('id')}${edBtn('id')}`}`)}
+                        ${cc('id','cg-main',`${idRaw ? `<span class="cg-val-id" onclick="event.stopPropagation()">${idDisplay}</span>${cpBtn(idRaw)}${edBtn('id')}` : `${ph('id')}${edBtn('id')}`}`)}
                         ${cc('payStatus','cg-sm',`${payStatusBadge||ph('payStatus')}${edBtn('payStatus')}`)}
                         ${cc('payment','cg-sm',`${paymentBadge||ph('payment')}${edBtn('payment')}`)}
                         ${cc('note','cg-sm',`${noteShort ? `<span class="cg-val-note">${noteShort}</span>` : ph('note')}${edBtn('note')}`)}
