@@ -643,7 +643,7 @@
         /* Номер в маршруті */
         .route-order-num { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; background: var(--primary); color: white; border-radius: 50%; font-size: 11px; font-weight: 700; }
         
-        .card-header { display: flex; align-items: stretch; padding: 0; cursor: pointer; border-radius: 8px 8px 0 0; overflow: hidden; }
+        .card-header { display: flex; align-items: stretch; padding: 0; cursor: pointer; border-radius: 8px 8px 0 0; overflow: visible; }
         .card-checkbox-wrap { display: flex; align-items: center; justify-content: center; padding: 10px 8px; background: var(--bg-main); border-right: 1px solid var(--border); flex-shrink: 0; }
         .card-checkbox { width: 18px; height: 18px; cursor: pointer; }
         
@@ -682,7 +682,7 @@
         .order-num { background: var(--purple); color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; flex-shrink: 0; }
         
         /* Right section - Авто вгорі, кнопка внизу */
-        .card-right-section { display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 6px 8px; border-left: 1px solid var(--border); flex-shrink: 0; min-width: 60px; max-width: 80px; overflow: hidden; position: relative; }
+        .card-right-section { display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 6px 8px; border-left: 1px solid var(--border); flex-shrink: 0; min-width: 60px; max-width: 80px; overflow: visible; position: relative; }
         .card-vehicle-badge { background: var(--info); color: white; padding: 4px 8px; border-radius: 4px; font-size: 9px; font-weight: 600; cursor: pointer; white-space: nowrap; text-align: center; }
         .card-vehicle-badge:hover { background: var(--primary); }
         .card-vehicle-badge.empty { background: var(--bg-main); color: var(--text-secondary); border: 1px dashed var(--text-secondary); }
@@ -756,11 +756,8 @@
         .btn-map { background: var(--info); color: white; }
         .btn-edit { background: var(--warning); color: white; }
         
-        /* Vehicle badge - тільки відображення */
-        .card-vehicle { }
-        .card-vehicle-badge { background: var(--info); color: white; padding: 4px 8px; border-radius: 4px; font-size: 9px; font-weight: 600; white-space: nowrap; text-align: center; cursor: default; }
-        .card-vehicle-badge.empty { background: var(--bg-main); color: var(--text-secondary); }
-        
+        .card-vehicle { position: relative; }
+
         /* DRAG HANDLE */
         .drag-handle { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; cursor: grab; color: var(--text-secondary); opacity: 0.4; padding: 12px 8px; background: var(--bg-main); border-right: 1px solid var(--border); }
         .drag-handle:hover { opacity: 1; background: #e8eaed; }
@@ -1440,12 +1437,15 @@
                 <span class="section-toggle" id="toggleVehicles">▼</span>
             </div>
             <div class="side-menu-collapsible" id="mobileVehiclesSection">
-                <div class="side-menu-item" style="border-color:var(--warning);color:var(--warning);" onclick="mobileSetVehicle('none')">
+                <div class="side-menu-item" id="mobileVehicleNone" style="border-color:var(--warning);color:var(--warning);" onclick="mobileSetVehicle('none')">
                     <span class="side-menu-item-left">❓ Без авто</span>
                     <span class="side-menu-item-count" id="mobileCountNoVehicle">0</span>
                 </div>
                 <div id="mobileVehiclesList"></div>
-                <div class="side-menu-item" onclick="openAddVehicleModal(); closeSideMenu();" style="color:var(--info);font-weight:600;border-top:1px solid var(--border);margin-top:8px;">
+                <div class="side-menu-item" onclick="resetVehicleFilter(); closeSideMenu();" style="color:var(--text-secondary);font-weight:600;border-top:1px solid var(--border);margin-top:6px;justify-content:center;background:var(--bg-main);">
+                    <span class="side-menu-item-left">🔄 Скинути фільтр авто</span>
+                </div>
+                <div class="side-menu-item" onclick="openAddVehicleModal(); closeSideMenu();" style="color:var(--info);font-weight:600;border-top:1px solid var(--border);margin-top:4px;">
                     <span class="side-menu-item-left">➕ Додати авто</span>
                 </div>
             </div>
@@ -1571,6 +1571,9 @@
                     <span class="item-count" id="pcCountNoVehicle">0</span>
                 </div>
                 <div id="pcVehiclesList"></div>
+                <div class="pc-sidebar-item" onclick="resetVehicleFilter()" style="background:var(--bg-main);color:var(--text-secondary);font-size:12px;justify-content:center;cursor:pointer;margin-top:6px;">
+                    <span><span class="item-icon">🔄</span>Скинути фільтр авто</span>
+                </div>
                 <div class="pc-sidebar-add" onclick="openAddVehicleModal()">➕ Додати авто</div>
             </div>
         </div>
@@ -2267,21 +2270,76 @@ document.addEventListener('DOMContentLoaded', () => {
     loadSettings();
     renderCalendars();
 
-    // Відновлюємо останній вибраний таб або "Нові ліди" за замовчуванням
-    if (lastTab === 'ua-eu' || lastTab === 'eu-ua' || lastTab === 'all') {
-        setDirection(lastTab);
-    } else {
-        showNewLeads();
-    }
+    // Завантажуємо дані одразу з таблиці (єдине джерело правди)
+    showLoader('Завантаження пасажирів...', '');
+    fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({ action: 'getAll' })
+    })
+    .then(r => r.json())
+    .then(data => {
+        hideLoader();
+        if (data.success && data.passengers) {
+            passengers = data.passengers.map(p => {
+                let normalizedStatus = (p.status || '').toString().toLowerCase().trim();
+                if (!normalizedStatus) normalizedStatus = 'new';
+                return {
+                    id: p.id || 'srv_' + p.rowNum,
+                    date: normalizeDate(p.date),
+                    name: p.name || '',
+                    phone: p.phone || '',
+                    phoneReg: p.phoneReg || '',
+                    from: p.from || '',
+                    to: p.to || '',
+                    seats: p.seats || 1,
+                    payment: p.payment || '',
+                    percent: p.percent || '',
+                    mark: p.mark || '',
+                    dispatcher: p.dispatcher || '',
+                    weight: p.weight || '',
+                    vehicle: p.vehicle || '',
+                    timing: p.timing || '',
+                    dateReg: normalizeDate(p.dateReg),
+                    note: p.note || '',
+                    direction: p.direction,
+                    status: normalizedStatus,
+                    statusDate: p.statusDate || '',
+                    isNew: p.isNew,
+                    isNew24h: p.isNew,
+                    _sheet: p.sheet,
+                    _rowNum: p.rowNum
+                };
+            });
+        }
 
-    updateVehiclesList();
-    updateAllCounts();
+        // Відновлюємо останній вибраний таб або "Нові ліди" за замовчуванням
+        if (lastTab === 'ua-eu' || lastTab === 'eu-ua' || lastTab === 'all') {
+            setDirection(lastTab);
+        } else {
+            showNewLeads();
+        }
 
-    // Синхронізуємо авто з сервера (підтягуємо нові аркуші)
-    syncVehiclesFromServer().then(() => updateAllCounts());
+        updateVehiclesList();
+        updateAllCounts();
+        updatePcVehiclesList();
 
-    // Перевірка перевищення місткості при завантаженні (з затримкою)
-    setTimeout(() => checkAllCapacityWarnings(), 2000);
+        // Синхронізуємо авто з сервера (підтягуємо нові аркуші)
+        syncVehiclesFromServer().then(() => updateAllCounts());
+
+        setTimeout(() => checkAllCapacityWarnings(), 500);
+    })
+    .catch(err => {
+        hideLoader();
+        console.error('Init load error:', err);
+        showToast('❌ Помилка завантаження');
+        // Показуємо порожній стан
+        if (lastTab === 'ua-eu' || lastTab === 'eu-ua' || lastTab === 'all') {
+            setDirection(lastTab);
+        } else {
+            showNewLeads();
+        }
+    });
 
     // Періодична перевірка кожні 5 хвилин
     setInterval(() => checkAllCapacityWarnings(), 300000);
@@ -2350,7 +2408,6 @@ function silentSync() {
                 const key = `${sp._sheet}_${sp._rowNum}`;
                 const local = localMap[key];
                 if (local) {
-                    if (!sp.vehicle && local.vehicle) sp.vehicle = local.vehicle;
                     if (!sp.status && local.status) sp.status = local.status;
                     if (local.prevStatus) sp.prevStatus = local.prevStatus;
                     if (local.archiveType) sp.archiveType = local.archiveType;
@@ -2401,8 +2458,8 @@ function playNotificationSound() {
     }
 }
 
-function loadSettings() { try { const s = JSON.parse(localStorage.getItem('yuraCrmV16')||'{}'); if(s.colSettings)colSettings=s.colSettings; if(s.passengers)passengers=s.passengers; if(s.lastTab)lastTab=s.lastTab; } catch(e){} }
-function saveSettings() { localStorage.setItem('yuraCrmV16', JSON.stringify({colSettings,passengers,lastTab})); }
+function loadSettings() { try { const s = JSON.parse(localStorage.getItem('yuraCrmV16')||'{}'); if(s.colSettings)colSettings=s.colSettings; if(s.lastTab)lastTab=s.lastTab; } catch(e){} }
+function saveSettings() { localStorage.setItem('yuraCrmV16', JSON.stringify({colSettings,lastTab})); }
 
 // SIDE MENU
 function openSideMenu() { document.getElementById('sideMenu').classList.add('open'); document.getElementById('sideMenuOverlay').classList.add('show'); renderMobileCalendar(); updateMobileVehicles(); }
@@ -2581,20 +2638,38 @@ function renderCalendarTo(containerId) {
     const months = ['Січень','Лютий','Березень','Квітень','Травень','Червень','Липень','Серпень','Вересень','Жовтень','Листопад','Грудень'];
     const today = new Date().toISOString().split('T')[0];
     
-    // Рахуємо ліди та місця на дату (з урахуванням напрямку)
+    // Рахуємо ліди та місця на дату (з урахуванням напрямку та авто)
     const seatCounts = {};
     const leadCounts = {};
     const dir = filters.direction;
-    const filteredPassengers = passengers.filter(p => p.status !== 'archived').filter(p => !dir || dir === 'all' || p.direction === dir);
+    let filteredPassengers = passengers.filter(p => p.status !== 'archived').filter(p => !dir || dir === 'all' || p.direction === dir);
+
+    // Фільтр по авто для календаря
+    if (filters.vehicle && filters.vehicle !== '') {
+        if (filters.vehicle === 'none') {
+            filteredPassengers = filteredPassengers.filter(p => !p.vehicle);
+        } else {
+            const fv = vehicles.find(x => x.id === filters.vehicle);
+            const fvName = fv ? fv.name : filters.vehicle;
+            filteredPassengers = filteredPassengers.filter(p => p.vehicle === filters.vehicle || p.vehicle === fvName);
+        }
+    }
+
     filteredPassengers.forEach(p => {
         if(p.date) {
             leadCounts[p.date] = (leadCounts[p.date]||0) + 1;
             seatCounts[p.date] = (seatCounts[p.date]||0) + (parseInt(p.seats) || 1);
         }
     });
-    
-    // Загальна місткість всіх авто
-    const totalCapacity = vehicles.reduce((sum, v) => sum + (parseInt(v.seats) || 8), 0);
+
+    // Місткість: якщо обрано конкретне авто — тільки його, інакше всіх
+    let totalCapacity;
+    if (filters.vehicle && filters.vehicle !== '' && filters.vehicle !== 'none') {
+        const fv = vehicles.find(x => x.id === filters.vehicle);
+        totalCapacity = fv ? (parseInt(fv.seats) || 8) : 0;
+    } else {
+        totalCapacity = vehicles.reduce((sum, v) => sum + (parseInt(v.seats) || 8), 0);
+    }
     
     const firstDay = new Date(year, month, 1), lastDay = new Date(year, month + 1, 0);
     const startDay = (firstDay.getDay() + 6) % 7, daysInMonth = lastDay.getDate();
@@ -2804,14 +2879,36 @@ function updateMobileVehicles() {
     if (!el) return;
     el.innerHTML = vehicles.map(v => {
         const _cl = ['archived','refused','transferred','deleted'];
-        const count = passengers.filter(p => p.vehicle === v.id && !_cl.includes(p.status)).length;
+        const count = passengers.filter(p => (p.vehicle === v.id || p.vehicle === v.name) && !_cl.includes(p.status)).length;
         const active = filters.vehicle === v.id;
         return `<div class="side-menu-item ${active?'active':''}" onclick="mobileSetVehicle('${v.id}')"><span class="side-menu-item-left">🚐 ${v.name}</span><span class="side-menu-item-count">${count}</span></div>`;
     }).join('');
+
+    // Оновлюємо active стан кнопки "Без авто" в мобільному
+    const mobileNone = document.getElementById('mobileVehicleNone');
+    if (mobileNone) {
+        if (filters.vehicle === 'none') {
+            mobileNone.classList.add('active');
+        } else {
+            mobileNone.classList.remove('active');
+        }
+    }
 }
 
 function mobileFilterAll() { filters.date=''; filters.vehicle=''; filters.showArchive=false; filters.statusFilter=''; closeSideMenu(); render(); updateAllCounts(); }
-function mobileSetVehicle(id) { filters.vehicle = id; filters.statusFilter = ''; closeSideMenu(); render(); }
+function mobileSetVehicle(id) {
+    // Toggle: якщо той самий фільтр — скидаємо
+    if (filters.vehicle === id) {
+        filters.vehicle = '';
+    } else {
+        filters.vehicle = id;
+    }
+    filters.statusFilter = '';
+    closeSideMenu();
+    render();
+    renderCalendars();
+    updateMobileVehicles();
+}
 
 // DATA
 function getFieldValue(p, key) {
@@ -2872,7 +2969,11 @@ function getFilteredData() {
     
     if (!filters.showNewOnly && filters.direction && filters.direction !== 'all') data = data.filter(p => p.direction === filters.direction);
     if (filters.statusFilter) data = data.filter(p => p.status === filters.statusFilter);
-    if (filters.routeVehicle) data = data.filter(p => p.vehicle === filters.routeVehicle);
+    if (filters.routeVehicle) {
+        const rv = vehicles.find(x => x.id === filters.routeVehicle);
+        const rvName = rv ? rv.name : filters.routeVehicle;
+        data = data.filter(p => p.vehicle === filters.routeVehicle || p.vehicle === rvName);
+    }
     if (filters.search && filters.search.trim()) { 
         const s = filters.search.trim().toLowerCase();
         data = data.filter(p => {
@@ -2979,10 +3080,14 @@ function render() {
         const idDisplay = hasSearch ? highlightSearch(p.id || '—') : (p.id || '—');
         const nameDisplay = hasSearch ? highlightSearch(p.name || '—') : (p.name || '—');
         
-        // Vehicle badge - просто відображення, без кліку
-        const vehicleBadge = veh 
-            ? `<span class="card-vehicle-badge">${veh.name}</span>` 
-            : `<span class="card-vehicle-badge empty">—</span>`;
+        // Vehicle badge - з dropdown для призначення авто
+        const vehDropdownItems = vehicles.map(vi =>
+            `<div class="vehicle-dropdown-item ${p.vehicle === vi.name || p.vehicle === vi.id ? 'active' : ''}" onclick="event.stopPropagation();quickAssignVehicle('${uniqueKey}','${vi.id}')">${vi.name}</div>`
+        ).join('');
+        const vehicleBadge = veh
+            ? `<span class="card-vehicle-badge" onclick="event.stopPropagation();toggleCardVehicle('${uniqueKey}')">${veh.name}</span>`
+            : `<span class="card-vehicle-badge empty" onclick="event.stopPropagation();toggleCardVehicle('${uniqueKey}')">—</span>`;
+        const vehicleDropdown = `<div class="vehicle-dropdown" id="vd_${uniqueKey}">${vehDropdownItems}<div class="vehicle-dropdown-item" onclick="event.stopPropagation();quickAssignVehicle('${uniqueKey}','')" style="color:var(--warning);">❌ Зняти авто</div></div>`;
         
         // Details blocks з підсвічуванням
         const detailsHtml = detailCols.map(k => {
@@ -3030,6 +3135,7 @@ function render() {
                 <div class="card-right-section">
                     <div class="card-vehicle">
                         ${vehicleBadge}
+                        ${vehicleDropdown}
                     </div>
                     <button class="card-actions-toggle ${aOpen ? 'open' : ''}" onclick="event.stopPropagation();toggleActions('${uniqueKey}')">▼</button>
                 </div>
@@ -3075,6 +3181,10 @@ function handleDrop(e, targetId) {
 // Хелпер: знайти пасажира по uniqueKey
 function findPassengerByUid(uid) {
     if (!uid) return null;
+    // Шукаємо в routePassengers якщо uid починається з 'route_'
+    if (uid.startsWith('route_')) {
+        return routePassengers.find(p => p._uid === uid) || null;
+    }
     if (uid.startsWith('local_')) {
         const idx = parseInt(uid.replace('local_', ''));
         const data = getFilteredData();
@@ -3100,6 +3210,8 @@ function toggleDetails(uid) {
         document.querySelector(`[data-uid="${openActionsId}"] .card-actions-toggle`)?.classList.remove('open');
         openActionsId = null;
     }
+    // Закриваємо vehicle dropdown
+    document.querySelectorAll('.vehicle-dropdown').forEach(d => d.classList.remove('show'));
     if (openDetailsId && openDetailsId !== uid) document.querySelector(`[data-uid="${openDetailsId}"] .card-details`)?.classList.remove('show');
     openDetailsId = openDetailsId === uid ? null : uid;
     document.querySelector(`[data-uid="${uid}"] .card-details`)?.classList.toggle('show', openDetailsId === uid);
@@ -3117,9 +3229,44 @@ function toggleActions(uid) {
         document.querySelector(`[data-uid="${openDetailsId}"] .card-details`)?.classList.remove('show');
         openDetailsId = null;
     }
+    // Закриваємо vehicle dropdown
+    document.querySelectorAll('.vehicle-dropdown').forEach(d => d.classList.remove('show'));
     openActionsId = openActionsId === uid ? null : uid;
     document.querySelector(`[data-uid="${uid}"] .card-actions`)?.classList.toggle('show', openActionsId === uid);
     document.querySelector(`[data-uid="${uid}"] .card-actions-toggle`)?.classList.toggle('open', openActionsId === uid);
+}
+
+// Відкрити/закрити dropdown авто на картці
+function toggleCardVehicle(uid) {
+    // Закриваємо всі інші vehicle dropdowns
+    document.querySelectorAll('.vehicle-dropdown').forEach(d => {
+        if (d.id !== 'vd_' + uid) d.classList.remove('show');
+    });
+    const dd = document.getElementById('vd_' + uid);
+    if (dd) dd.classList.toggle('show');
+}
+
+// Швидке призначення авто з dropdown на картці
+function quickAssignVehicle(uid, vehicleId) {
+    const p = findPassengerByUid(uid);
+    if (!p) return;
+    if (vehicleId) {
+        const veh = vehicles.find(v => v.id === vehicleId);
+        if (!veh) return showToast('❌ Авто не знайдено');
+        p.vehicle = veh.name;
+        if (p.status === 'new') p.status = 'work';
+        showToast(`🚐 ${veh.name}`);
+    } else {
+        p.vehicle = '';
+        showToast('❌ Авто знято');
+    }
+    updatePassengerOnServer(p);
+    saveSettings();
+    document.querySelectorAll('.vehicle-dropdown').forEach(d => d.classList.remove('show'));
+    render();
+    updateAllCounts();
+    updateVehiclesList();
+    updatePcVehiclesList();
 }
 
 function toggleSelect(uid) { 
@@ -3330,7 +3477,7 @@ function updateAllCounts() {
 function updatePcVehiclesList() {
     const container = document.getElementById('pcVehiclesList');
     if (!container) return;
-    
+
     container.innerHTML = vehicles.map(v => {
         const _cl2 = ['archived','refused','transferred','deleted'];
         const count = passengers.filter(p => (p.vehicle === v.id || p.vehicle === v.name) && !_cl2.includes(p.status)).length;
@@ -3343,6 +3490,12 @@ function updatePcVehiclesList() {
             <button onclick="event.stopPropagation();deleteVehicle('${v.id}')" style="background:none;border:none;cursor:pointer;font-size:12px;opacity:0.5;padding:4px;" title="Видалити авто">🗑️</button>
         </div>`;
     }).join('');
+
+    // Оновлюємо active стан кнопки "Без авто"
+    const pcNone = document.getElementById('pcVehicleNone');
+    if (pcNone) {
+        pcNone.classList.toggle('active', filters.vehicle === 'none');
+    }
 }
 
 // ROUTES LIST - оновлюємо з реальними даними з таблиці
@@ -3789,8 +3942,8 @@ function renderRoutePassengers() {
         
         const veh = vehicles.find(v => v.id === p._vehicleId || v.routeSheet === p._vehicleName || v.name === p._vehicleName);
         const vehicleBadge = veh
-            ? `<span class="card-vehicle-badge">${veh.name}</span>`
-            : `<span class="card-vehicle-badge">${p._vehicleDisplayName || p._vehicleName || '?'}</span>`;
+            ? `<span class="card-vehicle-badge" style="cursor:default;">${veh.name}</span>`
+            : `<span class="card-vehicle-badge" style="cursor:default;">${p._vehicleDisplayName || p._vehicleName || '?'}</span>`;
         
         const isSelected = selectedIds.has(p._uid);
         
@@ -4091,17 +4244,34 @@ function updateFilterButtons() {
 
 function toggleDropdown(id) { document.querySelectorAll('.dropdown-menu').forEach(d => { if(d.id !== id) d.classList.remove('show'); }); document.getElementById(id).classList.toggle('show'); if(id === 'dateDropdown') renderCalendarTo('desktopCalendar'); }
 function resetFilters() { filters.date = ''; filters.vehicle = ''; filters.showArchive = false; filters.statusFilter = ''; filters.routeVehicle = ''; routePassengers = []; routeStats = { total: 0, pending: 0, inProgress: 0, completed: 0, cancelled: 0, archived: 0 }; currentRouteVehicle = null; routeStatusFilter = 'all'; render(); renderCalendars(); updateVehiclesList(); updateAllCounts(); updatePcVehiclesList(); }
-function setVehicleFilter(id) { 
-    filters.vehicle = id; 
-    filters.statusFilter = ''; 
+function setVehicleFilter(id) {
+    // Toggle: якщо той самий фільтр — скидаємо
+    if (filters.vehicle === id) {
+        filters.vehicle = '';
+    } else {
+        filters.vehicle = id;
+    }
+    filters.statusFilter = '';
     filters.routeVehicle = '';
     routePassengers = [];
     routeStats = { total: 0, pending: 0, inProgress: 0, completed: 0, cancelled: 0, archived: 0 };
     currentRouteVehicle = null;
     routeStatusFilter = 'all';
-    document.getElementById('vehicleDropdown')?.classList.remove('show'); 
-    render(); 
+    document.getElementById('vehicleDropdown')?.classList.remove('show');
+    render();
+    renderCalendars();
     updatePcVehiclesList();
+    updateVehiclesList();
+}
+
+// Скинути фільтр авто (кнопка під меню авто)
+function resetVehicleFilter() {
+    filters.vehicle = '';
+    render();
+    renderCalendars();
+    updatePcVehiclesList();
+    updateVehiclesList();
+    updateMobileVehicles();
 }
 function filterByStatus(status) { filters.statusFilter = filters.statusFilter === status ? '' : status; filters.showArchive = false; filters.routeVehicle = ''; routePassengers = []; routeStats = { total: 0, pending: 0, inProgress: 0, completed: 0, cancelled: 0, archived: 0 }; currentRouteVehicle = null; routeStatusFilter = 'all'; render(); updateFilterButtons(); }
 function toggleArchiveFilter() { const entering = !filters.showArchive; filters.showArchive = entering; filters.statusFilter = ''; filters.routeVehicle = ''; filters.specialStatus = ''; if (entering) { filters.date = ''; filters.showNewOnly = false; filters.search = ''; filters.statusDateFrom = ''; filters.statusDateTo = ''; const si = document.getElementById('searchInput'); if (si) si.value = ''; } routePassengers = []; routeStats = { total: 0, pending: 0, inProgress: 0, completed: 0, cancelled: 0, archived: 0 }; currentRouteVehicle = null; routeStatusFilter = 'all'; render(); updateAllCounts(); updateFilterButtons(); renderCalendars(); }
@@ -4285,9 +4455,11 @@ let selectedBulkVehicleId = null;
 function openBulkVehicleModal() {
     selectedBulkVehicleId = null;
     document.getElementById('bulkVehicleCount').textContent = selectedIds.size;
-    document.getElementById('bulkVehicleList').innerHTML = vehicles.map(v =>
+    const noVehicleItem = `<div class="vehicle-select-item" id="vsi_none" onclick="selectBulkVehicle('none')" style="cursor:pointer;border:2px solid transparent;transition:all 0.2s;background:rgba(156,163,175,0.1);"><span class="vehicle-select-name" style="color:#6b7280;">❓ Без авто</span><span class="vehicle-select-info" style="color:#9ca3af;">Зняти призначення</span></div>`;
+    const vehicleItems = vehicles.map(v =>
         `<div class="vehicle-select-item" id="vsi_${v.id}" onclick="selectBulkVehicle('${v.id}')" style="cursor:pointer;border:2px solid transparent;transition:all 0.2s;"><span class="vehicle-select-name">🚐 ${v.name}</span><span class="vehicle-select-info">${v.seats} місць</span></div>`
     ).join('');
+    document.getElementById('bulkVehicleList').innerHTML = noVehicleItem + vehicleItems;
     const confirmBtn = document.getElementById('bulkVehicleConfirmBtn');
     confirmBtn.disabled = true;
     confirmBtn.style.opacity = '0.5';
@@ -4303,8 +4475,9 @@ function selectBulkVehicle(vehicleId) {
     });
     const selectedEl = document.getElementById('vsi_' + vehicleId);
     if (selectedEl) {
-        selectedEl.style.borderColor = 'var(--info)';
-        selectedEl.style.background = '#f0f7ff';
+        const isNone = vehicleId === 'none';
+        selectedEl.style.borderColor = isNone ? '#9ca3af' : 'var(--info)';
+        selectedEl.style.background = isNone ? 'rgba(156,163,175,0.15)' : '#f0f7ff';
     }
     // Активуємо кнопку підтвердження
     const confirmBtn = document.getElementById('bulkVehicleConfirmBtn');
@@ -4314,6 +4487,10 @@ function selectBulkVehicle(vehicleId) {
 
 function confirmBulkAssignVehicle() {
     if (!selectedBulkVehicleId) return showToast('⚠️ Оберіть авто');
+    if (selectedBulkVehicleId === 'none') {
+        bulkRemoveVehicle();
+        return;
+    }
     bulkAssignVehicle(selectedBulkVehicleId);
 }
 
@@ -4339,6 +4516,27 @@ function bulkAssignVehicle(vehicleId) {
     updateAllCounts();
     updateVehiclesList();
     showToast(`🚐 ${veh.name} призначено: ${count}`);
+}
+
+function bulkRemoveVehicle() {
+    let count = 0;
+    selectedIds.forEach(uid => {
+        const p = findPassengerByUid(uid);
+        if (p && !['archived','refused','transferred','deleted'].includes(p.status)) {
+            p.vehicle = '';
+            updatePassengerOnServer(p);
+            count++;
+        }
+    });
+    if (!count) return showToast('⚠️ Немає кого змінити');
+    saveSettings();
+    closeModal('bulkVehicleModal');
+    render();
+    updateBulkBar();
+    updateAllCounts();
+    updateVehiclesList();
+    updatePcVehiclesList();
+    showToast(`❓ Без авто: ${count}`);
 }
 
 function bulkMoveToRoute() {
@@ -4545,15 +4743,16 @@ function bulkArchive() {
     const allFoundPassengers = [];
     selectedIds.forEach(uid => {
         const p = findPassengerByUid(uid);
-        if (p) {
-            allFoundPassengers.push(p);
-            if (p._sheet && p._rowNum) {
-                const item = { sheet: p._sheet, rowNum: p._rowNum };
-                if (p._isRouteData) {
-                    routePassengers.push(item);
-                } else {
-                    mainPassengers.push(item);
-                }
+        if (!p) return;
+        allFoundPassengers.push(p);
+        const sheet = p._sheet || p.sheet;
+        const rowNum = p._rowNum || p.rowNum;
+        if (sheet && rowNum) {
+            const item = { sheet, rowNum };
+            if (p._isRouteData) {
+                routePassengers.push(item);
+            } else {
+                mainPassengers.push(item);
             }
         }
     });
@@ -4876,7 +5075,7 @@ function applyStatusToSelected(status, note) {
             count++;
 
             // Оновлюємо на сервері якщо є дані
-            if (p._sheet && p._rowNum) {
+            if (p._sheet || p.sheet) {
                 updatePassengerOnServer(p);
             }
         }
@@ -5886,11 +6085,23 @@ function savePassenger() {
         // Знаходимо індекс в масиві
         const i = passengers.findIndex(p => p._sheet === existingP._sheet && p._rowNum === existingP._rowNum);
         if (i !== -1) {
-            d._sheet = passengers[i]._sheet;
-            d._rowNum = passengers[i]._rowNum;
-            passengers[i] = {...passengers[i], ...d};
-            // Оновлюємо на сервері
-            updatePassengerOnServer(passengers[i]);
+            const directionChanged = existingP.direction && d.direction !== existingP.direction;
+
+            if (directionChanged && existingP._sheet && existingP._rowNum) {
+                // Напрямок змінився — переміщуємо на інший аркуш
+                d.status = existingP.status || 'new';
+                d.order = existingP.order || passengers.length * 10;
+                passengers.splice(i, 1);
+                passengers.unshift(d);
+                movePassengerDirection(existingP, d);
+            } else {
+                // Напрямок той самий — оновлюємо на місці
+                d._sheet = passengers[i]._sheet;
+                d._rowNum = passengers[i]._rowNum;
+                passengers[i] = {...passengers[i], ...d};
+                // Оновлюємо на сервері
+                updatePassengerOnServer(passengers[i]);
+            }
         }
     } else {
         passengers.unshift(d);
@@ -6198,7 +6409,6 @@ function syncWithSheets() {
             serverPassengers.forEach(sp => {
                 const local = localMapSync[`${sp._sheet}_${sp._rowNum}`];
                 if (local) {
-                    if (!sp.vehicle && local.vehicle) sp.vehicle = local.vehicle;
                     if (local.prevStatus) sp.prevStatus = local.prevStatus;
                     if (local.archiveType) sp.archiveType = local.archiveType;
                 }
@@ -6285,17 +6495,22 @@ function savePassengerToServer(passenger) {
 
 // UPDATE - Оновити пасажира на сервері
 function updatePassengerOnServer(passenger) {
-    if (!passenger._sheet || !passenger._rowNum) {
+    const pSheet = passenger._sheet || passenger.sheet;
+    const pRowNum = passenger._rowNum || passenger.rowNum;
+    if (!pSheet || !pRowNum) {
         console.warn('❌ Немає _sheet або _rowNum:', passenger);
         showToast('⚠️ Синхронізуй спочатку');
         return;
     }
 
+    const isRoute = !!passenger._isRouteData;
+    const apiUrl = isRoute ? ROUTE_API_URL : API_URL;
+
     const payload = {
         action: 'updatePassenger',
         payload: {
-            sheet: passenger._sheet,
-            rowNum: passenger._rowNum,
+            sheet: pSheet,
+            rowNum: pRowNum,
             date: passenger.date,
             from: passenger.from,
             to: passenger.to,
@@ -6317,7 +6532,7 @@ function updatePassengerOnServer(passenger) {
         }
     };
 
-    fetch(API_URL, {
+    fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain' },
         body: JSON.stringify(payload)
@@ -6333,6 +6548,94 @@ function updatePassengerOnServer(passenger) {
     .catch(err => {
         console.error('❌ Fetch error:', err);
         showToast('❌ Помилка зв\'язку');
+    });
+}
+
+// MOVE DIRECTION — Переміщення ліда між аркушами при зміні напрямку
+function movePassengerDirection(oldPassenger, newData) {
+    showLoader('Зміна напрямку...', '');
+
+    const addPayload = {
+        action: 'addPassenger',
+        payload: {
+            direction: newData.direction,
+            initials: getUserInitials(),
+            date: newData.date,
+            from: newData.from,
+            to: newData.to,
+            seats: newData.seats,
+            name: newData.name,
+            phone: newData.phone,
+            phoneReg: newData.phoneReg,
+            mark: newData.mark,
+            payment: newData.payment,
+            percent: newData.percent,
+            dispatcher: newData.dispatcher || 'CRM',
+            weight: newData.weight,
+            vehicle: newData.vehicle,
+            timing: newData.timing,
+            dateReg: newData.dateReg,
+            note: newData.note,
+            force: true
+        }
+    };
+
+    fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify(addPayload)
+    })
+    .then(r => r.json())
+    .then(addResult => {
+        if (!addResult.success) throw new Error(addResult.error || 'Помилка додавання');
+
+        // Оновлюємо локальні дані з новим sheet/rowNum
+        const p = passengers.find(x => x.id === newData.id);
+        if (p) {
+            p.id = addResult.id;
+            p._sheet = addResult.sheet;
+            p._rowNum = addResult.rowNum;
+        }
+
+        // Якщо статус не 'new' — оновлюємо статус на новому аркуші
+        const oldStatus = oldPassenger.status || 'new';
+        const statusPromise = oldStatus !== 'new'
+            ? fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain' },
+                body: JSON.stringify({
+                    action: 'updateField',
+                    payload: { sheet: addResult.sheet, rowNum: addResult.rowNum, field: 'status', value: oldStatus }
+                })
+              }).then(r => r.json())
+            : Promise.resolve({ success: true });
+
+        return statusPromise.then(() => addResult);
+    })
+    .then(addResult => {
+        // Видаляємо старий запис з попереднього аркуша
+        return fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify({
+                action: 'deletePassengersPermanently',
+                payload: { passengers: [{ sheet: oldPassenger._sheet, rowNum: oldPassenger._rowNum }] }
+            })
+        }).then(r => r.json());
+    })
+    .then(deleteResult => {
+        hideLoader();
+        saveSettings();
+        render();
+        updateAllCounts();
+        renderCalendars();
+        showToast('✅ Напрямок змінено');
+        checkAllCapacityWarnings();
+    })
+    .catch(err => {
+        hideLoader();
+        console.error('Move direction error:', err);
+        showToast('⚠️ Помилка зміни напрямку');
     });
 }
 

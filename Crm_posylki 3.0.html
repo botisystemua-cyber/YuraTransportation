@@ -668,8 +668,10 @@
 
         /* Right panel - vehicle + actions */
         .card-right-panel { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 6px; border-left: 1px solid var(--border); flex-shrink: 0; min-width: 40px; }
-        .card-vehicle-badge { background: var(--info); color: white; padding: 4px 8px; border-radius: 4px; font-size: 9px; font-weight: 600; white-space: nowrap; text-align: center; cursor: default; }
+        .card-vehicle-badge { background: var(--info); color: white; padding: 4px 8px; border-radius: 4px; font-size: 9px; font-weight: 600; white-space: nowrap; text-align: center; cursor: pointer; }
+        .card-vehicle-badge:hover { background: var(--primary); }
         .card-vehicle-badge.empty { background: var(--bg-main); color: var(--text-secondary); border: 1px dashed var(--text-secondary); }
+        .card-vehicle-badge.empty:hover { background: var(--info); color: white; border-style: solid; }
         .card-actions-toggle { width: 28px; height: 28px; border: none; border-radius: 6px; background: var(--bg-main); cursor: pointer; font-size: 10px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; }
         .card-actions-toggle:hover { background: var(--primary); color: white; }
         .card-actions-toggle.open { background: var(--primary); color: white; transform: rotate(180deg); }
@@ -720,7 +722,7 @@
         .card-details .details-close-btn:hover { background: #fee2e2; color: #dc2626; border-color: #dc2626; }
 
         /* Actions panel */
-        .card-actions { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; max-height: 0; overflow: hidden; padding: 0 12px; background: white; transition: max-height 0.25s ease, padding 0.25s ease; }
+        .card-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; max-height: 0; overflow: hidden; padding: 0 12px; background: white; transition: max-height 0.25s ease, padding 0.25s ease; }
         .card-actions.show { max-height: 200px; padding: 10px 12px; border-top: 1px solid var(--border); }
         .btn-card-action { padding: 10px 6px; border: none; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 4px; }
         .btn-card-action.btn-delete { background: #fee2e2; color: #dc2626; }
@@ -809,11 +811,8 @@
         .btn-map { background: var(--info); color: white; }
         .btn-edit { background: var(--warning); color: white; }
         
-        /* Vehicle badge - тільки відображення */
-        .card-vehicle { }
-        .card-vehicle-badge { background: var(--info); color: white; padding: 4px 8px; border-radius: 4px; font-size: 9px; font-weight: 600; white-space: nowrap; text-align: center; cursor: default; }
-        .card-vehicle-badge.empty { background: var(--bg-main); color: var(--text-secondary); }
-        
+        .card-vehicle { position: relative; }
+
         /* DRAG HANDLE */
         .drag-handle { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; cursor: grab; color: var(--text-secondary); opacity: 0.4; padding: 12px 6px; background: var(--bg-main); border-right: 1px solid var(--border); }
         .drag-handle:hover { opacity: 1; background: #e8eaed; }
@@ -1259,9 +1258,44 @@
             .card-route { font-size: 12px; }
             .card-price { font-size: 15px; }
             .details-grid { grid-template-columns: repeat(4, 1fr); }
-            .card-actions.show { grid-template-columns: repeat(5, 1fr); }
+            .card-actions.show { grid-template-columns: repeat(6, 1fr); }
             .workflow-bar { display: none; }
         }
+
+        /* ONBOARDING HINTS */
+        .onboarding-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.55); z-index: 9999;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; transition: opacity 0.3s ease;
+        }
+        .onboarding-overlay.show { opacity: 1; }
+        .onboarding-card {
+            background: white; border-radius: 16px; padding: 28px 24px;
+            max-width: 420px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center; position: relative;
+            transform: translateY(20px); transition: transform 0.3s ease;
+        }
+        .onboarding-overlay.show .onboarding-card { transform: translateY(0); }
+        .onboarding-icon { font-size: 48px; margin-bottom: 12px; }
+        .onboarding-title { font-size: 16px; font-weight: 800; color: var(--primary); margin-bottom: 8px; }
+        .onboarding-text { font-size: 13px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 20px; }
+        .onboarding-text strong { color: var(--text-primary); }
+        .onboarding-dots { display: flex; justify-content: center; gap: 8px; margin-bottom: 20px; }
+        .onboarding-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--border); transition: all 0.2s; }
+        .onboarding-dot.active { background: var(--primary); transform: scale(1.2); }
+        .onboarding-btns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+        .onboarding-btn {
+            padding: 10px 20px; border: none; border-radius: 8px; font-size: 13px;
+            font-weight: 700; cursor: pointer; font-family: inherit; transition: all 0.2s;
+        }
+        .onboarding-btn.primary { background: var(--primary); color: white; }
+        .onboarding-btn.primary:hover { background: var(--primary-dark); }
+        .onboarding-btn.secondary { background: var(--bg-main); color: var(--text-secondary); }
+        .onboarding-btn.secondary:hover { background: var(--border); }
+        .onboarding-btn.danger { background: #fee2e2; color: #dc2626; font-size: 11px; }
+        .onboarding-btn.danger:hover { background: #dc2626; color: white; }
+        .onboarding-step-num { position: absolute; top: 12px; right: 16px; font-size: 11px; color: var(--text-secondary); font-weight: 600; }
     </style>
 </head>
 <body>
@@ -1274,6 +1308,12 @@
         <button class="side-menu-close" onclick="closeSideMenu()">×</button>
     </div>
     <div class="side-menu-content">
+        <!-- Скинути всі фільтри -->
+        <div style="padding:8px 12px 4px;">
+            <div class="side-menu-item" onclick="resetFilters(); closeSideMenu();" style="background:linear-gradient(135deg,var(--primary),var(--info));color:white;font-weight:700;justify-content:center;cursor:pointer;border-radius:10px;padding:12px;font-size:14px;border:none;">
+                <span class="side-menu-item-left" style="color:white;justify-content:center;">🔄 Скинути всі фільтри</span>
+            </div>
+        </div>
         <!-- Напрямок -->
         <div class="side-menu-section">
             <div class="side-menu-section-header" onclick="toggleMobileSection('direction')">
@@ -1325,12 +1365,12 @@
                 <span class="section-toggle" id="toggleVehicles">▼</span>
             </div>
             <div class="side-menu-collapsible" id="mobileVehiclesSection">
-                <div class="side-menu-item" style="border-color:var(--warning);color:var(--warning);" onclick="mobileSetVehicle('none')">
+                <div class="side-menu-item" id="mobileVehicleNone" style="border-color:var(--warning);color:var(--warning);" onclick="mobileSetVehicle('none')">
                     <span class="side-menu-item-left">❓ Без авто</span>
                     <span class="side-menu-item-count" id="mobileCountNoVehicle">0</span>
                 </div>
                 <div id="mobileVehiclesList"></div>
-                <div class="side-menu-item" onclick="openAddVehicleModal(); closeSideMenu();" style="color:var(--info);font-weight:600;border-top:1px solid var(--border);margin-top:8px;">
+                <div class="side-menu-item" onclick="openAddVehicleModal(); closeSideMenu();" style="color:var(--info);font-weight:600;border-top:1px solid var(--border);margin-top:4px;">
                     <span class="side-menu-item-left">➕ Додати авто</span>
                 </div>
             </div>
@@ -1400,6 +1440,12 @@
 <div class="main-layout">
     <!-- PC SIDEBAR -->
     <aside class="pc-sidebar" id="pcSidebar">
+        <!-- Скинути всі фільтри -->
+        <div style="padding:8px 10px;">
+            <div class="pc-sidebar-item" onclick="resetFilters()" style="background:linear-gradient(135deg,var(--primary),var(--info));color:white;font-weight:700;justify-content:center;cursor:pointer;border-radius:10px;padding:10px;font-size:13px;">
+                <span>🔄 Скинути всі фільтри</span>
+            </div>
+        </div>
         <!-- Напрямок -->
         <div class="pc-sidebar-section">
             <div class="pc-sidebar-header" onclick="togglePcSection('direction')">
@@ -2156,24 +2202,74 @@ let undoHistory = []; // Історія для відміни дій
 document.addEventListener('DOMContentLoaded', () => {
     loadSettings();
     renderCalendars();
-    
+
     // За замовчуванням показуємо нові ліди
     filters.showNewOnly = true;
     document.getElementById('pcNewLeads')?.classList.add('active');
     document.getElementById('mobileNewLeads')?.classList.add('active');
     const navLabel = document.getElementById('navPackagesLabel');
     if (navLabel) navLabel.textContent = '🆕 Нові';
-    
-    render();
-    updateVehiclesList();
-    updateAllCounts();
-    
-    // Перевірка перевищення місткості при завантаженні (з затримкою)
-    setTimeout(() => checkAllCapacityWarnings(), 2000);
-    
+
+    // Завантажуємо дані одразу з таблиці (єдине джерело правди)
+    showLoader('Завантаження посилок...', '');
+    fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({ action: 'getAll' })
+    })
+    .then(r => r.json())
+    .then(data => {
+        hideLoader();
+        if (data.success && data.packages) {
+            packages = data.packages.map(p => {
+                let normalizedStatus = (p.status || '').toString().toLowerCase().trim();
+                return {
+                    id: p.id || 'srv_' + p.rowNum,
+                    name: p.name || '',
+                    phone: p.phone || '',
+                    phoneReg: p.phoneReg || '',
+                    address: p.address || '',
+                    vo: p.vo || '',
+                    number: p.number || '',
+                    ttn: p.ttn || '',
+                    weight: p.weight || '',
+                    amount: p.amount || '',
+                    payStatus: p.payStatus || '',
+                    payment: p.payment || '',
+                    parcelStatus: p.parcelStatus || '',
+                    vehicle: p.vehicle || '',
+                    timing: p.timing || '',
+                    dateReg: normalizeDate(p.dateReg),
+                    dateReceive: normalizeDate(p.dateReceive),
+                    smsNote: p.smsNote || '',
+                    photo: p.photo || '',
+                    note: p.note || '',
+                    direction: p.direction,
+                    status: normalizedStatus,
+                    statusDate: p.dateArchive || '',
+                    isNew: p.isNew,
+                    isNew24h: p.isNew,
+                    _sheet: p.sheet,
+                    _rowNum: p.rowNum
+                };
+            });
+        }
+        render();
+        updateVehiclesList();
+        updateAllCounts();
+        updatePcVehiclesList();
+        setTimeout(() => checkAllCapacityWarnings(), 500);
+    })
+    .catch(err => {
+        hideLoader();
+        console.error('Init load error:', err);
+        showToast('❌ Помилка завантаження');
+        render();
+    });
+
     // Періодична перевірка кожні 5 хвилин
     setInterval(() => checkAllCapacityWarnings(), 300000);
-    
+
     // Тихе авто-оновлення кожні 60 секунд
     setInterval(() => silentSync(), 60000);
 });
@@ -2239,8 +2335,6 @@ function silentSync() {
                 const key = `${sp._sheet}_${sp._rowNum}`;
                 const local = localMap[key];
                 if (local) {
-                    // Якщо сервер повернув порожнє авто, а локально є — зберігаємо локальне
-                    if (!sp.vehicle && local.vehicle) sp.vehicle = local.vehicle;
                     // Зберігаємо локальний статус якщо він вже archived (з типом)
                     if (!sp.status && local.status) sp.status = local.status;
                     // Зберігаємо CRM-only поля (не зберігаються на сервері)
@@ -2293,8 +2387,8 @@ function playNotificationSound() {
     }
 }
 
-function loadSettings() { try { const s = JSON.parse(localStorage.getItem('yuraCrmPackagesV1')||'{}'); if(s.colSettings)colSettings=s.colSettings; if(s.packages)packages=s.packages; if(s.hiddenCols)hiddenCols=new Set(s.hiddenCols); if(s.columnLabels){Object.keys(s.columnLabels).forEach(k=>{if(ALL_COLUMNS[k])ALL_COLUMNS[k].label=s.columnLabels[k];});} } catch(e){} }
-function saveSettings() { const columnLabels={}; Object.keys(ALL_COLUMNS).forEach(k=>{columnLabels[k]=ALL_COLUMNS[k].label;}); localStorage.setItem('yuraCrmPackagesV1', JSON.stringify({colSettings,packages,vehicles,columnLabels,hiddenCols:[...hiddenCols]})); }
+function loadSettings() { try { const s = JSON.parse(localStorage.getItem('yuraCrmPackagesV1')||'{}'); if(s.colSettings)colSettings=s.colSettings; if(s.hiddenCols)hiddenCols=new Set(s.hiddenCols); if(s.columnLabels){Object.keys(s.columnLabels).forEach(k=>{if(ALL_COLUMNS[k])ALL_COLUMNS[k].label=s.columnLabels[k];});} } catch(e){} }
+function saveSettings() { const columnLabels={}; Object.keys(ALL_COLUMNS).forEach(k=>{columnLabels[k]=ALL_COLUMNS[k].label;}); localStorage.setItem('yuraCrmPackagesV1', JSON.stringify({colSettings,vehicles,columnLabels,hiddenCols:[...hiddenCols]})); }
 
 // SIDE MENU
 function openSideMenu() { document.getElementById('sideMenu').classList.add('open'); document.getElementById('sideMenuOverlay').classList.add('show'); renderMobileCalendar(); updateMobileVehicles(); }
@@ -2465,20 +2559,39 @@ function renderCalendarTo(containerId) {
     const months = ['Січень','Лютий','Березень','Квітень','Травень','Червень','Липень','Серпень','Вересень','Жовтень','Листопад','Грудень'];
     const today = new Date().toISOString().split('T')[0];
     
-    // Рахуємо кількість посилок на кожну дату ВІДПРАВКИ (dateReceive) з урахуванням напрямку календаря
+    // Рахуємо кількість посилок на кожну дату ВІДПРАВКИ (dateReceive) з урахуванням напрямку календаря та авто
     const seatCounts = {};
     const leadCounts = {};
     const dir = calendarDirection;
-    packages.filter(p => p.status !== 'archived').filter(p => !dir || dir === 'all' || p.direction === dir).forEach(p => {
+    let filteredPackages = packages.filter(p => p.status !== 'archived').filter(p => !dir || dir === 'all' || p.direction === dir);
+
+    // Фільтр по авто для календаря
+    if (filters.vehicle && filters.vehicle !== '') {
+        if (filters.vehicle === 'none') {
+            filteredPackages = filteredPackages.filter(p => !p.vehicle);
+        } else {
+            const fv = vehicles.find(x => x.id === filters.vehicle);
+            const fvName = fv ? fv.name : filters.vehicle;
+            filteredPackages = filteredPackages.filter(p => p.vehicle === filters.vehicle || p.vehicle === fvName);
+        }
+    }
+
+    filteredPackages.forEach(p => {
         const shipDate = p.dateReceive || p.dateReg;
         if(shipDate) {
             leadCounts[shipDate] = (leadCounts[shipDate]||0) + 1;
             seatCounts[shipDate] = (seatCounts[shipDate]||0) + (parseFloat(p.weight) || 1);
         }
     });
-    
-    // Загальна місткість всіх авто
-    const totalCapacity = vehicles.reduce((sum, v) => sum + (parseInt(v.maxPoints) || 60), 0);
+
+    // Місткість: якщо обрано конкретне авто — тільки його, інакше всіх
+    let totalCapacity;
+    if (filters.vehicle && filters.vehicle !== '' && filters.vehicle !== 'none') {
+        const fv = vehicles.find(x => x.id === filters.vehicle);
+        totalCapacity = fv ? (parseInt(fv.maxPoints) || 60) : 0;
+    } else {
+        totalCapacity = vehicles.reduce((sum, v) => sum + (parseInt(v.maxPoints) || 60), 0);
+    }
     
     const firstDay = new Date(year, month, 1), lastDay = new Date(year, month + 1, 0);
     const startDay = (firstDay.getDay() + 6) % 7, daysInMonth = lastDay.getDate();
@@ -2698,14 +2811,36 @@ function updateMobileVehicles() {
     const el = document.getElementById('mobileVehiclesList');
     if (!el) return;
     el.innerHTML = vehicles.map(v => {
-        const count = packages.filter(p => p.vehicle === v.id && p.status !== 'archived').length;
+        const count = packages.filter(p => (p.vehicle === v.id || p.vehicle === v.name) && p.status !== 'archived').length;
         const active = filters.vehicle === v.id;
         return `<div class="side-menu-item ${active?'active':''}" onclick="mobileSetVehicle('${v.id}')" style="color:#2196F3;"><span class="side-menu-item-left">🚐 ${v.name}</span><span class="side-menu-item-count">${count}</span></div>`;
     }).join('');
+
+    // Оновлюємо active стан кнопки "Без авто" в мобільному
+    const mobileNone = document.getElementById('mobileVehicleNone');
+    if (mobileNone) {
+        if (filters.vehicle === 'none') {
+            mobileNone.classList.add('active');
+        } else {
+            mobileNone.classList.remove('active');
+        }
+    }
 }
 
 function mobileFilterAll() { filters.date=''; filters.vehicle=''; filters.showArchive=false; filters.statusFilter=''; closeSideMenu(); render(); updateAllCounts(); }
-function mobileSetVehicle(id) { filters.vehicle = id; filters.statusFilter = ''; closeSideMenu(); render(); }
+function mobileSetVehicle(id) {
+    // Toggle: якщо той самий фільтр — скидаємо
+    if (filters.vehicle === id) {
+        filters.vehicle = '';
+    } else {
+        filters.vehicle = id;
+    }
+    filters.statusFilter = '';
+    closeSideMenu();
+    render();
+    renderCalendars();
+    updateMobileVehicles();
+}
 
 // DATA
 function getFieldValue(p, key) {
@@ -2771,7 +2906,11 @@ function getFilteredData() {
     
     if (!filters.showNewOnly && filters.direction && filters.direction !== 'all') data = data.filter(p => p.direction === filters.direction);
     if (filters.statusFilter) data = data.filter(p => p.status === filters.statusFilter);
-    if (filters.routeVehicle) data = data.filter(p => p.vehicle === filters.routeVehicle);
+    if (filters.routeVehicle) {
+        const rv = vehicles.find(x => x.id === filters.routeVehicle);
+        const rvName = rv ? rv.name : filters.routeVehicle;
+        data = data.filter(p => p.vehicle === filters.routeVehicle || p.vehicle === rvName);
+    }
     if (filters.search && filters.search.trim()) { 
         const s = filters.search.trim().toLowerCase();
         data = data.filter(p => {
@@ -2892,10 +3031,14 @@ function render() {
         const payStatusBadge = p.payStatus ? `<span class="card-pay-badge ${payStatusClass?payStatusClass:'neutral'}">${p.payStatus}</span>` : '';
         const paymentBadge = p.payment ? `<span class="card-pay-badge neutral">${p.payment}</span>` : '';
 
-        // Vehicle
+        // Vehicle - з dropdown для призначення авто
+        const vehDropdownItems = vehicles.map(vi =>
+            `<div class="vehicle-dropdown-item ${p.vehicle === vi.name || p.vehicle === vi.id ? 'active' : ''}" onclick="event.stopPropagation();quickAssignVehicle('${uk}','${vi.id}')">${vi.name}</div>`
+        ).join('');
         const vehicleBadge = veh
-            ? `<span class="card-vehicle-badge">${veh.name}</span>`
-            : `<span style="opacity:0.3;font-size:10px">${ALL_COLUMNS['vehicle']?.label||'Авто'}</span>`;
+            ? `<span class="card-vehicle-badge" onclick="event.stopPropagation();toggleCardVehicle('${uk}')">${veh.name}</span>`
+            : `<span class="card-vehicle-badge empty" onclick="event.stopPropagation();toggleCardVehicle('${uk}')">${ALL_COLUMNS['vehicle']?.label||'Авто'}</span>`;
+        const vehicleDropdownHtml = `<div class="vehicle-dropdown" id="vd_${uk}">${vehDropdownItems}<div class="vehicle-dropdown-item" onclick="event.stopPropagation();quickAssignVehicle('${uk}','')" style="color:var(--warning);">❌ Зняти авто</div></div>`;
         const orderNum = isRouteView ? `<span class="order-num">${idx + 1}</span>` : '';
         const notGeocodedClass = p._notGeocoded ? 'not-geocoded-card' : '';
 
@@ -2988,7 +3131,7 @@ function render() {
                     <!-- ROW 2: Phone | АВТО | Amount | DateReceive -->
                     <div class="cg-row">
                         ${cc('phone','cg-main',`${phoneRaw ? `<span class="cg-val-phone" onclick="event.stopPropagation()" onmousedown="event.stopPropagation()">${phoneDisplay}${cpBtn(phoneRaw)}${edBtn('phone')}</span>` : `${ph('phone')}${edBtn('phone')}`}`)}
-                        ${cc('vehicle','cg-sm',`${vehicleBadge}`)}
+                        ${cc('vehicle','cg-sm',`<div class="card-vehicle">${vehicleBadge}${vehicleDropdownHtml}</div>`)}
                         ${cc('amount','cg-sm',`${priceDisplay ? `<span class="cg-val-price">${priceDisplay}</span>${edBtn('amount')}` : `${ph('amount')}${edBtn('amount')}`}`)}
                         ${cc('dateReceive','cg-sm',`${dateRecvDisplay ? `<span class="cg-val-date">${dateRecvDisplay}</span>${edBtn('dateReceive')}` : `${ph('dateReceive')}${edBtn('dateReceive')}`}`)}
                     </div>
@@ -3031,6 +3174,7 @@ function render() {
                 <button class="btn-card-action btn-call" onclick="event.stopPropagation();location.href='tel:${p.phone}'">📞 Дзвонити</button>
                 <button class="btn-card-action btn-msg" onclick="event.stopPropagation();window.open('https://console.smartsender.com/contacts?project=yura-transportation-131349','_blank')">💬 Писати</button>
                 <button class="btn-card-action btn-map" onclick="event.stopPropagation();openMapModal('${uk}')">🗺️ Карта</button>
+                <button class="btn-card-action btn-edit" onclick="event.stopPropagation();editPackage('${uk}')">✏️ Редагувати</button>
                 <button class="btn-card-action" style="background:#d1fae5;color:#065f46;" onclick="event.stopPropagation();restorePackageToOriginal('${uk}')">↩️ Відновити</button>
                 <button class="btn-card-action btn-delete" onclick="event.stopPropagation();deletePackage('${uk}')">🗑️ Видалити</button>
             </div>
@@ -3105,6 +3249,8 @@ function toggleDetails(uid) {
         document.querySelector(`[data-uid="${openActionsId}"] .card-actions-toggle`)?.classList.remove('open');
         openActionsId = null;
     }
+    // Закриваємо vehicle dropdown
+    document.querySelectorAll('.vehicle-dropdown').forEach(d => d.classList.remove('show'));
     if (openDetailsId && openDetailsId !== uid) {
         const prevCard = document.querySelector(`[data-uid="${openDetailsId}"]`);
         if (prevCard) prevCard.classList.remove('details-open');
@@ -3117,7 +3263,7 @@ function toggleDetails(uid) {
     document.querySelector(`[data-uid="${uid}"] .new-tag`)?.remove();
 }
 
-function toggleActions(uid) { 
+function toggleActions(uid) {
     // Закриваємо дії інших карток
     if (openActionsId && openActionsId !== uid) {
         document.querySelector(`[data-uid="${openActionsId}"] .card-actions`)?.classList.remove('show');
@@ -3130,9 +3276,43 @@ function toggleActions(uid) {
         document.querySelector(`[data-uid="${openDetailsId}"] .card-details`)?.classList.remove('show');
         openDetailsId = null;
     }
+    // Закриваємо vehicle dropdown
+    document.querySelectorAll('.vehicle-dropdown').forEach(d => d.classList.remove('show'));
     openActionsId = openActionsId === uid ? null : uid;
     document.querySelector(`[data-uid="${uid}"] .card-actions`)?.classList.toggle('show', openActionsId === uid);
     document.querySelector(`[data-uid="${uid}"] .card-actions-toggle`)?.classList.toggle('open', openActionsId === uid);
+}
+
+// Відкрити/закрити dropdown авто на картці
+function toggleCardVehicle(uid) {
+    document.querySelectorAll('.vehicle-dropdown').forEach(d => {
+        if (d.id !== 'vd_' + uid) d.classList.remove('show');
+    });
+    const dd = document.getElementById('vd_' + uid);
+    if (dd) dd.classList.toggle('show');
+}
+
+// Швидке призначення авто з dropdown на картці
+function quickAssignVehicle(uid, vehicleId) {
+    const p = findPackageByUid(uid);
+    if (!p) return;
+    if (vehicleId) {
+        const veh = vehicles.find(v => v.id === vehicleId);
+        if (!veh) return showToast('❌ Авто не знайдено');
+        p.vehicle = veh.name;
+        if (p.status === 'new') p.status = 'work';
+        showToast(`🚐 ${veh.name}`);
+    } else {
+        p.vehicle = '';
+        showToast('❌ Авто знято');
+    }
+    updatePackageOnServer(p);
+    saveSettings();
+    document.querySelectorAll('.vehicle-dropdown').forEach(d => d.classList.remove('show'));
+    render();
+    updateAllCounts();
+    updateVehiclesList();
+    updatePcVehiclesList();
 }
 
 // Toggle extra fields section per card
@@ -3371,7 +3551,7 @@ function updateAllCounts() {
 function updatePcVehiclesList() {
     const container = document.getElementById('pcVehiclesList');
     if (!container) return;
-    
+
     container.innerHTML = vehicles.map(v => {
         const count = packages.filter(p => (p.vehicle === v.id || p.vehicle === v.name) && p.status !== 'archived').length;
         const isActive = filters.vehicle === v.id;
@@ -3383,6 +3563,12 @@ function updatePcVehiclesList() {
             <button onclick="event.stopPropagation();deleteVehicle('${v.id}')" style="background:none;border:none;cursor:pointer;font-size:12px;opacity:0.5;padding:4px;" title="Видалити авто">🗑️</button>
         </div>`;
     }).join('');
+
+    // Оновлюємо active стан кнопки "Без авто"
+    const pcNone = document.getElementById('pcVehicleNone');
+    if (pcNone) {
+        pcNone.classList.toggle('active', filters.vehicle === 'none');
+    }
 }
 
 // ROUTES LIST - оновлюємо з реальними даними з таблиці
@@ -3837,10 +4023,10 @@ function renderRoutePassengers() {
         const payStatusBadge = p.payStatus ? `<span class="card-pay-badge ${payStatusClass||'neutral'}">${p.payStatus}</span>` : '';
         const paymentBadge = p.payment ? `<span class="card-pay-badge neutral">${p.payment}</span>` : '';
 
-        // Vehicle badge
+        // Vehicle badge (route view - display only)
         const vehicleBadge = veh
-            ? `<span class="card-vehicle-badge">${veh.name}</span>`
-            : `<span class="card-vehicle-badge">${p._vehicleName || '—'}</span>`;
+            ? `<span class="card-vehicle-badge" style="cursor:default;">${veh.name}</span>`
+            : `<span class="card-vehicle-badge" style="cursor:default;">${p._vehicleName || '—'}</span>`;
 
         // Driver status badge (compact for right panel)
         let driverStatusBadge = '<span class="status-badge pending" style="font-size:10px;padding:2px 5px;">⏳</span>';
@@ -3940,6 +4126,8 @@ function renderRoutePassengers() {
                 <button class="btn-card-action btn-call" onclick="event.stopPropagation();location.href='tel:${p.phone}'">📞 Дзвонити</button>
                 <button class="btn-card-action btn-msg" onclick="event.stopPropagation();window.open('https://console.smartsender.com/contacts?project=yura-transportation-131349','_blank')">💬 Писати</button>
                 <button class="btn-card-action btn-map" onclick="event.stopPropagation();openMapModal('${uk}')">🗺️ Карта</button>
+                <button class="btn-card-action btn-edit" onclick="event.stopPropagation();editPackage('${uk}')">✏️ Редагувати</button>
+                <button class="btn-card-action btn-delete" onclick="event.stopPropagation();showRouteDeleteChoice('${uk}')">🗑️ Видалити</button>
             </div>
         </div>`;
     });
@@ -3957,6 +4145,135 @@ function inlineRouteSave(uid, field, value) {
     const indId = 'saveInd_' + uid.replace(/[^a-zA-Z0-9]/g, '_');
     const ind = document.getElementById(indId);
     if (ind) { ind.classList.add('show'); setTimeout(() => ind.classList.remove('show'), 1500); }
+}
+
+// Видалення з маршруту — вибір дії
+function showRouteDeleteChoice(uid) {
+    const p = routePassengers.find(rp => rp._uid === uid);
+    if (!p) return;
+
+    document.getElementById('routeDeleteChoiceModal')?.remove();
+
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay show';
+    modal.id = 'routeDeleteChoiceModal';
+    modal.innerHTML = `
+        <div class="modal" style="max-width:380px;">
+            <div class="modal-header" style="background:#fee2e2;border-bottom:1px solid #fecaca;">
+                <span class="modal-title" style="color:#dc2626;">🗑️ Видалити</span>
+                <button class="modal-close" onclick="document.getElementById('routeDeleteChoiceModal').remove()">✕</button>
+            </div>
+            <div class="modal-body" style="padding:20px;">
+                <div style="text-align:center;margin-bottom:16px;">
+                    <div style="font-size:14px;font-weight:600;">${p.name || 'Без імені'}</div>
+                    <div style="font-size:12px;color:var(--text-secondary);">${p.phone || '—'}</div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:10px;">
+                    <button onclick="deleteFromRouteOnly('${uid}')" style="padding:14px;border:none;border-radius:10px;background:#f59e0b;color:white;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;">
+                        📋 Видалити з маршруту<br>
+                        <span style="font-size:11px;font-weight:400;opacity:0.9;">Посилка залишиться в головному списку</span>
+                    </button>
+                    <button onclick="deleteFromRouteAndTrash('${uid}')" style="padding:14px;border:none;border-radius:10px;background:#dc2626;color:white;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;">
+                        🗑️ Видалити в корзину<br>
+                        <span style="font-size:11px;font-weight:400;opacity:0.9;">Посилка буде архівована</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    modal.onclick = function(e) { if (e.target === modal) modal.remove(); };
+    document.body.appendChild(modal);
+}
+
+// Видалити лише з маршруту (посилка залишається в головному списку)
+function deleteFromRouteOnly(uid) {
+    document.getElementById('routeDeleteChoiceModal')?.remove();
+    const p = routePassengers.find(rp => rp._uid === uid);
+    if (!p) return;
+
+    const sheetName = currentRouteVehicle?.routeSheet || p._vehicleName;
+    if (!sheetName) return showToast('Невідомий аркуш маршруту');
+
+    showLoader('Видаляю з маршруту...', '');
+
+    fetch(ROUTE_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({
+            action: 'archivePackages',
+            packages: [{ sheet: sheetName, rowNum: p.rowNum }],
+            user: 'crm',
+            reason: 'removed_from_route'
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        hideLoader();
+        if (data.success) {
+            // Видаляємо з локального масиву маршруту
+            routePassengers = routePassengers.filter(rp => rp._uid !== uid);
+            routeStats.total = routePassengers.length;
+
+            // Повертаємо статус в головному списку назад на 'work'
+            const mainPkg = packages.find(mp => String(mp.id) === String(p.id));
+            if (mainPkg) {
+                mainPkg.status = 'work';
+                updatePackageOnServer(mainPkg);
+                saveSettings();
+            }
+
+            renderRoutePassengers();
+            updateAllCounts();
+            showToast('📋 Видалено з маршруту');
+        } else {
+            showToast('❌ ' + (data.error || 'Помилка'));
+        }
+    })
+    .catch(err => { hideLoader(); showToast('❌ Помилка мережі'); });
+}
+
+// Видалити з маршруту + в корзину (архів)
+function deleteFromRouteAndTrash(uid) {
+    document.getElementById('routeDeleteChoiceModal')?.remove();
+    const p = routePassengers.find(rp => rp._uid === uid);
+    if (!p) return;
+
+    const sheetName = currentRouteVehicle?.routeSheet || p._vehicleName;
+    if (!sheetName) return showToast('Невідомий аркуш маршруту');
+
+    showLoader('Видаляю...', '');
+
+    // 1) Архівуємо в маршруті
+    fetch(ROUTE_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({
+            action: 'archivePackages',
+            packages: [{ sheet: sheetName, rowNum: p.rowNum }],
+            user: 'crm',
+            reason: 'route_delete_trash'
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        // 2) Архівуємо в головному списку
+        const mainPkg = packages.find(mp => String(mp.id) === String(p.id));
+        if (mainPkg) {
+            mainPkg.status = 'archived';
+            mainPkg.archiveType = 'deleted';
+            mainPkg.archiveDate = new Date().toISOString().split('T')[0];
+            updatePackageOnServer(mainPkg);
+            saveSettings();
+        }
+
+        hideLoader();
+        routePassengers = routePassengers.filter(rp => rp._uid !== uid);
+        routeStats.total = routePassengers.length;
+        renderRoutePassengers();
+        updateAllCounts();
+        showToast('🗑️ Видалено в корзину');
+    })
+    .catch(err => { hideLoader(); showToast('❌ Помилка мережі'); });
 }
 
 // Фільтр по статусу в маршруті
@@ -4027,18 +4344,35 @@ function updateFilterButtons() {
 }
 
 function toggleDropdown(id) { document.querySelectorAll('.dropdown-menu').forEach(d => { if(d.id !== id) d.classList.remove('show'); }); document.getElementById(id).classList.toggle('show'); if(id === 'dateDropdown') renderCalendarTo('desktopCalendar'); }
-function resetFilters() { filters.date = ''; filters.vehicle = ''; filters.showArchive = false; filters.statusFilter = ''; filters.routeVehicle = ''; routePassengers = []; routeStats = { total: 0, pending: 0, inProgress: 0, completed: 0, cancelled: 0, archived: 0 }; currentRouteVehicle = null; routeStatusFilter = 'all'; calendarDirection = 'all'; document.querySelectorAll('.cal-direction-select').forEach(s => s.value = 'all'); render(); renderCalendars(); updateVehiclesList(); updateAllCounts(); updatePcVehiclesList(); }
-function setVehicleFilter(id) { 
-    filters.vehicle = id; 
-    filters.statusFilter = ''; 
+function resetFilters() { filters.date = ''; filters.vehicle = ''; filters.showArchive = false; filters.statusFilter = ''; filters.routeVehicle = ''; filters.direction = 'all'; filters.showNewOnly = false; filters.specialStatus = ''; filters.search = ''; filters.statusDateFrom = ''; filters.statusDateTo = ''; const si = document.getElementById('searchInput'); if (si) si.value = ''; routePassengers = []; routeStats = { total: 0, pending: 0, inProgress: 0, completed: 0, cancelled: 0, archived: 0 }; currentRouteVehicle = null; routeStatusFilter = 'all'; calendarDirection = 'all'; document.querySelectorAll('.cal-direction-select').forEach(s => s.value = 'all'); render(); renderCalendars(); updateVehiclesList(); updateAllCounts(); updatePcVehiclesList(); if(typeof updateMobileVehicles === 'function') updateMobileVehicles(); }
+function setVehicleFilter(id) {
+    // Toggle: якщо той самий фільтр — скидаємо
+    if (filters.vehicle === id) {
+        filters.vehicle = '';
+    } else {
+        filters.vehicle = id;
+    }
+    filters.statusFilter = '';
     filters.routeVehicle = '';
     routePassengers = [];
     routeStats = { total: 0, pending: 0, inProgress: 0, completed: 0, cancelled: 0, archived: 0 };
     currentRouteVehicle = null;
     routeStatusFilter = 'all';
-    document.getElementById('vehicleDropdown')?.classList.remove('show'); 
-    render(); 
+    document.getElementById('vehicleDropdown')?.classList.remove('show');
+    render();
+    renderCalendars();
     updatePcVehiclesList();
+    updateVehiclesList();
+}
+
+// Скинути фільтр авто (кнопка під меню авто)
+function resetVehicleFilter() {
+    filters.vehicle = '';
+    render();
+    renderCalendars();
+    updatePcVehiclesList();
+    updateVehiclesList();
+    updateMobileVehicles();
 }
 function filterByStatus(status) { filters.statusFilter = filters.statusFilter === status ? '' : status; filters.showArchive = false; filters.routeVehicle = ''; routePassengers = []; routeStats = { total: 0, pending: 0, inProgress: 0, completed: 0, cancelled: 0, archived: 0 }; currentRouteVehicle = null; routeStatusFilter = 'all'; render(); updateFilterButtons(); }
 function toggleArchiveFilter() { const entering = !filters.showArchive; filters.showArchive = entering; filters.statusFilter = ''; filters.routeVehicle = ''; filters.specialStatus = ''; if (entering) { filters.date = ''; filters.showNewOnly = false; filters.search = ''; filters.statusDateFrom = ''; filters.statusDateTo = ''; const si = document.getElementById('searchInput'); if (si) si.value = ''; } routePassengers = []; routeStats = { total: 0, pending: 0, inProgress: 0, completed: 0, cancelled: 0, archived: 0 }; currentRouteVehicle = null; routeStatusFilter = 'all'; render(); updateAllCounts(); updateFilterButtons(); renderCalendars(); }
@@ -4294,12 +4628,14 @@ function selectBulkVehicle(vehicleId) {
 
 function confirmBulkVehicle() {
     if (!selectedBulkVehicleId) return;
+    const veh = vehicles.find(v => v.id === selectedBulkVehicleId);
+    if (!veh) return showToast('❌ Авто не знайдено');
     saveForUndo('vehicle');
     let count = 0;
     selectedIds.forEach(uid => {
         const p = findPackageByUid(uid);
         if (p && p.status !== 'archived') {
-            p.vehicle = selectedBulkVehicleId;
+            p.vehicle = veh.name;
             if (p.status === 'new') p.status = 'work';
             updatePackageOnServer(p);
             count++;
@@ -4309,6 +4645,8 @@ function confirmBulkVehicle() {
     closeModal('bulkVehicleModal');
     refreshAfterAction();
     updateAllCounts();
+    updateVehiclesList();
+    updatePcVehiclesList();
     showToast(`🚐 Авто призначено: ${count}`);
 }
 
@@ -6676,7 +7014,6 @@ function syncWithSheets() {
                 };
                 const local = localMap[`${sp._sheet}_${sp._rowNum}`];
                 if (local) {
-                    if (!sp.vehicle && local.vehicle) sp.vehicle = local.vehicle;
                     if (local.prevStatus) sp.prevStatus = local.prevStatus;
                     if (local.archiveType) sp.archiveType = local.archiveType;
                 }
@@ -7004,6 +7341,129 @@ document.addEventListener('click', e => {
     if (!e.target.closest('.card-vehicle-badge') && !e.target.closest('.vehicle-dropdown')) document.querySelectorAll('.vehicle-dropdown').forEach(d => d.classList.remove('show'));
     if (!e.target.closest('#navPackages') && !e.target.closest('.direction-popup')) document.getElementById('directionPopup')?.classList.remove('show');
 });
+
+// ============================================
+// ONBOARDING HINTS SYSTEM
+// ============================================
+const ONBOARDING_HINTS = [
+    {
+        icon: '👋',
+        title: 'Ласкаво просимо до CRM Посилки!',
+        text: 'Це ваша система управління посилками. Тут ви можете <strong>додавати, редагувати та відстежувати</strong> всі посилки в одному місці.'
+    },
+    {
+        icon: '☑️',
+        title: 'Вибір та масові дії',
+        text: 'Натисніть <strong>галочку</strong> на картці посилки, щоб вибрати її. При виборі зліва з\'явиться <strong>панель масових дій</strong> — архівування, призначення авто, зміна статусу та інше.'
+    },
+    {
+        icon: '✏️',
+        title: 'Редагування та видалення',
+        text: 'Натисніть <strong>▼</strong> на картці, щоб розгорнути дії. Тепер доступні кнопки <strong>Редагувати</strong> та <strong>Видалити</strong> прямо на кожній картці — і в основному списку, і в маршруті.'
+    },
+    {
+        icon: '🚀',
+        title: 'Маршрути',
+        text: 'Призначте авто посилці, потім перемістіть у <strong>маршрут</strong>. У маршруті можна видаляти посилки окремо — <strong>тільки з маршруту</strong> або <strong>повністю в корзину</strong>.'
+    },
+    {
+        icon: '📊',
+        title: 'Фільтри та пошук',
+        text: 'Використовуйте <strong>бокову панель</strong> зліва для фільтрації по даті, авто, напрямку та статусу. <strong>Пошук</strong> у хедері шукає по телефону, імені, ТТН та адресі.'
+    }
+];
+
+let onboardingStep = 0;
+
+function initOnboarding() {
+    if (localStorage.getItem('posylki_onboarding_disabled') === 'true') return;
+    if (localStorage.getItem('posylki_onboarding_seen') === 'true') return;
+
+    // Невелика затримка для завантаження сторінки
+    setTimeout(() => showOnboarding(), 800);
+}
+
+function showOnboarding() {
+    onboardingStep = 0;
+    renderOnboardingStep();
+}
+
+function renderOnboardingStep() {
+    let overlay = document.getElementById('onboardingOverlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.className = 'onboarding-overlay';
+        overlay.id = 'onboardingOverlay';
+        document.body.appendChild(overlay);
+        requestAnimationFrame(() => overlay.classList.add('show'));
+    }
+
+    const hint = ONBOARDING_HINTS[onboardingStep];
+    const total = ONBOARDING_HINTS.length;
+    const isLast = onboardingStep === total - 1;
+    const isFirst = onboardingStep === 0;
+
+    const dots = ONBOARDING_HINTS.map((_, i) =>
+        `<div class="onboarding-dot ${i === onboardingStep ? 'active' : ''}"></div>`
+    ).join('');
+
+    overlay.innerHTML = `
+        <div class="onboarding-card">
+            <span class="onboarding-step-num">${onboardingStep + 1} / ${total}</span>
+            <div class="onboarding-icon">${hint.icon}</div>
+            <div class="onboarding-title">${hint.title}</div>
+            <div class="onboarding-text">${hint.text}</div>
+            <div class="onboarding-dots">${dots}</div>
+            <div class="onboarding-btns">
+                ${!isFirst ? '<button class="onboarding-btn secondary" onclick="prevOnboardingStep()">← Назад</button>' : ''}
+                ${isLast
+                    ? '<button class="onboarding-btn primary" onclick="finishOnboarding()">Зрозуміло!</button>'
+                    : '<button class="onboarding-btn primary" onclick="nextOnboardingStep()">Далі →</button>'
+                }
+            </div>
+            <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:12px;">
+                <button class="onboarding-btn danger" onclick="disableOnboarding()">Вимкнути підказки назавжди</button>
+            </div>
+        </div>
+    `;
+}
+
+function nextOnboardingStep() {
+    if (onboardingStep < ONBOARDING_HINTS.length - 1) {
+        onboardingStep++;
+        renderOnboardingStep();
+    }
+}
+
+function prevOnboardingStep() {
+    if (onboardingStep > 0) {
+        onboardingStep--;
+        renderOnboardingStep();
+    }
+}
+
+function finishOnboarding() {
+    localStorage.setItem('posylki_onboarding_seen', 'true');
+    closeOnboarding();
+}
+
+function disableOnboarding() {
+    localStorage.setItem('posylki_onboarding_disabled', 'true');
+    localStorage.setItem('posylki_onboarding_seen', 'true');
+    closeOnboarding();
+    showToast('Підказки вимкнено. Щоб увімкнути — очистіть localStorage.');
+}
+
+function closeOnboarding() {
+    const overlay = document.getElementById('onboardingOverlay');
+    if (overlay) {
+        overlay.classList.remove('show');
+        setTimeout(() => overlay.remove(), 300);
+    }
+}
+
+// Запуск онбордингу при завантаженні
+initOnboarding();
 </script>
 </body>
 </html>
