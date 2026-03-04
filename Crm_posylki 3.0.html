@@ -1160,18 +1160,63 @@
         .optimize-method { background: #fff3e0; padding: 10px 14px; border-radius: 8px; font-size: 12px; color: #e65100; text-align: center; }
         
         .optimize-loading { text-align: center; padding: 30px; }
-        .optimize-spinner { border: 3px solid var(--border); border-top: 3px solid var(--primary); border-radius: 50%; width: 36px; height: 36px; animation: spin 1s linear infinite; margin: 0 auto 12px; }
+        .optimize-spinner { border: 4px solid var(--border); border-top: 4px solid var(--primary); border-radius: 50%; width: 64px; height: 64px; animation: spin 0.8s linear infinite; margin: 0 auto 16px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .optimize-loading-text { font-weight: 600; color: var(--primary); margin-bottom: 4px; }
         .optimize-loading small { color: var(--text-secondary); }
         
+        /* ROUTE PROGRESS — centered overlay */
+        .route-progress-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 1200;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,0.25);
+            backdrop-filter: blur(2px);
+        }
+        .route-progress-card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px 48px;
+            box-shadow: 0 12px 48px rgba(0,0,0,0.22);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 24px;
+            min-width: 260px;
+            max-width: 340px;
+            animation: routeCardIn 0.3s ease;
+        }
+        @keyframes routeCardIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .route-progress-spinner {
+            width: 64px; height: 64px;
+            border: 4px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: routeSpin 0.8s linear infinite;
+        }
+        @keyframes routeSpin {
+            to { transform: rotate(360deg); }
+        }
+        .route-progress-text {
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--primary);
+            text-align: center;
+        }
+
         /* Global Loader */
         .global-loader { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 9999; backdrop-filter: blur(4px); }
         .global-loader.show { display: flex; }
-        .loader-box { background: white; padding: 30px 50px; border-radius: 16px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.3); }
-        .loader-spinner { width: 50px; height: 50px; border: 4px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px; }
-        .loader-text { font-weight: 600; color: var(--primary); font-size: 14px; }
-        .loader-progress { font-size: 12px; color: var(--text-secondary); margin-top: 8px; }
+        .loader-box { background: white; padding: 40px 48px; border-radius: 20px; text-align: center; box-shadow: 0 12px 48px rgba(0,0,0,0.22); }
+        .loader-spinner { width: 64px; height: 64px; border: 4px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 20px; }
+        .loader-text { font-weight: 700; color: var(--primary); font-size: 17px; }
+        .loader-progress { font-size: 13px; color: var(--text-secondary); margin-top: 10px; }
         
         /* Capacity Alert - ненав'язливе сповіщення справа */
         .capacity-alert { position: fixed; top: 70px; right: 20px; background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); border: 2px solid #ef4444; border-radius: 12px; padding: 14px 18px; box-shadow: 0 4px 20px rgba(239,68,68,0.3); z-index: 500; max-width: 280px; animation: slideInRight 0.4s ease, pulse 2s ease-in-out infinite; cursor: pointer; }
@@ -2152,6 +2197,18 @@
 </div>
 
 <div class="toast" id="toast"></div>
+
+<script>
+// Google Maps API init callback
+window.mapsApiReady = false;
+window.mapsDirections = null;
+function initMapsAPI() {
+    window.mapsApiReady = true;
+    window.mapsDirections = new google.maps.DirectionsService();
+    console.log('✅ Google Maps API ready');
+}
+</script>
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCthPzhD6zDM9zR-re0R2ceohyhCRdawNc&callback=initMapsAPI"></script>
 
 <script>
 const ALL_COLUMNS = {
@@ -3137,7 +3194,7 @@ function render() {
                     </div>
                     <!-- ROW 3: ID | PayStatus | Payment | Note -->
                     <div class="cg-row">
-                        ${cc('id','cg-main',`${idRaw ? `<span class="cg-val-id" onclick="event.stopPropagation()">${idDisplay}${cpBtn(idRaw)}</span>` : ph('id')}`)}
+                        ${cc('id','cg-main',`${idRaw ? `<span class="cg-val-id" onclick="event.stopPropagation()">${idDisplay}</span>${cpBtn(idRaw)}${edBtn('id')}` : `${ph('id')}${edBtn('id')}`}`)}
                         ${cc('payStatus','cg-sm',`${payStatusBadge||ph('payStatus')}${edBtn('payStatus')}`)}
                         ${cc('payment','cg-sm',`${paymentBadge||ph('payment')}${edBtn('payment')}`)}
                         ${cc('note','cg-sm',`${noteShort ? `<span class="cg-val-note">${noteShort}</span>` : ph('note')}${edBtn('note')}`)}
@@ -3897,6 +3954,28 @@ function updateLoader(text, progress) {
 }
 function hideLoader() {
     document.getElementById('globalLoader').classList.remove('show');
+}
+
+// Route progress overlay helpers
+function showRouteProgress(text) {
+    let el = document.getElementById('routeProgressOverlay');
+    if (!el) {
+        el = document.createElement('div');
+        el.className = 'route-progress-overlay';
+        el.id = 'routeProgressOverlay';
+        el.innerHTML = '<div class="route-progress-card"><div class="route-progress-spinner"></div><div class="route-progress-text"></div></div>';
+        document.body.appendChild(el);
+    }
+    el.querySelector('.route-progress-text').textContent = text || 'Обробка маршруту...';
+    el.style.display = 'flex';
+}
+function hideRouteProgress() {
+    const el = document.getElementById('routeProgressOverlay');
+    if (el) el.style.display = 'none';
+}
+function updateRouteProgress(text) {
+    const el = document.getElementById('routeProgressOverlay');
+    if (el) el.querySelector('.route-progress-text').textContent = text;
 }
 
 // Глобальні змінні для маршрутів
@@ -5315,6 +5394,64 @@ function nearestNeighborOrder(items, startCoords) {
     return tour;
 }
 
+// Ліміт Google Directions API
+const OPTIMIZE_MAX_WAYPOINTS = 23;
+
+// Оптимізація через Google Directions API (реальні дороги)
+function optimizeDirectionsClient(geocodedItems, startCoords, endCoords) {
+    return new Promise((resolve, reject) => {
+        if (!window.mapsDirections) return reject(new Error('Maps API not ready'));
+
+        let settled = false;
+        const timeout = setTimeout(() => {
+            if (!settled) {
+                settled = true;
+                reject(new Error('Directions API timeout (30s)'));
+            }
+        }, 30000);
+
+        const waypoints = geocodedItems.map(p => ({
+            location: new google.maps.LatLng(p.coords.lat, p.coords.lng),
+            stopover: true
+        }));
+
+        const origin = new google.maps.LatLng(startCoords.lat, startCoords.lng);
+        let destination, routeWaypoints;
+
+        if (endCoords) {
+            destination = new google.maps.LatLng(endCoords.lat, endCoords.lng);
+            routeWaypoints = waypoints;
+        } else {
+            destination = waypoints[waypoints.length - 1].location;
+            routeWaypoints = waypoints.slice(0, -1);
+        }
+
+        window.mapsDirections.route({
+            origin: origin,
+            destination: destination,
+            waypoints: routeWaypoints,
+            optimizeWaypoints: true,
+            travelMode: google.maps.TravelMode.DRIVING
+        }, (response, status) => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timeout);
+            if (status === 'OK') {
+                const order = response.routes[0].waypoint_order;
+                if (endCoords) {
+                    resolve(order);
+                } else {
+                    const result = order.slice();
+                    result.push(geocodedItems.length - 1);
+                    resolve(result);
+                }
+            } else {
+                reject(new Error('Directions API: ' + status));
+            }
+        });
+    });
+}
+
 function generateMapLinksClient(orderedItems, startCoords, endCoords) {
     const links = [];
     const total = orderedItems.length;
@@ -5399,9 +5536,25 @@ async function startOptimization() {
             return showToast('❌ Жодну адресу не вдалось знайти');
         }
 
-        // Nearest Neighbor
-        const order = nearestNeighborOrder(items, startCoords);
-        const orderedItems = order.map(i => items[i]);
+        // Оптимізація маршруту: спочатку Google Directions API, потім fallback на Nearest Neighbor
+        let optimizedOrder = null;
+        let method = '';
+
+        if (items.length <= OPTIMIZE_MAX_WAYPOINTS && window.mapsDirections) {
+            try {
+                optimizedOrder = await optimizeDirectionsClient(items, startCoords, endCoords);
+                method = 'Google Directions API (реальні дороги)';
+            } catch(e) {
+                console.warn('Directions API fallback:', e.message);
+            }
+        }
+
+        if (!optimizedOrder || optimizedOrder.length === 0) {
+            optimizedOrder = nearestNeighborOrder(items, startCoords);
+            method = 'Nearest Neighbor (по прямій)';
+        }
+
+        const orderedItems = optimizedOrder.map(i => items[i]);
 
         // Generate map links
         const mapLinks = generateMapLinksClient(orderedItems, startCoords, endCoords);
@@ -5422,7 +5575,7 @@ async function startOptimization() {
                 geocoded: items.length,
                 optimized: orderedItems.length
             },
-            method: `Nearest Neighbor (~${totalDist.toFixed(0)} км)`,
+            method: method + ` (~${totalDist.toFixed(0)} км)`,
             mapLinks: mapLinks,
             notGeocodedList: notGeocoded,
             orderedPassengers: orderedItems
@@ -5952,6 +6105,7 @@ function headerEdit(uid, field, btn) {
 
     // Determine current value and field config
     const fieldConfig = {
+        id: { val: p.id||'', ph: 'ІД...', w: '100px' },
         phone: { val: p.phone||'', ph: '+380...', w: '140px' },
         weight: { val: p.weight||'', ph: '0 кг', w: '70px' },
         amount: { val: p.amount||'', ph: '0', w: '70px' },
