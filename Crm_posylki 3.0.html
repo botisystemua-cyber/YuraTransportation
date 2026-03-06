@@ -2398,6 +2398,14 @@ function silentSync() {
                     // Зберігаємо CRM-only поля (не зберігаються на сервері)
                     if (local.prevStatus) sp.prevStatus = local.prevStatus;
                     if (local.archiveType) sp.archiveType = local.archiveType;
+                    // Зберігаємо поля оптимізації (order, status='optimize', _notGeocoded)
+                    if (local.status === 'optimize') {
+                        sp.status = 'optimize';
+                        sp.order = local.order;
+                        sp._notGeocoded = local._notGeocoded;
+                    } else if (local.order !== undefined) {
+                        sp.order = local.order;
+                    }
                 }
             });
 
