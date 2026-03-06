@@ -2100,7 +2100,8 @@
             <button class="btn-save" onclick="startOptimization()">🚀 Оптимізувати</button>
         </div>
         <div class="modal-footer" id="optimizeResultFooter" style="display:none">
-            <button class="btn-save" onclick="closeModal('optimizeModal')">Закрити</button>
+            <button class="btn-cancel" onclick="closeModal('optimizeModal')">Закрити</button>
+            <button class="btn-save" onclick="applyOptimizedSort()">📊 Сортувати</button>
         </div>
     </div>
 </div>
@@ -2411,6 +2412,14 @@ function silentSync() {
                     if (!sp.status && local.status) sp.status = local.status;
                     if (local.prevStatus) sp.prevStatus = local.prevStatus;
                     if (local.archiveType) sp.archiveType = local.archiveType;
+                    // Зберігаємо поля оптимізації (order, status='optimize', _notGeocoded)
+                    if (local.status === 'optimize') {
+                        sp.status = 'optimize';
+                        sp.order = local.order;
+                        sp._notGeocoded = local._notGeocoded;
+                    } else if (local.order !== undefined) {
+                        sp.order = local.order;
+                    }
                 }
             });
 
@@ -3013,6 +3022,16 @@ function getFilteredData() {
     }
     
     return data.sort((a,b) => {
+        // Оптимізовані ліди — сортуємо по order першочергово
+        const aOpt = a.status === 'optimize';
+        const bOpt = b.status === 'optimize';
+        if (aOpt || bOpt) {
+            // Оптимізовані завжди зверху перед звичайними
+            if (aOpt && !bOpt) return -1;
+            if (!aOpt && bOpt) return 1;
+            // Обидва оптимізовані — по order
+            return (a.order||0) - (b.order||0);
+        }
         // Нові (isNew) завжди зверху
         if (a.isNew && !b.isNew) return -1;
         if (!a.isNew && b.isNew) return 1;
@@ -4540,10 +4559,11 @@ function bulkRemoveVehicle() {
 }
 
 function bulkMoveToRoute() {
-    // Збираємо вибраних пасажирів
-    const selected = [...selectedIds].map(uid => findPassengerByUid(uid)).filter(Boolean);
+    // Збираємо вибраних пасажирів і сортуємо по order (щоб зберігати порядок оптимізації)
+    const selected = [...selectedIds].map(uid => findPassengerByUid(uid)).filter(Boolean)
+        .sort((a, b) => (a.order || 0) - (b.order || 0));
     if (!selected.length) return showToast('⚠️ Оберіть пасажирів');
-    
+
     // Перевіряємо чи є авто
     const withVehicle = selected.filter(p => p.vehicle);
     if (!withVehicle.length) return showToast('⚠️ Спочатку призначте авто');
@@ -5721,6 +5741,21 @@ function confirmOptimization() {
         showToast('⚠️ Синхронізуй дані перед маршрутом');
     }
     closeOptimization();
+}
+
+// Кнопка "Сортувати" у вікні результату оптимізації
+function applyOptimizedSort() {
+    // Закриваємо модалку оптимізації
+    closeModal('optimizeModal');
+
+    // Виділення (selectedIds) вже збережене — не чіпаємо
+    // order та status='optimize' вже виставлені в applyOptimizedOrder()
+
+    // Перерендерюємо картки — тепер getFilteredData() сортує optimize по order
+    render();
+    updateBulkBar();
+
+    showToast('📊 Ліди відсортовані по оптимізованому маршруту');
 }
 
 // UNDO SYSTEM
