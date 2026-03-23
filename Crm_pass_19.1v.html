@@ -2210,7 +2210,7 @@ function normalizeSheetName(name) {
     return name.replace(/\s+/g, ' ').trim();
 }
 
-// Синхронізація vehicles з сервера — підтягує нові аркуші, видаляє зниклі
+// Синхронізація vehicles з сервера — будує список ТІЛЬКИ з реальних аркушів таблиці
 async function syncVehiclesFromServer() {
     try {
         const res = await fetch(ROUTE_API_URL, {
@@ -2224,34 +2224,23 @@ async function syncVehiclesFromServer() {
         // Фільтруємо лише маршрутні аркуші
         const serverSheets = data.routes.filter(r => isRouteSheet(r.name));
 
-        // 1) Додаємо нові аркуші яких немає в vehicles
-        for (const sheet of serverSheets) {
+        // Будуємо vehicles ПОВНІСТЮ з серверних даних
+        vehicles = serverSheets.map((sheet, idx) => {
+            // Шукаємо чи вже є таке авто (щоб зберегти id для фільтрів)
             const normalizedName = normalizeSheetName(sheet.name);
-            const exists = vehicles.find(v =>
-                normalizeSheetName(v.routeSheet || '') === normalizedName ||
-                normalizeSheetName(v.name) === normalizedName
+            const existing = vehicles.find(v =>
+                normalizeSheetName(v.routeSheet || '') === normalizedName
             );
-            if (!exists) {
-                // "Пас. Маршрут 1" → "Автомобіль 1", інші — прибираємо префікс "Пас."
-                const match = sheet.name.match(/^Пас\.\s*Маршрут\s*(\d+)$/i);
-                const displayName = match ? `Автомобіль ${match[1]}` : sheet.name.replace(/^Пас\.\s*/, '');
-                vehicles.push({
-                    id: 'v' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
-                    name: displayName,
-                    seats: 8,
-                    routeSheet: sheet.name
-                });
-            }
-        }
 
-        // 2) Помічаємо авто чий аркуш зник з сервера (але не видаляємо дефолтні)
-        const serverNamesNorm = serverSheets.map(s => normalizeSheetName(s.name));
-        vehicles = vehicles.filter(v => {
-            if (!v.routeSheet) return true; // без аркуша — залишаємо
-            if (serverNamesNorm.includes(normalizeSheetName(v.routeSheet))) return true; // є на сервері
-            // Перевіряємо чи це дефолтне авто — залишаємо як fallback
-            if (DEFAULT_VEHICLES.find(d => d.id === v.id)) return true;
-            return false; // аркуш видалено з сервера — прибираємо
+            // "Пас. Маршрут 1" → "Маршрут 1", інші — як є
+            const displayName = sheet.name.replace(/^Пас\.\s*/i, '');
+
+            return {
+                id: existing ? existing.id : 'v' + (idx + 1),
+                name: displayName,
+                seats: existing ? existing.seats : 8,
+                routeSheet: sheet.name
+            };
         });
 
         // Оновлюємо UI
