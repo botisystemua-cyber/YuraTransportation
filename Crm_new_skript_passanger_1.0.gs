@@ -745,7 +745,14 @@ function archivePassenger(payload) {
     var archiveSS = SpreadsheetApp.openById(ARCHIVE_SS_ID_LOG);
     var archiveSheet = archiveSS.getSheetByName('Пасажири');
     if (!archiveSheet) {
-      return { success: false, error: 'Архівний аркуш "Пасажири" не знайдено' };
+      archiveSheet = archiveSS.insertSheet('Пасажири');
+      archiveSheet.getRange(1, 1, 1, 23).setValues([[
+        'Дата виїзду', 'Адреса Відправки', 'Адреса прибуття', 'Кількість місць',
+        'ПіБ', 'Телефон Пасажира', 'Відмітка', 'Оплата', 'Відсоток',
+        'Диспечер', 'ІД', 'Телефон Реєстратора', 'Вага', 'Автомобіль',
+        'Таймінг', 'дата оформлення', 'Примітка', 'Статус',
+        'DATE_ARCHIVE', 'ARCHIVED_BY', 'ARCHIVE_REASON', 'SOURCE_SHEET', 'ARCHIVE_ID'
+      ]]);
     }
 
     // Будуємо рядок: 23 колонки (A-W)
@@ -801,7 +808,14 @@ function bulkArchive(payload) {
     archiveSS = SpreadsheetApp.openById(ARCHIVE_SS_ID_LOG);
     archiveSheet = archiveSS.getSheetByName('Пасажири');
     if (!archiveSheet) {
-      return { success: false, error: 'Архівний аркуш "Пасажири" не знайдено' };
+      archiveSheet = archiveSS.insertSheet('Пасажири');
+      archiveSheet.getRange(1, 1, 1, 23).setValues([[
+        'Дата виїзду', 'Адреса Відправки', 'Адреса прибуття', 'Кількість місць',
+        'ПіБ', 'Телефон Пасажира', 'Відмітка', 'Оплата', 'Відсоток',
+        'Диспечер', 'ІД', 'Телефон Реєстратора', 'Вага', 'Автомобіль',
+        'Таймінг', 'дата оформлення', 'Примітка', 'Статус',
+        'DATE_ARCHIVE', 'ARCHIVED_BY', 'ARCHIVE_REASON', 'SOURCE_SHEET', 'ARCHIVE_ID'
+      ]]);
     }
   } catch (err) {
     return { success: false, error: 'Не вдалося відкрити архів: ' + err.toString() };

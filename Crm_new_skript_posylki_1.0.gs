@@ -711,7 +711,14 @@ function archivePackage(data) {
     var archiveSS = SpreadsheetApp.openById(ARCHIVE_SS_ID_LOG);
     var archiveSheet = archiveSS.getSheetByName('Посилки');
     if (!archiveSheet) {
-      return { success: false, error: 'Архівний аркуш "Посилки" не знайдено' };
+      archiveSheet = archiveSS.insertSheet('Посилки');
+      archiveSheet.getRange(1, 1, 1, 26).setValues([[
+        'ВО', 'Номер№', 'Номер ТТН', 'Вага', 'Адреса Отримувача',
+        'Напрямок', 'Телефон Отримувача', 'Сума Є', 'Статус оплати', 'Оплата',
+        'Телефон Реєстратора', 'Примітка', 'Статус посилки', 'ІД', 'ПіБ',
+        'дата оформлення', 'Таймінг', 'Примітка смс', 'Дата отримання', 'Фото', 'Статус',
+        'DATE_ARCHIVE', 'ARCHIVED_BY', 'ARCHIVE_REASON', 'SOURCE_SHEET', 'ARCHIVE_ID'
+      ]]);
     }
 
     // Будуємо рядок: 26 колонок (A-Z)
@@ -731,14 +738,12 @@ function archivePackage(data) {
     return { success: false, error: 'Помилка запису в архів: ' + err.toString() };
   }
 
-  // === КРОК 2: Оновлюємо джерело (тільки після успішного запису в архів) ===
-  sheet.getRange(rowNum, COL.STATUS + 1).setValue('archived');
-  sheet.getRange(rowNum, COL.DATE_ARCHIVE + 1).setValue(dateNow.substring(0, 10));
-  sheet.getRange(rowNum, COL.ARCHIVE_ID + 1).setValue(archiveId);
+  // === КРОК 2: Видаляємо рядок з джерела (дані вже в архіві) ===
+  sheet.deleteRow(rowNum);
 
   var recordId = String(rowData[COL.ID] || '');
   writeLog('archivePackage', sheetName, rowNum, 'archived',
-    'ІД: ' + recordId + ' | ArchiveID: ' + archiveId);
+    'ІД: ' + recordId + ' | ArchiveID: ' + archiveId + ' | видалено з джерела');
 
   return {
     success: true,
@@ -769,7 +774,14 @@ function bulkArchive(data) {
     archiveSS = SpreadsheetApp.openById(ARCHIVE_SS_ID_LOG);
     archiveSheet = archiveSS.getSheetByName('Посилки');
     if (!archiveSheet) {
-      return { success: false, error: 'Архівний аркуш "Посилки" не знайдено' };
+      archiveSheet = archiveSS.insertSheet('Посилки');
+      archiveSheet.getRange(1, 1, 1, 26).setValues([[
+        'ВО', 'Номер№', 'Номер ТТН', 'Вага', 'Адреса Отримувача',
+        'Напрямок', 'Телефон Отримувача', 'Сума Є', 'Статус оплати', 'Оплата',
+        'Телефон Реєстратора', 'Примітка', 'Статус посилки', 'ІД', 'ПіБ',
+        'дата оформлення', 'Таймінг', 'Примітка смс', 'Дата отримання', 'Фото', 'Статус',
+        'DATE_ARCHIVE', 'ARCHIVED_BY', 'ARCHIVE_REASON', 'SOURCE_SHEET', 'ARCHIVE_ID'
+      ]]);
     }
   } catch (err) {
     return { success: false, error: 'Не вдалося відкрити архів: ' + err.toString() };
@@ -830,16 +842,23 @@ function bulkArchive(data) {
     return { success: false, error: 'Помилка batch-запису в архів: ' + err.toString() };
   }
 
-  // === КРОК 2: Оновлюємо джерело ===
+  // === КРОК 2: Видаляємо рядки з джерела (знизу вгору щоб не збити номери) ===
+  var rowsBySheet = {};
   for (var k = 0; k < successItems.length; k++) {
     var si = successItems[k];
-    si.srcSheet.getRange(si.rowNum, COL.STATUS + 1).setValue('archived');
-    si.srcSheet.getRange(si.rowNum, COL.DATE_ARCHIVE + 1).setValue(dateShort);
-    si.srcSheet.getRange(si.rowNum, COL.ARCHIVE_ID + 1).setValue(si.archiveId);
+    if (!rowsBySheet[si.sheet]) rowsBySheet[si.sheet] = { sheet: si.srcSheet, rows: [] };
+    rowsBySheet[si.sheet].rows.push(si.rowNum);
+  }
+  for (var shName in rowsBySheet) {
+    var entry = rowsBySheet[shName];
+    entry.rows.sort(function(a, b) { return b - a; });
+    for (var r = 0; r < entry.rows.length; r++) {
+      entry.sheet.deleteRow(entry.rows[r]);
+    }
   }
 
   writeLog('bulkArchive', 'bulk', 0, 'archived',
-    archiveRows.length + '/' + items.length + ' записано в архів');
+    archiveRows.length + '/' + items.length + ' записано в архів і видалено з джерела');
 
   return {
     success: true,
