@@ -944,18 +944,24 @@ function archiveToExternal(payload) {
     var startRow = archiveSheet.getLastRow() + 1;
     archiveSheet.getRange(startRow, 1, archiveRows.length, 23).setValues(archiveRows);
 
-    // === КРОК 2: Оновлюємо джерело ===
+    // === КРОК 2: Видаляємо рядки з джерела (знизу вгору щоб не збити номери) ===
+    var rowsBySheet = {};
     for (var k = 0; k < successItems.length; k++) {
       var si = successItems[k];
-      si.srcSheet.getRange(si.rowNum, COL.STATUS + 1).setValue('archived');
-      si.srcSheet.getRange(si.rowNum, COL.DATE_ARCHIVE + 1).setValue(dateShort);
-      si.srcSheet.getRange(si.rowNum, COL.ARCHIVED_BY + 1).setValue(user);
-      si.srcSheet.getRange(si.rowNum, COL.ARCHIVE_REASON + 1).setValue(reason);
-      si.srcSheet.getRange(si.rowNum, COL.ARCHIVE_ID + 1).setValue(si.archiveId);
+      var sName = si.srcSheet.getName();
+      if (!rowsBySheet[sName]) rowsBySheet[sName] = { sheet: si.srcSheet, rows: [] };
+      rowsBySheet[sName].rows.push(si.rowNum);
+    }
+    for (var shName in rowsBySheet) {
+      var entry = rowsBySheet[shName];
+      entry.rows.sort(function(a, b) { return b - a; }); // зверху вниз (reverse)
+      for (var r = 0; r < entry.rows.length; r++) {
+        entry.sheet.deleteRow(entry.rows[r]);
+      }
     }
 
     writeLog('archiveToExternal', 'bulk', 0, 'archived: ' + archiveRows.length,
-      archiveRows.length + '/' + items.length + ' записано в архів');
+      archiveRows.length + '/' + items.length + ' записано в архів і видалено з маршруту');
 
     return {
       success: true,
