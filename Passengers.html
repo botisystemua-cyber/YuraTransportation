@@ -3027,13 +3027,19 @@ function getFilteredData() {
     }
     
     return data.sort((a,b) => {
-        // Оптимізовані ліди — сортуємо по grupaOpt першочергово
+        // Оптимізовані ліди — сортуємо по grupaOpt (літера групи + номер)
         const aGrp = a.grupaOpt || '';
         const bGrp = b.grupaOpt || '';
         if (aGrp || bGrp) {
             if (aGrp && !bGrp) return -1;
             if (!aGrp && bGrp) return 1;
-            return (parseInt(aGrp)||0) - (parseInt(bGrp)||0);
+            // Спочатку по літері групи (A, B, C...), потім по номеру
+            const aLetter = aGrp.match(/^([A-Z])/)?.[1] || '';
+            const bLetter = bGrp.match(/^([A-Z])/)?.[1] || '';
+            if (aLetter !== bLetter) return aLetter.localeCompare(bLetter);
+            const aNum = parseInt(aGrp.replace(/^[A-Z]/, '')) || 0;
+            const bNum = parseInt(bGrp.replace(/^[A-Z]/, '')) || 0;
+            return aNum - bNum;
         }
         // Нові (isNew) завжди зверху
         if (a.isNew && !b.isNew) return -1;
@@ -5234,6 +5240,7 @@ function selectAllVisible() {
 // ============================================
 let optimizeBy = 'from';
 let optimizePassengersList = [];
+let lastOptimizedGroup = ''; // Остання оптимізована група (A, B, C...)
 
 function runOptimization() {
     // Беремо пасажирів по поточних фільтрах (дата + авто)
@@ -5691,34 +5698,41 @@ function applyOptimizedOrder(orderedPassengers, notGeocodedList) {
         });
     }
 
-    // Збираємо листи, які задіяні в оптимізації
-    const optimizedSheets = new Set(orderedPassengers.map(op => op._sheet).filter(Boolean));
+    // Збираємо існуючі групи серед оптимізованих пасажирів та визначаємо нову літеру
+    const existingGroups = new Set();
     const optimizedUids = new Set(orderedPassengers.map(op => op._uid || (op._sheet && op._rowNum ? `${op._sheet}_${op._rowNum}` : null)).filter(Boolean));
 
-    // Очищаємо grupaOpt у ВСІХ пасажирів тих самих листів (скидаємо старий порядок)
+    // Збираємо всі існуючі літери груп
     passengers.forEach(p => {
-        if (!p._sheet || !optimizedSheets.has(p._sheet)) return;
-        const uid = (p._sheet && p._rowNum) ? `${p._sheet}_${p._rowNum}` : null;
-        if (!uid || optimizedUids.has(uid)) return; // оптимізовані отримають новий порядок нижче
-        if (!p.grupaOpt) return; // вже порожнє
-
-        p.grupaOpt = '';
-        p.order = undefined;
-
-        // Очищаємо на сервері
-        if (p._sheet && p._rowNum) {
-            fetch(API_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain' },
-                body: JSON.stringify({
-                    action: 'updateField',
-                    payload: { sheet: p._sheet, rowNum: p._rowNum, field: 'grupaOpt', value: '' }
-                })
-            }).catch(err => console.error('grupaOpt clear error:', err));
+        if (p.grupaOpt) {
+            const letter = p.grupaOpt.match(/^([A-Z])/);
+            if (letter) existingGroups.add(letter[1]);
         }
     });
 
-    // Присвоюємо новий порядок — простий числовий без літер
+    // Визначаємо наступну вільну літеру для нової групи
+    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    let newGroupLetter = 'A';
+    for (let i = 0; i < alphabet.length; i++) {
+        if (!existingGroups.has(alphabet[i])) {
+            newGroupLetter = alphabet[i];
+            break;
+        }
+    }
+
+    // Очищаємо grupaOpt ТІЛЬКИ у тих пасажирів, які потрапили в нову оптимізацію
+    // (вони переходять з попередньої групи в нову — стара група продовжує працювати без них)
+    orderedPassengers.forEach(op => {
+        const uid = op._uid || (op._sheet && op._rowNum ? `${op._sheet}_${op._rowNum}` : null);
+        if (!uid) return;
+        const p = findPassengerByUid(uid);
+        if (p && p.grupaOpt) {
+            // Скидаємо стару групу — отримає нову нижче
+            p.grupaOpt = '';
+        }
+    });
+
+    // Присвоюємо новий порядок з літерою групи (A1, A2, ... або B1, B2, ...)
     orderedPassengers.forEach((op, idx) => {
         const uid = op._uid || (op._sheet && op._rowNum ? `${op._sheet}_${op._rowNum}` : null);
         if (!uid) return;
@@ -5727,7 +5741,7 @@ function applyOptimizedOrder(orderedPassengers, notGeocodedList) {
         if (p) {
             p.order = idx;
             p._notGeocoded = notGeocodedUids.has(uid);
-            p.grupaOpt = String(idx + 1);
+            p.grupaOpt = newGroupLetter + String(idx + 1);
 
             // Зберігаємо grupaOpt на сервер
             if (p._sheet && p._rowNum) {
@@ -5743,6 +5757,7 @@ function applyOptimizedOrder(orderedPassengers, notGeocodedList) {
         }
     });
 
+    lastOptimizedGroup = newGroupLetter;
     saveSettings();
     render();
     updateBulkBar();
@@ -5756,7 +5771,14 @@ function closeOptimization() {
 
 // Відкрити Google Maps з оптимізованими точками
 function openGoogleMaps() {
-    const optimized = passengers.filter(p => p.grupaOpt).sort((a, b) => (parseInt(a.grupaOpt)||0) - (parseInt(b.grupaOpt)||0));
+    // Показуємо маршрут останньої оптимізованої групи
+    const grp = lastOptimizedGroup;
+    const optimized = passengers.filter(p => p.grupaOpt && (!grp || p.grupaOpt.startsWith(grp)))
+        .sort((a, b) => {
+            const aNum = parseInt(a.grupaOpt.replace(/^[A-Z]/, '')) || 0;
+            const bNum = parseInt(b.grupaOpt.replace(/^[A-Z]/, '')) || 0;
+            return aNum - bNum;
+        });
     if (!optimized.length) return showToast('⚠️ Немає оптимізованих заявок');
 
     // Будуємо URL маршруту через waypoints
@@ -5775,7 +5797,9 @@ function openGoogleMaps() {
 
 // Підтвердити оптимізацію → перевести в маршрут
 function confirmOptimization() {
-    const optimized = passengers.filter(p => p.grupaOpt);
+    // Підтверджуємо останню оптимізовану групу
+    const grp = lastOptimizedGroup;
+    const optimized = passengers.filter(p => p.grupaOpt && (!grp || p.grupaOpt.startsWith(grp)));
     if (!optimized.length) return showToast('⚠️ Немає оптимізованих заявок');
 
     // Виділяємо їх та переводимо в маршрут
