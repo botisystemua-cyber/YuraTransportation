@@ -5693,9 +5693,6 @@ function showOptimizationResult(data) {
         ).join('');
     }
     document.getElementById('optimizeMapLinks').innerHTML = mapHtml;
-    
-    // Оновлюємо порядок пасажирів в CRM
-    applyOptimizedOrder(data.orderedPassengers, data.notGeocodedList);
 }
 
 function applyOptimizedOrder(orderedPassengers, notGeocodedList) {
