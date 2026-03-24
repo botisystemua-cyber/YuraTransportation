@@ -147,6 +147,17 @@ POST: `archiveByStatus`, `archiveByIds`, `archiveByAge`, `archiveAll`, `restoreA
 - Трекінг статусів
 - Інтеграція з картами
 
+## URL-и API (деплойнуті Google Apps Script)
+
+| Скрипт | URL |
+|---|---|
+| **Бот Пасажири** (`Script-Passengers.gs`) | `https://script.google.com/macros/s/AKfycby9pcF_gXt-rZT3xLQX2ucZD4PRmv633UG5v6YNN6NHZYzu28Tkzs5RfBcUrnc_sGPK/exec` |
+| **Бот Посилки** (`Script-Cargo.gs`) | `https://script.google.com/macros/s/AKfycbzMeU2UXqFW1JTj85yIvHeCt_9YyLW2i6CeBq6F6tWY3lYAKAT1X9Ne-N28aiY7dGHMQQ/exec` |
+| **Маршрути пасажирів** (`Script-passengers-marshrut.gs`) | `https://script.google.com/macros/s/AKfycbzPJHn3OlBJbRlHvveT453NKUZMViUMMmfD9yqttGZ0b7mVCeKcUum_UsmamUe43g/exec` |
+| **Маршрути посилок** (`Script-cargo-marshrut.gs`) | `https://script.google.com/macros/s/AKfycbwlo9O9RO_LUDmtTGD3GL8e1i1jkklM6heaypRGMZF_QidhBsDmagflqUhAMmwwguLYwg/exec` |
+| **Архів** (`Script-Archiv.gs`) | `https://script.google.com/macros/s/AKfycbwJLGZgYT333VdMW-nM5kPjYs2WIGGjfqkZnDJYjJxUt8nzE8GDGCPm7EzMHhcxNDOn/exec` |
+| **Авторизація** (Login) | `https://script.google.com/macros/s/AKfycbzZ6QAMEANL2DI5cbBgSpcg5KaW9xW8643u5SEkbQplljr4fh3BU_bek4WBQH6ikO34ww/exec` |
+
 ## Стильові конвенції
 
 - **Мова інтерфейсу:** Українська (uk_UA)
