@@ -5794,7 +5794,7 @@ function applyOptimizedOrder(orderedPassengers, notGeocodedList) {
                     headers: { 'Content-Type': 'text/plain' },
                     body: JSON.stringify({
                         action: 'updateField',
-                        payload: { sheet: sheet, rowNum: rowNum, field: 'grupaOpt', value: p.grupaOpt }
+                        sheet: sheet, rowNum: rowNum, field: 'grupaOpt', value: p.grupaOpt
                     })
                 }).catch(err => console.error('grupaOpt save error:', err));
             }
