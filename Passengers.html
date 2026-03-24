@@ -2412,14 +2412,18 @@ function silentSync() {
                     if (!sp.status && local.status) sp.status = local.status;
                     if (local.prevStatus) sp.prevStatus = local.prevStatus;
                     if (local.archiveType) sp.archiveType = local.archiveType;
-                    // Зберігаємо поля оптимізації (order, status='optimize', _notGeocoded)
+                    // Зберігаємо поля оптимізації (order, status='optimize', _notGeocoded, grupaOpt)
                     if (local.status === 'optimize') {
                         sp.status = 'optimize';
                         sp.order = local.order;
                         sp._notGeocoded = local._notGeocoded;
+                        // Зберігаємо локальний grupaOpt якщо сервер ще не встиг оновити
+                        if (local.grupaOpt && !sp.grupaOpt) sp.grupaOpt = local.grupaOpt;
                     } else if (local.order !== undefined) {
                         sp.order = local.order;
                     }
+                    // Завжди зберігаємо grupaOpt з локальних даних якщо сервер повернув порожнє
+                    if (local.grupaOpt && !sp.grupaOpt) sp.grupaOpt = local.grupaOpt;
                 }
             });
 
@@ -6559,6 +6563,7 @@ function syncWithSheets() {
                     timing: p.timing || '',
                     dateReg: normalizeDate(p.dateReg),
                     note: p.note || '',
+                    grupaOpt: p.grupaOpt || '',
                     direction: p.direction,
                     status: normalizedStatus,
                     statusDate: p.statusDate || '',
@@ -6569,7 +6574,7 @@ function syncWithSheets() {
                     _rowNum: p.rowNum
                 };
             });
-            
+
             // Мержимо з локальними — зберігаємо vehicle та CRM-only поля
             const localMapSync = {};
             passengers.forEach(p => {
@@ -6580,6 +6585,17 @@ function syncWithSheets() {
                 if (local) {
                     if (local.prevStatus) sp.prevStatus = local.prevStatus;
                     if (local.archiveType) sp.archiveType = local.archiveType;
+                    // Зберігаємо поля оптимізації
+                    if (local.status === 'optimize') {
+                        sp.status = 'optimize';
+                        sp.order = local.order;
+                        sp._notGeocoded = local._notGeocoded;
+                        if (local.grupaOpt && !sp.grupaOpt) sp.grupaOpt = local.grupaOpt;
+                    } else if (local.order !== undefined) {
+                        sp.order = local.order;
+                    }
+                    // Зберігаємо grupaOpt якщо сервер повернув порожнє
+                    if (local.grupaOpt && !sp.grupaOpt) sp.grupaOpt = local.grupaOpt;
                 }
             });
 
