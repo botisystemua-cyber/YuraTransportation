@@ -56,9 +56,10 @@ var COL = {
   STATUS: 20,       // U — Статус (CRM: new/work/route/archived/refused/transferred/deleted)
   DATE_ARCHIVE: 21, // V — Дата архів
   ARCHIVE_ID: 22,   // W — ARCHIVE_ID (зв'язок з таблицею Архіви)
-  VEHICLE: 23       // X — Автомобіль
+  VEHICLE: 23,      // X — Автомобіль
+  GROUP_OPT: 24     // Y — Група ОПТ (група оптимізації)
 };
-var TOTAL_COLS = 24;
+var TOTAL_COLS = 25;
 
 // Статуси для архівації
 var ARCHIVE_STATUSES = ['archived', 'refused', 'deleted', 'transferred'];
@@ -102,7 +103,8 @@ var FIELD_MAP = {
   status: COL.STATUS,
   dateArchive: COL.DATE_ARCHIVE,
   archiveId: COL.ARCHIVE_ID,
-  vehicle: COL.VEHICLE
+  vehicle: COL.VEHICLE,
+  grupaOpt: COL.GROUP_OPT
 };
 
 // ============================================

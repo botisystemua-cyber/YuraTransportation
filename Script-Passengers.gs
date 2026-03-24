@@ -74,9 +74,10 @@ var COL = {
   NOTE: 16,         // Q — Примітка
   STATUS: 17,       // R — Статус (new/work/route/archived/refused/transferred/deleted)
   DATE_ARCHIVE: 18, // S — Дата архів
-  ARCHIVE_ID: 19    // T — ARCHIVE_ID (зв'язок з таблицею Архіви)
+  ARCHIVE_ID: 19,   // T — ARCHIVE_ID (зв'язок з таблицею Архіви)
+  GROUP_OPT: 20     // U — Група ОПТ (група оптимізації)
 };
-var TOTAL_COLS = 20;
+var TOTAL_COLS = 21;
 
 // Статуси для архівації
 var ARCHIVE_STATUSES = ['archived', 'refused', 'deleted', 'transferred'];
@@ -102,7 +103,8 @@ var FIELD_MAP = {
   note: COL.NOTE,
   status: COL.STATUS,
   dateArchive: COL.DATE_ARCHIVE,
-  archiveId: COL.ARCHIVE_ID
+  archiveId: COL.ARCHIVE_ID,
+  grupaOpt: COL.GROUP_OPT
 };
 
 // ============================================

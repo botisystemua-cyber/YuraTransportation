@@ -2015,6 +2015,7 @@
             <div class="form-row"><div class="form-group"><label>Таймінг</label><input type="text" id="fTiming"></div><div class="form-group"><label>Дата оформлення</label><input type="date" id="fDateReg"></div></div>
             <div class="form-group"><label>Примітка</label><textarea id="fNote" rows="2"></textarea></div>
             <div class="form-group"><label>Примітка СМС</label><input type="text" id="fSmsNote"></div>
+            <div class="form-group"><label>Група ОПТ</label><input type="text" id="fGrupaOpt" placeholder="напр. A-1"></div>
         </div>
         <div class="modal-footer"><button class="btn-cancel" onclick="closeModal('packageModal')">Скасувати</button><button class="btn-save" onclick="savePackage()">💾 Зберегти</button></div>
     </div>
@@ -2232,10 +2233,11 @@ const ALL_COLUMNS = {
     vo:{label:'ВО',group:'details'},
     smsNote:{label:'Примітка СМС',group:'details'},
     photo:{label:'Фото',group:'details'},
-    timing:{label:'Таймінг',group:'details'}
+    timing:{label:'Таймінг',group:'details'},
+    grupaOpt:{label:'Група ОПТ',group:'details'}
 };
 
-let colSettings = {header:['ttn','weight','dateReg','phone','vehicle','amount','dateReceive','id','payStatus','payment','note','address','number'],details:['phoneReg','parcelStatus','name','vo','smsNote','photo','timing']};
+let colSettings = {header:['ttn','weight','dateReg','phone','vehicle','amount','dateReceive','id','payStatus','payment','note','address','number'],details:['phoneReg','parcelStatus','name','vo','smsNote','photo','timing','grupaOpt']};
 let packages = [];
 
 let vehicles = [
@@ -2302,6 +2304,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     smsNote: p.smsNote || '',
                     photo: p.photo || '',
                     note: p.note || '',
+                    grupaOpt: p.grupaOpt || '',
                     direction: p.direction,
                     status: normalizedStatus,
                     statusDate: p.dateArchive || '',
@@ -2370,6 +2373,7 @@ function silentSync() {
                     smsNote: p.smsNote || '',
                     photo: p.photo || '',
                     note: p.note || '',
+                    grupaOpt: p.grupaOpt || '',
                     direction: p.direction,
                     status: normalizedStatus,
                     statusDate: p.dateArchive || '',
@@ -5885,7 +5889,7 @@ function openAddModal() {
     editingId = null;
     document.getElementById('packageModalTitle').textContent = 'Додати посилку';
     document.getElementById('fDirection').value = filters.direction !== 'all' ? filters.direction : 'ua-eu';
-    ['fName','fPhone','fPhoneReg','fAddress','fTtn','fWeight','fAmount','fTiming','fNote','fSmsNote'].forEach(id => {
+    ['fName','fPhone','fPhoneReg','fAddress','fTtn','fWeight','fAmount','fTiming','fNote','fSmsNote','fGrupaOpt'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = '';
     });
@@ -5930,6 +5934,8 @@ function editPackage(uid) {
     document.getElementById('fNote').value = p.note || '';
     const smsNote = document.getElementById('fSmsNote');
     if (smsNote) smsNote.value = p.smsNote || '';
+    const grupaOpt = document.getElementById('fGrupaOpt');
+    if (grupaOpt) grupaOpt.value = p.grupaOpt || '';
     openActionsId = null;
     document.querySelectorAll('.card-actions').forEach(el => el.classList.remove('show'));
     document.querySelectorAll('.card-actions-toggle').forEach(el => el.classList.remove('open'));
@@ -6067,6 +6073,7 @@ function savePackage() {
         dateReg: document.getElementById('fDateReg').value,
         note: document.getElementById('fNote').value,
         smsNote: document.getElementById('fSmsNote')?.value || '',
+        grupaOpt: document.getElementById('fGrupaOpt')?.value || '',
         status: existingP?.status || '',
         isNew: !editingId,
         order: packages.length * 10
@@ -6156,7 +6163,8 @@ function headerEdit(uid, field, btn) {
         vo: { val: p.vo||'', ph: 'ВО', w: '60px' },
         parcelStatus: { val: p.parcelStatus||'', ph: 'Статус...', w: '120px' },
         payStatus: { val: p.payStatus||'', ph: 'Статус оплати...', w: '120px' },
-        payment: { val: p.payment||'', ph: 'Оплата...', w: '120px' }
+        payment: { val: p.payment||'', ph: 'Оплата...', w: '120px' },
+        grupaOpt: { val: p.grupaOpt||'', ph: 'Група ОПТ...', w: '100px' }
     };
 
     // Select fields - use dropdown instead of text input
@@ -7251,10 +7259,11 @@ function savePackageToServer(pkg) {
             smsNote: pkg.smsNote || '',
             dateReceive: pkg.dateReceive || '',
             photo: pkg.photo || '',
+            grupaOpt: pkg.grupaOpt || '',
             status: pkg.status || ''
         }
     };
-    
+
     fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain' },
@@ -7324,6 +7333,7 @@ function updatePackageOnServer(pkg) {
             smsNote: pkg.smsNote || '',
             dateReceive: pkg.dateReceive || '',
             photo: pkg.photo || '',
+            grupaOpt: pkg.grupaOpt || '',
             status: pkg.status || '',
             vehicle: pkg.vehicle || ''
         }
