@@ -4041,6 +4041,23 @@ function renderRoutePassengers() {
     } else if (routeStatusFilter !== 'all') {
         filteredPassengers = routePassengers.filter(p => p.driverStatus === routeStatusFilter);
     }
+
+    // Сортуємо по grupaOpt (оптимізовані першими, потім по літері + номеру)
+    filteredPassengers = [...filteredPassengers].sort((a, b) => {
+        const aGrp = a.grupaOpt || '';
+        const bGrp = b.grupaOpt || '';
+        if (aGrp || bGrp) {
+            if (aGrp && !bGrp) return -1;
+            if (!aGrp && bGrp) return 1;
+            const aLetter = aGrp.match(/^([A-Z])/)?.[1] || '';
+            const bLetter = bGrp.match(/^([A-Z])/)?.[1] || '';
+            if (aLetter !== bLetter) return aLetter.localeCompare(bLetter);
+            const aNum = parseInt(aGrp.replace(/^[A-Z]/, '')) || 0;
+            const bNum = parseInt(bGrp.replace(/^[A-Z]/, '')) || 0;
+            return aNum - bNum;
+        }
+        return 0;
+    });
     
     // Рахуємо сповіщення
     const notifiedCount = routePassengers.filter(p => mailingIds.includes(String(p.id))).length;
@@ -5324,8 +5341,14 @@ let optimizePackagesList = [];
 let lastOptimizedGroup = ''; // Остання оптимізована група (A, B, C...)
 
 function runOptimization() {
-    // Беремо пасажирів по поточних фільтрах (дата + авто)
-    const data = getFilteredData().filter(p => p.status !== 'archived');
+    // В режимі маршруту — оптимізуємо маршрутні посилки
+    const isRouteView = filters.statusFilter === 'route' && filters.routeVehicle;
+    let data;
+    if (isRouteView && routePassengers.length > 0) {
+        data = routePassengers.filter(p => !['archived','refused','transferred','deleted'].includes(p.status));
+    } else {
+        data = getFilteredData().filter(p => p.status !== 'archived');
+    }
     if (!data.length) return showToast('⚠️ Немає заявок для оптимізації');
     openOptimizeModal(data);
 }
@@ -5544,14 +5567,14 @@ async function startOptimization() {
         for (const p of optimizePackagesList) {
             const addr = optimizeBy === 'to' ? (p.address || '') : (p.address || '');
             if (!addr.trim()) {
-                notGeocoded.push({ id: p.id, name: p.name, address: '(порожня адреса)', uid: (p._sheet && p._rowNum) ? `${p._sheet}_${p._rowNum}` : null });
+                notGeocoded.push({ id: p.id, name: p.name, address: '(порожня адреса)', uid: p._uid || (p._sheet && p._rowNum ? `${p._sheet}_${p._rowNum}` : (p.sheet && p.rowNum ? `${p.sheet}_${p.rowNum}` : null)) });
                 continue;
             }
             const coords = await geocodeAddressClient(addr);
             if (coords) {
-                items.push({ ...p, coords, address: addr, _uid: (p._sheet && p._rowNum) ? `${p._sheet}_${p._rowNum}` : null });
+                items.push({ ...p, coords, address: addr, _uid: p._uid || (p._sheet && p._rowNum ? `${p._sheet}_${p._rowNum}` : (p.sheet && p.rowNum ? `${p.sheet}_${p.rowNum}` : null)) });
             } else {
-                notGeocoded.push({ id: p.id, name: p.name, address: addr, uid: (p._sheet && p._rowNum) ? `${p._sheet}_${p._rowNum}` : null });
+                notGeocoded.push({ id: p.id, name: p.name, address: addr, uid: p._uid || (p._sheet && p._rowNum ? `${p._sheet}_${p._rowNum}` : (p.sheet && p.rowNum ? `${p.sheet}_${p.rowNum}` : null)) });
             }
             await new Promise(r => setTimeout(r, 100)); // Delay for API rate
         }
@@ -5699,9 +5722,17 @@ function applyOptimizedOrder(orderedPassengers, notGeocodedList) {
         });
     }
 
-    // Збираємо існуючі групи серед всіх посилок та визначаємо нову літеру
+    // Визначаємо чи це маршрутні посилки (route_*) чи основні
+    const isRouteData = orderedPassengers.some(op => {
+        const uid = op._uid || '';
+        return uid.startsWith('route_');
+    });
+    const targetApiUrl = isRouteData ? ROUTE_API_URL : API_URL;
+    const allPackagesList = isRouteData ? routePassengers : packages;
+
+    // Збираємо існуючі групи
     const existingGroups = new Set();
-    packages.forEach(p => {
+    allPackagesList.forEach(p => {
         if (p.grupaOpt) {
             const letter = p.grupaOpt.match(/^([A-Z])/);
             if (letter) existingGroups.add(letter[1]);
@@ -5720,11 +5751,10 @@ function applyOptimizedOrder(orderedPassengers, notGeocodedList) {
 
     // Якщо всі літери A-Z зайняті — очищаємо ВСІ групи і починаємо з A
     if (!newGroupLetter) {
-        packages.forEach(p => {
+        allPackagesList.forEach(p => {
             if (p.grupaOpt) p.grupaOpt = '';
         });
-        // Один bulk-запит на сервер замість сотень окремих
-        fetch(API_URL, {
+        fetch(targetApiUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'text/plain' },
             body: JSON.stringify({ action: 'clearAllGrupaOpt' })
@@ -5755,14 +5785,16 @@ function applyOptimizedOrder(orderedPassengers, notGeocodedList) {
             p._notGeocoded = notGeocodedUids.has(uid);
             p.grupaOpt = newGroupLetter + String(idx + 1);
 
-            // Зберігаємо grupaOpt на сервер
-            if (p._sheet && p._rowNum) {
-                fetch(API_URL, {
+            // Зберігаємо grupaOpt на правильний сервер
+            const sheet = p.sheet || p._sheet;
+            const rowNum = p.rowNum || p._rowNum;
+            if (sheet && rowNum) {
+                fetch(targetApiUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain' },
                     body: JSON.stringify({
                         action: 'updateField',
-                        payload: { sheet: p._sheet, rowNum: p._rowNum, field: 'grupaOpt', value: p.grupaOpt }
+                        payload: { sheet: sheet, rowNum: rowNum, field: 'grupaOpt', value: p.grupaOpt }
                     })
                 }).catch(err => console.error('grupaOpt save error:', err));
             }
@@ -5771,23 +5803,81 @@ function applyOptimizedOrder(orderedPassengers, notGeocodedList) {
 
     lastOptimizedGroup = newGroupLetter;
     saveSettings();
-    refreshAfterAction();
+
+    // Рендеримо відповідний вид
+    if (isRouteData) {
+        renderRoutePassengers();
+    } else {
+        refreshAfterAction();
+    }
     updateAllCounts();
 }
 
 // Кнопка "Сортувати" у вікні результату оптимізації
 function applyOptimizedSort() {
-    // Закриваємо модалку оптимізації
     closeModal('optimizeModal');
 
-    // Виділення (selectedIds) вже збережене — не чіпаємо
-    // order та grupaOpt вже виставлені в applyOptimizedOrder()
-
-    // Перерендерюємо картки — тепер getFilteredData() сортує optimize по order
-    render();
+    const isRouteView = filters.statusFilter === 'route' && filters.routeVehicle;
+    if (isRouteView) {
+        renderRoutePassengers();
+    } else {
+        render();
+    }
     updateBulkBar();
-
     showToast('📊 Ліди відсортовані по оптимізованому маршруту');
+}
+
+// Закрити панель оптимізації
+function closeOptimization() {
+    document.getElementById('optimizationPanel')?.classList.remove('show');
+}
+
+// Відкрити Google Maps з оптимізованими точками
+function openGoogleMaps() {
+    const grp = lastOptimizedGroup;
+    const isRouteView = filters.statusFilter === 'route' && filters.routeVehicle;
+    const sourceList = isRouteView ? routePassengers : packages;
+    const optimized = sourceList.filter(p => p.grupaOpt && (!grp || p.grupaOpt.startsWith(grp)))
+        .sort((a, b) => {
+            const aNum = parseInt(a.grupaOpt.replace(/^[A-Z]/, '')) || 0;
+            const bNum = parseInt(b.grupaOpt.replace(/^[A-Z]/, '')) || 0;
+            return aNum - bNum;
+        });
+    if (!optimized.length) return showToast('⚠️ Немає оптимізованих заявок');
+
+    const addresses = optimized.map(p => p.address).filter(Boolean);
+    if (addresses.length === 0) return showToast('❌ Немає адрес');
+
+    const origin = encodeURIComponent(addresses[0]);
+    const destination = encodeURIComponent(addresses[addresses.length - 1]);
+    const waypoints = addresses.slice(1, -1).map(a => encodeURIComponent(a)).join('|');
+
+    let url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}`;
+    if (waypoints) url += `&waypoints=${waypoints}`;
+
+    window.open(url, '_blank');
+}
+
+// Підтвердити оптимізацію → перевести в маршрут
+function confirmOptimization() {
+    const grp = lastOptimizedGroup;
+    const isRouteView = filters.statusFilter === 'route' && filters.routeVehicle;
+    const sourceList = isRouteView ? routePassengers : packages;
+    const optimized = sourceList.filter(p => p.grupaOpt && (!grp || p.grupaOpt.startsWith(grp)));
+    if (!optimized.length) return showToast('⚠️ Немає оптимізованих заявок');
+
+    selectedIds.clear();
+    optimized.forEach(p => {
+        const uid = p._uid || (p._sheet && p._rowNum ? `${p._sheet}_${p._rowNum}` : null);
+        if (uid) selectedIds.add(uid);
+    });
+
+    if (selectedIds.size > 0) {
+        bulkMoveToRoute();
+    } else {
+        showToast('⚠️ Синхронізуй дані перед маршрутом');
+    }
+    closeOptimization();
 }
 
 // UNDO SYSTEM
