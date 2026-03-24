@@ -2412,18 +2412,14 @@ function silentSync() {
                     if (!sp.status && local.status) sp.status = local.status;
                     if (local.prevStatus) sp.prevStatus = local.prevStatus;
                     if (local.archiveType) sp.archiveType = local.archiveType;
-                    // Зберігаємо поля оптимізації (order, status='optimize', _notGeocoded, grupaOpt)
-                    if (local.status === 'optimize') {
-                        sp.status = 'optimize';
+                    // Зберігаємо поля оптимізації (order, grupaOpt)
+                    if (local.grupaOpt) {
                         sp.order = local.order;
                         sp._notGeocoded = local._notGeocoded;
-                        // Зберігаємо локальний grupaOpt якщо сервер ще не встиг оновити
-                        if (local.grupaOpt && !sp.grupaOpt) sp.grupaOpt = local.grupaOpt;
+                        if (!sp.grupaOpt) sp.grupaOpt = local.grupaOpt;
                     } else if (local.order !== undefined) {
                         sp.order = local.order;
                     }
-                    // Завжди зберігаємо grupaOpt з локальних даних якщо сервер повернув порожнє
-                    if (local.grupaOpt && !sp.grupaOpt) sp.grupaOpt = local.grupaOpt;
                 }
             });
 
@@ -3031,15 +3027,7 @@ function getFilteredData() {
     }
     
     return data.sort((a,b) => {
-        // Оптимізовані ліди (в поточній сесії) — сортуємо по order першочергово
-        const aOpt = a.status === 'optimize';
-        const bOpt = b.status === 'optimize';
-        if (aOpt || bOpt) {
-            if (aOpt && !bOpt) return -1;
-            if (!aOpt && bOpt) return 1;
-            return (a.order||0) - (b.order||0);
-        }
-        // Збережена оптимізація (grupaOpt з сервера) — працює після перезавантаження
+        // Оптимізовані ліди — сортуємо по grupaOpt першочергово
         const aGrp = a.grupaOpt || '';
         const bGrp = b.grupaOpt || '';
         if (aGrp || bGrp) {
@@ -5715,7 +5703,6 @@ function applyOptimizedOrder(orderedPassengers, notGeocodedList) {
         if (!p.grupaOpt) return; // вже порожнє
 
         p.grupaOpt = '';
-        p.status = (p.status === 'optimize') ? 'work' : p.status; // скидаємо статус optimize
         p.order = undefined;
 
         // Очищаємо на сервері
@@ -5739,7 +5726,6 @@ function applyOptimizedOrder(orderedPassengers, notGeocodedList) {
         const p = findPassengerByUid(uid);
         if (p) {
             p.order = idx;
-            p.status = 'optimize';
             p._notGeocoded = notGeocodedUids.has(uid);
             p.grupaOpt = String(idx + 1);
 
@@ -5770,7 +5756,7 @@ function closeOptimization() {
 
 // Відкрити Google Maps з оптимізованими точками
 function openGoogleMaps() {
-    const optimized = passengers.filter(p => p.status === 'optimize').sort((a, b) => (a.order || 0) - (b.order || 0));
+    const optimized = passengers.filter(p => p.grupaOpt).sort((a, b) => (parseInt(a.grupaOpt)||0) - (parseInt(b.grupaOpt)||0));
     if (!optimized.length) return showToast('⚠️ Немає оптимізованих заявок');
 
     // Будуємо URL маршруту через waypoints
@@ -5789,7 +5775,7 @@ function openGoogleMaps() {
 
 // Підтвердити оптимізацію → перевести в маршрут
 function confirmOptimization() {
-    const optimized = passengers.filter(p => p.status === 'optimize');
+    const optimized = passengers.filter(p => p.grupaOpt);
     if (!optimized.length) return showToast('⚠️ Немає оптимізованих заявок');
 
     // Виділяємо їх та переводимо в маршрут
@@ -5813,9 +5799,9 @@ function applyOptimizedSort() {
     closeModal('optimizeModal');
 
     // Виділення (selectedIds) вже збережене — не чіпаємо
-    // order та status='optimize' вже виставлені в applyOptimizedOrder()
+    // order та grupaOpt вже виставлені в applyOptimizedOrder()
 
-    // Перерендерюємо картки — тепер getFilteredData() сортує optimize по order
+    // Перерендерюємо картки — тепер getFilteredData() сортує по grupaOpt
     render();
     updateBulkBar();
 
@@ -6585,17 +6571,14 @@ function syncWithSheets() {
                 if (local) {
                     if (local.prevStatus) sp.prevStatus = local.prevStatus;
                     if (local.archiveType) sp.archiveType = local.archiveType;
-                    // Зберігаємо поля оптимізації
-                    if (local.status === 'optimize') {
-                        sp.status = 'optimize';
+                    // Зберігаємо поля оптимізації (order, grupaOpt)
+                    if (local.grupaOpt) {
                         sp.order = local.order;
                         sp._notGeocoded = local._notGeocoded;
-                        if (local.grupaOpt && !sp.grupaOpt) sp.grupaOpt = local.grupaOpt;
+                        if (!sp.grupaOpt) sp.grupaOpt = local.grupaOpt;
                     } else if (local.order !== undefined) {
                         sp.order = local.order;
                     }
-                    // Зберігаємо grupaOpt якщо сервер повернув порожнє
-                    if (local.grupaOpt && !sp.grupaOpt) sp.grupaOpt = local.grupaOpt;
                 }
             });
 
