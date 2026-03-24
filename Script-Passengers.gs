@@ -316,6 +316,7 @@ function getSheetPassengers(sheetName, direction) {
         status: crmStatus,
         dateArchive: formatDate(row[COL.DATE_ARCHIVE]),
         archiveId: String(row[COL.ARCHIVE_ID] || ''),
+        grupaOpt: String(row[COL.GROUP_OPT] || ''),
 
         isNew: isRecent(row[COL.DATE_REG] || row[COL.DATE], 24),
         isArchived: ARCHIVE_STATUSES.indexOf(crmStatus) !== -1
