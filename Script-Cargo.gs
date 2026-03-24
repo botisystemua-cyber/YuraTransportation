@@ -272,6 +272,7 @@ function getAllPackages() {
         dateArchive: formatDate(row[COL.DATE_ARCHIVE]),
         archiveId: String(row[COL.ARCHIVE_ID] || ''),
         vehicle: String(row[COL.VEHICLE] || ''),
+        grupaOpt: String(row[COL.GROUP_OPT] || ''),
 
         // Мета
         isNew: isNew24h,

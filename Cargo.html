@@ -2400,8 +2400,12 @@ function silentSync() {
                     // Зберігаємо CRM-only поля (не зберігаються на сервері)
                     if (local.prevStatus) sp.prevStatus = local.prevStatus;
                     if (local.archiveType) sp.archiveType = local.archiveType;
-                    // Зберігаємо поля оптимізації (order, status='optimize', _notGeocoded)
-                    if (local.status === 'optimize') {
+                    // Зберігаємо поля оптимізації (order, grupaOpt, _notGeocoded)
+                    if (local.grupaOpt) {
+                        sp.order = local.order;
+                        sp._notGeocoded = local._notGeocoded;
+                        if (!sp.grupaOpt) sp.grupaOpt = local.grupaOpt;
+                    } else if (local.status === 'optimize') {
                         sp.status = 'optimize';
                         sp.order = local.order;
                         sp._notGeocoded = local._notGeocoded;
@@ -3019,15 +3023,19 @@ function getFilteredData() {
     }
     
     return data.sort((a,b) => {
-        // Оптимізовані ліди — сортуємо по order першочергово
-        const aOpt = a.status === 'optimize';
-        const bOpt = b.status === 'optimize';
-        if (aOpt || bOpt) {
-            // Оптимізовані завжди зверху перед звичайними
-            if (aOpt && !bOpt) return -1;
-            if (!aOpt && bOpt) return 1;
-            // Обидва оптимізовані — по order
-            return (a.order||0) - (b.order||0);
+        // Оптимізовані ліди — сортуємо по grupaOpt (літера групи + номер)
+        const aGrp = a.grupaOpt || '';
+        const bGrp = b.grupaOpt || '';
+        if (aGrp || bGrp) {
+            if (aGrp && !bGrp) return -1;
+            if (!aGrp && bGrp) return 1;
+            // Спочатку по літері групи (A, B, C...), потім по номеру
+            const aLetter = aGrp.match(/^([A-Z])/)?.[1] || '';
+            const bLetter = bGrp.match(/^([A-Z])/)?.[1] || '';
+            if (aLetter !== bLetter) return aLetter.localeCompare(bLetter);
+            const aNum = parseInt(aGrp.replace(/^[A-Z]/, '')) || 0;
+            const bNum = parseInt(bGrp.replace(/^[A-Z]/, '')) || 0;
+            return aNum - bNum;
         }
         // Нові (isNew) завжди зверху
         if (a.isNew && !b.isNew) return -1;
@@ -5317,6 +5325,7 @@ function selectAllVisible() {
 // ============================================
 let optimizeBy = 'from';
 let optimizePackagesList = [];
+let lastOptimizedGroup = ''; // Остання оптимізована група (A, B, C...)
 
 function runOptimization() {
     // Беремо пасажирів по поточних фільтрах (дата + авто)
@@ -5693,20 +5702,85 @@ function applyOptimizedOrder(orderedPassengers, notGeocodedList) {
             if (item.uid) notGeocodedUids.add(item.uid);
         });
     }
-    
-    // Оновлюємо порядок в масиві packages
+
+    // Збираємо існуючі групи серед всіх посилок та визначаємо нову літеру
+    const existingGroups = new Set();
+    packages.forEach(p => {
+        if (p.grupaOpt) {
+            const letter = p.grupaOpt.match(/^([A-Z])/);
+            if (letter) existingGroups.add(letter[1]);
+        }
+    });
+
+    // Визначаємо наступну вільну літеру для нової групи
+    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    let newGroupLetter = null;
+    for (let i = 0; i < alphabet.length; i++) {
+        if (!existingGroups.has(alphabet[i])) {
+            newGroupLetter = alphabet[i];
+            break;
+        }
+    }
+
+    // Якщо всі літери A-Z зайняті — очищаємо ВСІ групи і починаємо з A
+    if (!newGroupLetter) {
+        packages.forEach(p => {
+            if (p.grupaOpt) {
+                p.grupaOpt = '';
+                if (p._sheet && p._rowNum) {
+                    fetch(API_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'text/plain' },
+                        body: JSON.stringify({
+                            action: 'updateField',
+                            payload: { sheet: p._sheet, rowNum: p._rowNum, field: 'grupaOpt', value: '' }
+                        })
+                    }).catch(err => console.error('grupaOpt clear error:', err));
+                }
+            }
+        });
+        existingGroups.clear();
+        newGroupLetter = 'A';
+        showToast('🔄 Всі 26 груп використано — групи очищено, починаємо з A');
+    }
+
+    // Очищаємо grupaOpt ТІЛЬКИ у тих посилок, які потрапили в нову оптимізацію
+    orderedPassengers.forEach(op => {
+        const uid = op._uid || (op._sheet && op._rowNum ? `${op._sheet}_${op._rowNum}` : null);
+        if (!uid) return;
+        const p = findPackageByUid(uid);
+        if (p && p.grupaOpt) {
+            p.grupaOpt = '';
+        }
+    });
+
+    // Присвоюємо новий порядок з літерою групи (A1, A2, ... або B1, B2, ...)
     orderedPassengers.forEach((op, idx) => {
         const uid = op._uid || (op._sheet && op._rowNum ? `${op._sheet}_${op._rowNum}` : null);
         if (!uid) return;
-        
+
         const p = findPackageByUid(uid);
         if (p) {
             p.order = idx;
             p.status = 'optimize';
             p._notGeocoded = notGeocodedUids.has(uid);
+            p.grupaOpt = newGroupLetter + String(idx + 1);
+
+            // Зберігаємо grupaOpt на сервер
+            if (p._sheet && p._rowNum) {
+                fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify({
+                        action: 'updateField',
+                        payload: { sheet: p._sheet, rowNum: p._rowNum, field: 'grupaOpt', value: p.grupaOpt }
+                    })
+                }).catch(err => console.error('grupaOpt save error:', err));
+            }
         }
     });
-    
+
+    lastOptimizedGroup = newGroupLetter;
     saveSettings();
     refreshAfterAction();
     updateAllCounts();

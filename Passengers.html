@@ -5712,12 +5712,36 @@ function applyOptimizedOrder(orderedPassengers, notGeocodedList) {
 
     // Визначаємо наступну вільну літеру для нової групи
     const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    let newGroupLetter = 'A';
+    let newGroupLetter = null;
     for (let i = 0; i < alphabet.length; i++) {
         if (!existingGroups.has(alphabet[i])) {
             newGroupLetter = alphabet[i];
             break;
         }
+    }
+
+    // Якщо всі літери A-Z зайняті — очищаємо ВСІ групи і починаємо з A
+    if (!newGroupLetter) {
+        passengers.forEach(p => {
+            if (p.grupaOpt) {
+                const oldVal = p.grupaOpt;
+                p.grupaOpt = '';
+                // Очищаємо на сервері
+                if (p._sheet && p._rowNum) {
+                    fetch(API_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'text/plain' },
+                        body: JSON.stringify({
+                            action: 'updateField',
+                            payload: { sheet: p._sheet, rowNum: p._rowNum, field: 'grupaOpt', value: '' }
+                        })
+                    }).catch(err => console.error('grupaOpt clear error:', err));
+                }
+            }
+        });
+        existingGroups.clear();
+        newGroupLetter = 'A';
+        showToast('🔄 Всі 26 груп використано — групи очищено, починаємо з A');
     }
 
     // Очищаємо grupaOpt ТІЛЬКИ у тих пасажирів, які потрапили в нову оптимізацію
