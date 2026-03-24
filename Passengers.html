@@ -3041,12 +3041,7 @@ function getFilteredData() {
         if (aGrp || bGrp) {
             if (aGrp && !bGrp) return -1;
             if (!aGrp && bGrp) return 1;
-            // Одна група — по номеру (A-1, A-2...)
-            const aParts = aGrp.split('-');
-            const bParts = bGrp.split('-');
-            if (aParts[0] === bParts[0]) return (parseInt(aParts[1])||0) - (parseInt(bParts[1])||0);
-            // Різні групи — по літері
-            return aGrp.localeCompare(bGrp);
+            return (parseInt(aGrp)||0) - (parseInt(bGrp)||0);
         }
         // Нові (isNew) завжди зверху
         if (a.isNew && !b.isNew) return -1;
@@ -5704,14 +5699,35 @@ function applyOptimizedOrder(orderedPassengers, notGeocodedList) {
         });
     }
 
-    // Генеруємо літеру групи (A, B, C... по колу)
-    const usedGroups = new Set(passengers.map(p => (p.grupaOpt || '').split('-')[0]).filter(Boolean));
-    let groupLetter = 'A';
-    while (usedGroups.has(groupLetter) && groupLetter < 'Z') {
-        groupLetter = String.fromCharCode(groupLetter.charCodeAt(0) + 1);
-    }
+    // Збираємо листи, які задіяні в оптимізації
+    const optimizedSheets = new Set(orderedPassengers.map(op => op._sheet).filter(Boolean));
+    const optimizedUids = new Set(orderedPassengers.map(op => op._uid || (op._sheet && op._rowNum ? `${op._sheet}_${op._rowNum}` : null)).filter(Boolean));
 
-    // Оновлюємо порядок в масиві passengers + записуємо grupaOpt
+    // Очищаємо grupaOpt у ВСІХ пасажирів тих самих листів (скидаємо старий порядок)
+    passengers.forEach(p => {
+        if (!p._sheet || !optimizedSheets.has(p._sheet)) return;
+        const uid = (p._sheet && p._rowNum) ? `${p._sheet}_${p._rowNum}` : null;
+        if (!uid || optimizedUids.has(uid)) return; // оптимізовані отримають новий порядок нижче
+        if (!p.grupaOpt) return; // вже порожнє
+
+        p.grupaOpt = '';
+        p.status = (p.status === 'optimize') ? 'work' : p.status; // скидаємо статус optimize
+        p.order = undefined;
+
+        // Очищаємо на сервері
+        if (p._sheet && p._rowNum) {
+            fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain' },
+                body: JSON.stringify({
+                    action: 'updateField',
+                    payload: { sheet: p._sheet, rowNum: p._rowNum, field: 'grupaOpt', value: '' }
+                })
+            }).catch(err => console.error('grupaOpt clear error:', err));
+        }
+    });
+
+    // Присвоюємо новий порядок — простий числовий без літер
     orderedPassengers.forEach((op, idx) => {
         const uid = op._uid || (op._sheet && op._rowNum ? `${op._sheet}_${op._rowNum}` : null);
         if (!uid) return;
@@ -5721,7 +5737,7 @@ function applyOptimizedOrder(orderedPassengers, notGeocodedList) {
             p.order = idx;
             p.status = 'optimize';
             p._notGeocoded = notGeocodedUids.has(uid);
-            p.grupaOpt = groupLetter + '-' + (idx + 1);
+            p.grupaOpt = String(idx + 1);
 
             // Зберігаємо grupaOpt на сервер
             if (p._sheet && p._rowNum) {
