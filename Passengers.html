@@ -1934,7 +1934,6 @@
             <div class="form-row"><div class="form-group"><label>Диспечер</label><input type="text" id="fDispatcher"></div><div class="form-group"><label>Вага (кг)</label><input type="text" id="fWeight"></div></div>
             <div class="form-row"><div class="form-group"><label>Таймінг</label><input type="text" id="fTiming"></div><div class="form-group"><label>Дата оформлення</label><input type="date" id="fDateReg"></div></div>
             <div class="form-group"><label>Примітка</label><textarea id="fNote" rows="2"></textarea></div>
-            <div class="form-group"><label>Група ОПТ</label><input type="text" id="fGrupaOpt" placeholder="напр. A-1"></div>
         </div>
         <div class="modal-footer"><button class="btn-cancel" onclick="closeModal('passengerModal')">Скасувати</button><button class="btn-save" onclick="savePassenger()">💾 Зберегти</button></div>
     </div>
@@ -2177,11 +2176,10 @@ const ALL_COLUMNS = {
     weight:{label:'Вага',group:'details'},
     timing:{label:'Таймінг',group:'details'},
     dateReg:{label:'Дата оформлення',group:'details'},
-    note:{label:'Примітка',group:'details'},
-    grupaOpt:{label:'Група ОПТ',group:'details'}
+    note:{label:'Примітка',group:'details'}
 };
 
-let colSettings = {header:['name','phone','seats','from','to','date','payment'],details:['percent','note','mark','dispatcher','phoneReg','timing','dateReg','weight','grupaOpt']};
+let colSettings = {header:['name','phone','seats','from','to','date','payment'],details:['percent','note','mark','dispatcher','phoneReg','timing','dateReg','weight']};
 let passengers = [
     {id:'p1',date:'2025-02-20',name:'Семен Гора',phone:'+380639763484',from:'Кошице',to:'Ужгород',seats:2,payment:'60',vehicle:'v1',status:'new',isNew:true,order:0,direction:'eu-ua'},
     {id:'p2',date:'2025-02-20',name:'Катерина Ятухівська',phone:'+380973874545',from:'Братислава',to:'Ужгород',seats:1,payment:'60',vehicle:'v1',status:'work',isNew:false,order:1,direction:'eu-ua'},
@@ -5959,7 +5957,7 @@ function openAddModal() {
     document.getElementById('passengerModalTitle').textContent = 'Додати'; 
     document.getElementById('fDate').value = filters.date || new Date().toISOString().split('T')[0]; 
     document.getElementById('fDirection').value = filters.direction !== 'all' ? filters.direction : 'ua-eu';
-    ['fName','fPhone','fPhoneReg','fFrom','fTo','fPayment','fPercent','fMark','fDispatcher','fWeight','fTiming','fNote','fGrupaOpt'].forEach(id => document.getElementById(id).value = ''); 
+    ['fName','fPhone','fPhoneReg','fFrom','fTo','fPayment','fPercent','fMark','fDispatcher','fWeight','fTiming','fNote'].forEach(id => document.getElementById(id).value = ''); 
     document.getElementById('fSeats').value = 1; 
     document.getElementById('fVehicle').value = filters.vehicle || ''; 
     document.getElementById('fDateReg').value = new Date().toISOString().split('T')[0];
@@ -5989,7 +5987,6 @@ function editPassenger(uid) {
     document.getElementById('fTiming').value = p.timing || '';
     document.getElementById('fDateReg').value = p.dateReg || '';
     document.getElementById('fNote').value = p.note || '';
-    document.getElementById('fGrupaOpt').value = p.grupaOpt || '';
     // Закриваємо дії картки
     openActionsId = null;
     document.querySelectorAll('.card-actions').forEach(el => el.classList.remove('show'));
@@ -6130,7 +6127,7 @@ function savePassenger() {
         timing: document.getElementById('fTiming').value,
         dateReg: document.getElementById('fDateReg').value,
         note: document.getElementById('fNote').value,
-        grupaOpt: document.getElementById('fGrupaOpt').value,
+        grupaOpt: existingP?.grupaOpt || '',
         status: existingP?.status || 'new',
         isNew: !editingId,
         order: passengers.length * 10
@@ -6205,7 +6202,7 @@ function toggleDetailsCol(k) {
 function resetColumnsSettings() {
     colSettings = {
         header: ['name','phone','seats','from','to','date','payment'],
-        details: ['percent','note','mark','dispatcher','phoneReg','timing','dateReg','weight','grupaOpt']
+        details: ['percent','note','mark','dispatcher','phoneReg','timing','dateReg','weight']
     };
     renderColumnsList();
     showToast('🔄 Скинуто');
