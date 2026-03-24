@@ -668,6 +668,164 @@
         /* PHOTO BUTTON */
         .btn-photo-link { display: inline-block; padding: 6px 12px; background: linear-gradient(135deg, #2196F3, #1565C0); color: white; border-radius: 6px; font-size: 11px; font-weight: 600; text-decoration: none; margin-top: 6px; }
         .btn-photo-link:hover { opacity: 0.9; }
+        /* UNIFIED ROUTE CARD */
+        .route-card-unified {
+            background: linear-gradient(135deg, #d90d0d 0%, #a00a0a 100%);
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 12px;
+            padding: 18px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 16px rgba(217, 13, 13, 0.3);
+            margin-bottom: 12px;
+            text-align: center;
+        }
+        .route-card-unified:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 28px rgba(217, 13, 13, 0.4);
+        }
+        .route-card-unified .route-name {
+            color: #ffffff;
+            font-size: 20px;
+        }
+        .route-card-unified .unified-count {
+            font-size: 32px;
+            font-weight: 800;
+            color: #ffffff;
+            margin: 8px 0 4px;
+        }
+        .route-card-unified .unified-subtitle {
+            font-size: 11px;
+            color: rgba(255,255,255,0.8);
+            letter-spacing: 1px;
+        }
+        .route-card .route-count-big {
+            font-size: 22px;
+            font-weight: 800;
+            color: #d90d0d;
+            margin-top: 4px;
+        }
+        /* ROUTE FILTER BAR (inside list screen for unified view) */
+        .route-filter-bar {
+            display: flex;
+            gap: 4px;
+            margin-top: 6px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            padding-bottom: 2px;
+        }
+        .route-filter-bar::-webkit-scrollbar { display: none; }
+        .route-filter-btn {
+            padding: 4px 10px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 10px;
+            background: rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.8);
+            white-space: nowrap;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+        .route-filter-btn.active {
+            background: rgba(217, 13, 13, 0.8);
+            color: #fff;
+            border-color: #d90d0d;
+            box-shadow: 0 0 8px rgba(217, 13, 13, 0.4);
+        }
+        .route-filter-btn .route-filter-count {
+            font-size: 12px;
+            font-weight: 800;
+            margin-left: 4px;
+        }
+        /* PASSENGER ROUTE BADGE on cards */
+        .passenger-route-badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 9px;
+            font-weight: 700;
+            background: rgba(26, 58, 94, 0.15);
+            color: #1a3a5e;
+            letter-spacing: 0.3px;
+        }
+        /* TRANSFER MODAL */
+        .transfer-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(4px);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        .transfer-overlay.show { display: flex; }
+        .transfer-box {
+            background: white;
+            width: 90%;
+            max-width: 380px;
+            border-radius: 16px;
+            overflow: hidden;
+            animation: slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .transfer-header {
+            background: linear-gradient(135deg, #1a3a5e 0%, #0d1f3c 100%);
+            color: white;
+            padding: 16px;
+            text-align: center;
+            border-bottom: 4px solid #d90d0d;
+        }
+        .transfer-header h3 { margin: 0; font-size: 16px; font-weight: 700; }
+        .transfer-body { padding: 16px; }
+        .transfer-passenger-info {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 12px;
+            font-size: 12px;
+        }
+        .transfer-passenger-info strong { color: #1a3a5e; }
+        .transfer-route-option {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            margin-bottom: 8px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .transfer-route-option:hover {
+            border-color: #1a3a5e;
+            background: rgba(26, 58, 94, 0.05);
+        }
+        .transfer-route-option.current {
+            border-color: #ccc;
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .transfer-route-name { font-weight: 700; font-size: 14px; color: #1a3a5e; }
+        .transfer-route-count { font-size: 11px; color: #888; }
+        .transfer-footer {
+            padding: 12px 16px;
+            background: #f8f9fa;
+            border-top: 1px solid #e9ecef;
+        }
+        .transfer-cancel-btn {
+            width: 100%;
+            padding: 10px;
+            background: #e9ecef;
+            color: #495057;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -751,6 +909,7 @@
                     <span class="filter-count" id="countCancelled">0</span>
                 </button>
             </div>
+            <div class="route-filter-bar" id="routeFilterBar" style="display:none;"></div>
         </div>
         <div class="deliveries-container" id="deliveriesList">
             <div class="loading"><div class="spinner"></div><p>Завантаження...</p></div>
@@ -786,6 +945,11 @@
         let currentFilter = 'all';
         let lastUpdateTime = 0;
         let isFirstLoad = true;
+        // Unified view
+        let isUnifiedView = false;
+        let allRoutePassengers = []; // all passengers from all routes with _sourceRoute
+        let availablePassengerRoutes = []; // [{name, count}]
+        let currentRouteFilter = 'all'; // 'all' or route name
         function escapeHtml(str) {
             if (!str) return '';
             return String(str)
@@ -842,16 +1006,25 @@
                 var data = await response.json();
                 if (data.success && data.routes && data.routes.length > 0) {
                     var passengerRoutes = data.routes;
+                    availablePassengerRoutes = passengerRoutes;
                     if (passengerRoutes.length === 0) {
                         grid.innerHTML = '<div style="text-align:center;color:rgba(255,255,255,0.7);padding:20px;">Немає маршрутів</div>';
                         return;
                     }
-                    grid.innerHTML = passengerRoutes.map(function(route) {
+                    var totalCount = passengerRoutes.reduce(function(sum, r) { return sum + (r.count || 0); }, 0);
+                    var html = '<div class="route-card-unified" onclick="openUnifiedRoute()">' +
+                        '<div class="route-name">&#128202; ЗВЕДЕНИЙ</div>' +
+                        '<div class="unified-count">' + totalCount + '</div>' +
+                        '<div class="unified-subtitle">ПАСАЖИРІВ У ВСІХ МАРШРУТАХ</div>' +
+                    '</div>';
+                    html += passengerRoutes.map(function(route) {
                         return '<div class="route-card" onclick="selectRoute(\'' + escapeHtml(route.name) + '\', \'\', \'passenger\')">' +
                             '<div class="route-name">' + escapeHtml(route.name) + '</div>' +
-                            '<span class="route-type-badge badge-passenger">ПАСАЖИРИ (' + route.count + ')</span>' +
+                            '<div class="route-count-big">' + route.count + '</div>' +
+                            '<span class="route-type-badge badge-passenger">ПАСАЖИРИ</span>' +
                         '</div>';
                     }).join('');
+                    grid.innerHTML = html;
                 } else {
                     grid.innerHTML = '<div style="text-align:center;color:rgba(255,255,255,0.7);padding:20px;">Немає маршрутів</div>';
                 }
@@ -902,6 +1075,8 @@
             deliveries = [];
             currentSheet = route;
             currentRouteType = routeType;
+            isUnifiedView = false;
+            currentRouteFilter = 'all';
             deliveryStatuses = {};
             newDeliveries = [];
             currentFilter = 'all';
@@ -910,6 +1085,8 @@
             loadStatuses();
             document.querySelectorAll('.filter-btn').forEach(function(btn) { btn.classList.remove('active'); });
             document.getElementById('filterAll').classList.add('active');
+            var rfBar = document.getElementById('routeFilterBar');
+            if (rfBar) rfBar.style.display = 'none';
             var headerIcon = document.getElementById('listHeaderIcon');
             headerIcon.innerHTML = routeType === 'passenger' ? '&#128101; Пасажири' : '&#128230; Посилки';
             showScreen('listScreen');
@@ -962,7 +1139,241 @@
             openRoute(route, routeType);
         }
         function goBack() {
+            isUnifiedView = false;
+            currentRouteFilter = 'all';
+            var rfBar = document.getElementById('routeFilterBar');
+            if (rfBar) rfBar.style.display = 'none';
             showScreen('routeScreen');
+        }
+        // ============ UNIFIED VIEW ============
+        async function openUnifiedRoute() {
+            var list = document.getElementById('deliveriesList');
+            list.innerHTML = '<div class="loading"><div class="spinner"></div><p>Завантаження всіх маршрутів...</p></div>';
+            deliveries = [];
+            allRoutePassengers = [];
+            currentSheet = 'Зведений';
+            currentRouteType = 'passenger';
+            isUnifiedView = true;
+            currentRouteFilter = 'all';
+            deliveryStatuses = {};
+            newDeliveries = [];
+            currentFilter = 'all';
+            lastUpdateTime = 0;
+            isFirstLoad = true;
+            loadStatuses();
+            document.querySelectorAll('.filter-btn').forEach(function(btn) { btn.classList.remove('active'); });
+            document.getElementById('filterAll').classList.add('active');
+            document.getElementById('listHeaderIcon').innerHTML = '&#128202; Зведений';
+            document.getElementById('routeNameDisplay').textContent = 'Усі пасажирські маршрути';
+            showScreen('listScreen');
+            showToast('Завантаження зведеного...');
+            await fetchUnifiedPassengers();
+        }
+        async function fetchUnifiedPassengers() {
+            var list = document.getElementById('deliveriesList');
+            list.innerHTML = '<div class="loading"><div class="spinner"></div><p>Завантаження всіх маршрутів...</p></div>';
+            try {
+                // Fetch routes if not loaded yet
+                if (availablePassengerRoutes.length === 0) {
+                    var routeResp = await fetch(CONFIG.ROUTES_API_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'text/plain' },
+                        body: JSON.stringify({ action: 'getAvailableRoutes' })
+                    });
+                    var routeData = await routeResp.json();
+                    if (routeData.success && routeData.routes) {
+                        availablePassengerRoutes = routeData.routes;
+                    }
+                }
+                // Fetch passengers from all routes in parallel
+                var promises = availablePassengerRoutes.map(function(route) {
+                    return fetch(CONFIG.PASSENGER_API_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'text/plain' },
+                        body: JSON.stringify({
+                            action: 'getRoutePassengers',
+                            payload: { sheetName: route.name }
+                        })
+                    }).then(function(r) { return r.json(); }).then(function(data) {
+                        return { routeName: route.name, data: data };
+                    });
+                });
+                var results = await Promise.all(promises);
+                allRoutePassengers = [];
+                results.forEach(function(result) {
+                    if (result.data.success && result.data.passengers) {
+                        result.data.passengers.forEach(function(p) {
+                            p._sourceRoute = result.routeName;
+                            allRoutePassengers.push(p);
+                        });
+                    }
+                });
+                // Update route counts from real data
+                availablePassengerRoutes.forEach(function(route) {
+                    route.count = allRoutePassengers.filter(function(p) { return p._sourceRoute === route.name; }).length;
+                });
+                // Apply route filter
+                applyRouteFilter();
+                // Build route filter bar
+                buildRouteFilterBar();
+                lastUpdateTime = Date.now();
+                isFirstLoad = false;
+                showToast('Завантажено ' + allRoutePassengers.length + ' пасажирів');
+            } catch (error) {
+                console.error('Помилка зведеного завантаження:', error);
+                list.innerHTML = '<div class="loading">&#10060; Помилка: ' + escapeHtml(error.message) + '</div>';
+            }
+        }
+        function applyRouteFilter() {
+            if (currentRouteFilter === 'all') {
+                deliveries = allRoutePassengers.slice();
+            } else {
+                deliveries = allRoutePassengers.filter(function(p) {
+                    return p._sourceRoute === currentRouteFilter;
+                });
+            }
+            // Rebuild status keys
+            deliveries.forEach(function(item, idx) {
+                item._statusKey = 'pas_' + item.rowNum + '_' + item._sourceRoute + '_' + idx;
+                var apiStatus = item.driverStatus;
+                if (apiStatus && apiStatus !== 'pending') {
+                    deliveryStatuses[item._statusKey] = apiStatus;
+                }
+            });
+            saveStatuses();
+            renderDeliveries();
+            updateStats();
+        }
+        function buildRouteFilterBar() {
+            var bar = document.getElementById('routeFilterBar');
+            if (!bar) return;
+            var totalCount = allRoutePassengers.length;
+            var html = '<button class="route-filter-btn ' + (currentRouteFilter === 'all' ? 'active' : '') + '" onclick="setRouteFilter(\'all\')">УСЬОГО <span class="route-filter-count">' + totalCount + '</span></button>';
+            availablePassengerRoutes.forEach(function(route) {
+                var count = route.count || 0;
+                var isActive = currentRouteFilter === route.name;
+                html += '<button class="route-filter-btn ' + (isActive ? 'active' : '') + '" onclick="setRouteFilter(\'' + escapeHtml(route.name) + '\')">' + escapeHtml(route.name) + ' <span class="route-filter-count">' + count + '</span></button>';
+            });
+            bar.innerHTML = html;
+            bar.style.display = 'flex';
+        }
+        function setRouteFilter(filter) {
+            currentRouteFilter = filter;
+            applyRouteFilter();
+            buildRouteFilterBar();
+            var label = filter === 'all' ? 'Усі маршрути' : filter;
+            document.getElementById('routeNameDisplay').textContent = label;
+        }
+        async function forceLoadUnified() {
+            lastUpdateTime = 0;
+            await fetchUnifiedPassengers();
+        }
+        // ============ TRANSFER PASSENGER ============
+        function showTransferModal(statusKey) {
+            var passenger = deliveries.find(function(d) { return d._statusKey === statusKey; });
+            if (!passenger) return showToast('Пасажира не знайдено');
+            var overlay = document.getElementById('transferOverlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.className = 'transfer-overlay';
+                overlay.id = 'transferOverlay';
+                overlay.onclick = function(e) { if (e.target === overlay) closeTransferModal(); };
+                document.body.appendChild(overlay);
+            }
+            var html = '<div class="transfer-box">' +
+                '<div class="transfer-header"><h3>&#128260; Перенести пасажира</h3></div>' +
+                '<div class="transfer-body">' +
+                    '<div class="transfer-passenger-info"><strong>' + escapeHtml(passenger.name) + '</strong><br>' +
+                        escapeHtml(passenger.phone) + '<br>' +
+                        escapeHtml(passenger.from) + ' &#8594; ' + escapeHtml(passenger.to) + '<br>' +
+                        '<span style="color:#888;">Зараз: ' + escapeHtml(passenger._sourceRoute) + '</span>' +
+                    '</div>';
+            availablePassengerRoutes.forEach(function(route) {
+                var isCurrent = route.name === passenger._sourceRoute;
+                html += '<div class="transfer-route-option ' + (isCurrent ? 'current' : '') + '" ' +
+                    (isCurrent ? '' : 'onclick="executeTransfer(\'' + escapeHtml(statusKey) + '\', \'' + escapeHtml(route.name) + '\')"') + '>' +
+                    '<div class="transfer-route-name">' + escapeHtml(route.name) + (isCurrent ? ' (поточний)' : '') + '</div>' +
+                    '<div class="transfer-route-count">' + (route.count || 0) + ' пас.</div>' +
+                '</div>';
+            });
+            html += '</div><div class="transfer-footer">' +
+                '<button class="transfer-cancel-btn" onclick="closeTransferModal()">Скасувати</button>' +
+                '</div></div>';
+            overlay.innerHTML = html;
+            overlay.classList.add('show');
+        }
+        function closeTransferModal() {
+            var overlay = document.getElementById('transferOverlay');
+            if (overlay) overlay.classList.remove('show');
+        }
+        async function executeTransfer(statusKey, targetRoute) {
+            var passenger = deliveries.find(function(d) { return d._statusKey === statusKey; });
+            if (!passenger) return showToast('Пасажира не знайдено');
+            var sourceRoute = passenger._sourceRoute;
+            if (sourceRoute === targetRoute) return;
+            if (!confirm('Перенести ' + passenger.name + ' з "' + sourceRoute + '" до "' + targetRoute + '"?')) return;
+            closeTransferModal();
+            showToast('&#9203; Переносимо...');
+            try {
+                // 1. Copy to target route
+                var passengerData = {};
+                passengerData[targetRoute] = [{
+                    date: passenger.date || '',
+                    from: passenger.from || '',
+                    to: passenger.to || '',
+                    seats: passenger.seats || 1,
+                    name: passenger.name || '',
+                    phone: passenger.phone || '',
+                    mark: passenger.mark || '',
+                    payment: passenger.payment || '',
+                    percent: passenger.percent || '',
+                    dispatcher: passenger.dispatcher || '',
+                    id: passenger.id || '',
+                    phoneReg: passenger.phoneReg || '',
+                    weight: passenger.weight || '',
+                    timing: passenger.timing || '',
+                    dateReg: passenger.dateReg || '',
+                    note: passenger.note || '',
+                    sourceSheet: sourceRoute
+                }];
+                var copyResp = await fetch(CONFIG.PASSENGER_API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify({
+                        action: 'copyToRoute',
+                        payload: { passengersByVehicle: passengerData, conflictAction: 'add' }
+                    })
+                });
+                var copyData = await copyResp.json();
+                if (!copyData.success) {
+                    showToast('&#10060; Помилка копіювання: ' + (copyData.error || ''));
+                    return;
+                }
+                // 2. Delete from source route
+                var delResp = await fetch(CONFIG.PASSENGER_API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify({
+                        action: 'deleteRoutePassenger',
+                        payload: {
+                            sheetName: sourceRoute,
+                            rowNum: passenger.rowNum,
+                            expectedId: passenger.id || ''
+                        }
+                    })
+                });
+                var delData = await delResp.json();
+                if (!delData.success) {
+                    showToast('&#9888; Скопійовано, але не вдалося видалити з ' + sourceRoute);
+                    return;
+                }
+                showToast('&#9989; Перенесено до ' + targetRoute);
+                // Reload all data
+                lastUpdateTime = 0;
+                await fetchUnifiedPassengers();
+            } catch (err) {
+                showToast('&#10060; Помилка: ' + err.message);
+            }
         }
         async function loadDeliveries() {
             var now = Date.now();
@@ -976,7 +1387,11 @@
         }
         async function forceLoadDeliveries() {
             lastUpdateTime = 0;
-            await fetchDeliveries();
+            if (isUnifiedView) {
+                await fetchUnifiedPassengers();
+            } else {
+                await fetchDeliveries();
+            }
         }
         async function fetchDeliveries() {
             var list = document.getElementById('deliveriesList');
@@ -1254,10 +1669,16 @@
                 var safePhone = escapeHtml(passenger.phone);
                 var safeId = escapeHtml(passenger.id);
                 var safeStatusKey = escapeHtml(passenger._statusKey);
+                var routeBadge = isUnifiedView && passenger._sourceRoute
+                    ? '<span class="passenger-route-badge">&#128204; ' + escapeHtml(passenger._sourceRoute) + '</span> '
+                    : '';
+                var transferBtn = isUnifiedView
+                    ? '<button class="btn-small-card" onclick="showTransferModal(\'' + safeStatusKey + '\')" style="background:linear-gradient(135deg,#FF9800,#F57C00);color:white;border-color:#F57C00;">&#128260; Перенести</button>'
+                    : '';
                 card.innerHTML = '<div class="card-row">' +
                         '<div class="delivery-number ' + (isNew ? 'new' : '') + '">' + (index + 1) + '</div>' +
                         '<div class="card-main-info">' +
-                            '<div class="card-address">' + safeName + '</div>' +
+                            '<div class="card-address">' + routeBadge + safeName + '</div>' +
                             '<div style="font-size:11px;color:#666;margin-top:2px;">&#128663; ' + safeFrom + ' &#8594; ' + safeTo + '</div>' +
                         '</div>' +
                         '<span style="font-size:16px;font-weight:bold;">' + statusIcon + '</span>' +
@@ -1276,8 +1697,9 @@
                         '<button class="btn-small-card" onclick="navigatePassenger(' + index + ',\'from\')">&#128663; Відправка</button>' +
                         '<button class="btn-small-card" onclick="navigatePassenger(' + index + ',\'to\')">&#127937; Прибуття</button>' +
                     '</div>' +
-                    '<div class="card-buttons" style="grid-template-columns:1fr;margin-top:5px;">' +
+                    '<div class="card-buttons" style="grid-template-columns:' + (isUnifiedView ? '1fr 1fr' : '1fr') + ';margin-top:5px;">' +
                         '<button class="btn-small-card" onclick="toggleExpand(\'' + uid + '\')">&#128194; Деталі</button>' +
+                        transferBtn +
                     '</div>' +
                     '<div class="status-buttons-card">' +
                         '<button class="status-btn-card status-in-progress-btn" onclick="setPassengerStatus(\'' + safeStatusKey + '\',\'in-progress\')">&#128260;</button>' +
@@ -1303,6 +1725,7 @@
                 '<div class="detail-section"><div class="detail-label">&#128101; Місць</div><div class="detail-value">' + (passenger.seats || 'N/A') + '</div></div>' +
                 '<div class="detail-section"><div class="detail-label">&#9878; Вага</div><div class="detail-value">' + escapeHtml(passenger.weight || 'N/A') + '</div></div>' +
                 '<div class="detail-section"><div class="detail-label">&#128663; Автомобіль</div><div class="detail-value">' + escapeHtml(passenger.vehicle || 'N/A') + '</div></div>' +
+                (passenger._sourceRoute ? '<div class="detail-section"><div class="detail-label">&#128204; Маршрутний лист</div><div class="detail-value">' + escapeHtml(passenger._sourceRoute) + '</div></div>' : '') +
                 (passenger.note && String(passenger.note).trim() ? '<div class="detail-section"><div class="detail-label">&#128221; Примітка</div><div class="detail-value">' + escapeHtml(passenger.note) + '</div></div>' : '');
         }
         function toggleExpand(uid) {
@@ -1490,6 +1913,7 @@
             updateStats();
             var passenger = deliveries.find(function(d) { return d._statusKey === statusKey; });
             if (!passenger) return;
+            var routeName = (isUnifiedView && passenger._sourceRoute) ? passenger._sourceRoute : currentSheet;
             // updateDriverStatus → пише mark + кольори в Sheet + логи
             fetch(CONFIG.PASSENGER_API_URL, {
                 method: 'POST',
@@ -1497,7 +1921,7 @@
                 body: JSON.stringify({
                     action: 'updateDriverStatus',
                     driverId: driverName,
-                    routeName: currentSheet,
+                    routeName: routeName,
                     passengerId: passenger.id || '',
                     phone: passenger.phone || '',
                     address: passenger.from || '',
@@ -1527,6 +1951,7 @@
             if (!confirm('Ви точно хочете скасувати цього пасажира?')) return;
             var passenger = deliveries.find(function(d) { return d._statusKey === statusKey; });
             if (!passenger) return;
+            var routeName = (isUnifiedView && passenger._sourceRoute) ? passenger._sourceRoute : currentSheet;
             deliveryStatuses[statusKey] = 'cancelled';
             saveStatuses();
             renderDeliveries();
@@ -1538,7 +1963,7 @@
                 body: JSON.stringify({
                     action: 'updateDriverStatus',
                     driverId: driverName,
-                    routeName: currentSheet,
+                    routeName: routeName,
                     passengerId: passenger.id || '',
                     phone: passenger.phone || '',
                     address: passenger.from || '',
@@ -1563,6 +1988,7 @@
                 : 'Змінити статус СКАСОВАНО на ОЧІКУЄ?';
             if (!confirm(confirmMsg)) return;
             var passenger = deliveries.find(function(d) { return d._statusKey === statusKey; });
+            var routeName = (isUnifiedView && passenger && passenger._sourceRoute) ? passenger._sourceRoute : currentSheet;
             deliveryStatuses[statusKey] = 'pending';
             saveStatuses();
             renderDeliveries();
@@ -1574,7 +2000,7 @@
                 body: JSON.stringify({
                     action: 'updateDriverStatus',
                     driverId: driverName,
-                    routeName: currentSheet,
+                    routeName: routeName,
                     passengerId: passenger ? (passenger.id || '') : '',
                     phone: passenger ? (passenger.phone || '') : '',
                     address: passenger ? (passenger.from || '') : '',

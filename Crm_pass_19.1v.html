@@ -2100,7 +2100,8 @@
             <button class="btn-save" onclick="startOptimization()">🚀 Оптимізувати</button>
         </div>
         <div class="modal-footer" id="optimizeResultFooter" style="display:none">
-            <button class="btn-save" onclick="closeModal('optimizeModal')">Закрити</button>
+            <button class="btn-cancel" onclick="closeModal('optimizeModal')">Закрити</button>
+            <button class="btn-save" onclick="applyOptimizedSort()">📊 Сортувати</button>
         </div>
     </div>
 </div>
@@ -2204,7 +2205,12 @@ function isRouteSheet(name) {
     return !EXCLUDED_SHEETS.some(ex => name.toLowerCase().includes(ex));
 }
 
-// Синхронізація vehicles з сервера — підтягує нові аркуші, видаляє зниклі
+// Нормалізація назви аркуша для порівняння (прибирає зайві пробіли)
+function normalizeSheetName(name) {
+    return name.replace(/\s+/g, ' ').trim();
+}
+
+// Синхронізація vehicles з сервера — будує список ТІЛЬКИ з реальних аркушів таблиці
 async function syncVehiclesFromServer() {
     try {
         const res = await fetch(ROUTE_API_URL, {
@@ -2218,32 +2224,23 @@ async function syncVehiclesFromServer() {
         // Фільтруємо лише маршрутні аркуші
         const serverSheets = data.routes.filter(r => isRouteSheet(r.name));
 
-        // 1) Додаємо нові аркуші яких немає в vehicles
-        for (const sheet of serverSheets) {
-            const exists = vehicles.find(v =>
-                v.routeSheet === sheet.name || v.name === sheet.name
+        // Будуємо vehicles ПОВНІСТЮ з серверних даних
+        vehicles = serverSheets.map((sheet, idx) => {
+            // Шукаємо чи вже є таке авто (щоб зберегти id для фільтрів)
+            const normalizedName = normalizeSheetName(sheet.name);
+            const existing = vehicles.find(v =>
+                normalizeSheetName(v.routeSheet || '') === normalizedName
             );
-            if (!exists) {
-                // "Пас. Маршрут 1" → "Автомобіль 1", інші — прибираємо префікс "Пас."
-                const match = sheet.name.match(/^Пас\.\s*Маршрут\s*(\d+)$/i);
-                const displayName = match ? `Автомобіль ${match[1]}` : sheet.name.replace(/^Пас\.\s*/, '');
-                vehicles.push({
-                    id: 'v' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
-                    name: displayName,
-                    seats: 8,
-                    routeSheet: sheet.name
-                });
-            }
-        }
 
-        // 2) Помічаємо авто чий аркуш зник з сервера (але не видаляємо дефолтні)
-        const serverNames = serverSheets.map(s => s.name);
-        vehicles = vehicles.filter(v => {
-            if (!v.routeSheet) return true; // без аркуша — залишаємо
-            if (serverNames.includes(v.routeSheet)) return true; // є на сервері
-            // Перевіряємо чи це дефолтне авто — залишаємо як fallback
-            if (DEFAULT_VEHICLES.find(d => d.id === v.id)) return true;
-            return false; // аркуш видалено з сервера — прибираємо
+            // "Пас. Маршрут 1" → "Маршрут 1", інші — як є
+            const displayName = sheet.name.replace(/^Пас\.\s*/i, '');
+
+            return {
+                id: existing ? existing.id : 'v' + (idx + 1),
+                name: displayName,
+                seats: existing ? existing.seats : 8,
+                routeSheet: sheet.name
+            };
         });
 
         // Оновлюємо UI
@@ -2264,6 +2261,8 @@ let openActionsId = null;
 let calendarDate = new Date(); // Поточна дата
 let draggedId = null;
 let undoHistory = []; // Історія для відміни дій
+let archivedPassengers = []; // Завантажені з архіву пасажири
+let archiveLoaded = false; // Чи завантажено архів
 
 // INIT
 document.addEventListener('DOMContentLoaded', () => {
@@ -2411,6 +2410,14 @@ function silentSync() {
                     if (!sp.status && local.status) sp.status = local.status;
                     if (local.prevStatus) sp.prevStatus = local.prevStatus;
                     if (local.archiveType) sp.archiveType = local.archiveType;
+                    // Зберігаємо поля оптимізації (order, status='optimize', _notGeocoded)
+                    if (local.status === 'optimize') {
+                        sp.status = 'optimize';
+                        sp.order = local.order;
+                        sp._notGeocoded = local._notGeocoded;
+                    } else if (local.order !== undefined) {
+                        sp.order = local.order;
+                    }
                 }
             });
 
@@ -2955,13 +2962,18 @@ function getFilteredData() {
     }
     // Спеціальний фільтр по типу архіву (refused, transferred, deleted) або весь архів
     else if (filters.specialStatus) {
+        // Об'єднуємо локальні архівовані + завантажені з API
+        const localArchived = passengers.filter(p => p.status === 'archived');
+        const allArchived = [...localArchived, ...archivedPassengers];
         if (filters.specialStatus === 'archived') {
-            data = data.filter(p => p.status === 'archived');
+            data = allArchived;
         } else {
-            data = data.filter(p => p.status === 'archived' && p.archiveType === filters.specialStatus);
+            data = allArchived.filter(p => p.archiveType === filters.specialStatus);
         }
     } else if (filters.showArchive) {
-        data = data.filter(p => p.status === 'archived');
+        // Об'єднуємо локальні архівовані + завантажені з API
+        const localArchived = passengers.filter(p => p.status === 'archived');
+        data = [...localArchived, ...archivedPassengers];
     } else {
         // Приховуємо архівовані в звичайному режимі
         data = data.filter(p => p.status !== 'archived');
@@ -3013,6 +3025,16 @@ function getFilteredData() {
     }
     
     return data.sort((a,b) => {
+        // Оптимізовані ліди — сортуємо по order першочергово
+        const aOpt = a.status === 'optimize';
+        const bOpt = b.status === 'optimize';
+        if (aOpt || bOpt) {
+            // Оптимізовані завжди зверху перед звичайними
+            if (aOpt && !bOpt) return -1;
+            if (!aOpt && bOpt) return 1;
+            // Обидва оптимізовані — по order
+            return (a.order||0) - (b.order||0);
+        }
         // Нові (isNew) завжди зверху
         if (a.isNew && !b.isNew) return -1;
         if (!a.isNew && b.isNew) return 1;
@@ -3197,7 +3219,10 @@ function findPassengerByUid(uid) {
     const rowNum = parseInt(parts.pop());
     const sheet = parts.join('_');
     // Підтримка як числового, так і строкового rowNum
-    return passengers.find(p => p._sheet === sheet && (p._rowNum === rowNum || p._rowNum === String(rowNum)));
+    const found = passengers.find(p => p._sheet === sheet && (p._rowNum === rowNum || p._rowNum === String(rowNum)));
+    if (found) return found;
+    // Шукаємо в архівних пасажирах
+    return archivedPassengers.find(p => p.id === uid || (p._rowNum === rowNum && p._archiveSource === sheet)) || null;
 }
 
 // SELECTION & BULK ACTIONS
@@ -3386,7 +3411,8 @@ function handleSearch() { filters.search = document.getElementById('searchInput'
 function updateAllCounts() {
     // Активні = не архівовані
     const active = passengers.filter(p => p.status !== 'archived');
-    const archived = passengers.filter(p => p.status === 'archived');
+    const localArchived = passengers.filter(p => p.status === 'archived');
+    const archived = [...localArchived, ...archivedPassengers];
     const refused = archived.filter(p => p.archiveType === 'refused');
     const transferred = archived.filter(p => p.archiveType === 'transferred');
     const deleted = archived.filter(p => p.archiveType === 'deleted');
@@ -4274,7 +4300,7 @@ function resetVehicleFilter() {
     updateMobileVehicles();
 }
 function filterByStatus(status) { filters.statusFilter = filters.statusFilter === status ? '' : status; filters.showArchive = false; filters.routeVehicle = ''; routePassengers = []; routeStats = { total: 0, pending: 0, inProgress: 0, completed: 0, cancelled: 0, archived: 0 }; currentRouteVehicle = null; routeStatusFilter = 'all'; render(); updateFilterButtons(); }
-function toggleArchiveFilter() { const entering = !filters.showArchive; filters.showArchive = entering; filters.statusFilter = ''; filters.routeVehicle = ''; filters.specialStatus = ''; if (entering) { filters.date = ''; filters.showNewOnly = false; filters.search = ''; filters.statusDateFrom = ''; filters.statusDateTo = ''; const si = document.getElementById('searchInput'); if (si) si.value = ''; } routePassengers = []; routeStats = { total: 0, pending: 0, inProgress: 0, completed: 0, cancelled: 0, archived: 0 }; currentRouteVehicle = null; routeStatusFilter = 'all'; render(); updateAllCounts(); updateFilterButtons(); renderCalendars(); }
+function toggleArchiveFilter() { const entering = !filters.showArchive; filters.showArchive = entering; filters.statusFilter = ''; filters.routeVehicle = ''; filters.specialStatus = ''; if (entering) { filters.date = ''; filters.showNewOnly = false; filters.search = ''; filters.statusDateFrom = ''; filters.statusDateTo = ''; const si = document.getElementById('searchInput'); if (si) si.value = ''; } routePassengers = []; routeStats = { total: 0, pending: 0, inProgress: 0, completed: 0, cancelled: 0, archived: 0 }; currentRouteVehicle = null; routeStatusFilter = 'all'; if (entering) { loadArchivedPassengers(); } else { render(); } updateAllCounts(); updateFilterButtons(); renderCalendars(); }
 
 // SINGLE ACTIONS
 function moveOneToRoute(id) {
@@ -4290,12 +4316,12 @@ function moveOneToRoute(id) {
 
 function archivePassenger(id) {
     const p = passengers.find(x => x.id === id);
-    if (p) { if (p.status !== 'archived') { p.prevStatus = p.status || 'new'; } p.archiveType = 'archived'; p.status = 'archived'; saveSettings(); render(); updateAllCounts(); renderCalendars(); showToast('📦 В архіві'); }
+    if (p) { if (p.status !== 'archived') { p.prevStatus = p.status || 'new'; } p.archiveType = 'archived'; p.status = 'archived'; archiveLoaded = false; saveSettings(); render(); updateAllCounts(); renderCalendars(); showToast('📦 В архіві'); }
 }
 
 function restorePassenger(id) {
     const p = passengers.find(x => x.id === id);
-    if (p) { p.status = p.prevStatus || 'new'; delete p.prevStatus; delete p.archiveType; p.statusDate = ''; saveSettings(); render(); updateAllCounts(); renderCalendars(); showToast('♻️ Відновлено'); }
+    if (p) { p.status = p.prevStatus || 'new'; delete p.prevStatus; delete p.archiveType; p.statusDate = ''; archiveLoaded = false; saveSettings(); render(); updateAllCounts(); renderCalendars(); showToast('♻️ Відновлено'); }
 }
 
 function bulkRestore() {
@@ -4365,6 +4391,7 @@ function bulkRestore() {
         hideLoader();
         if (data.success) {
             restoreLocally();
+            archiveLoaded = false; // Скидаємо кеш архіву
             clearSelection();
             render();
             updateAllCounts();
@@ -4540,10 +4567,11 @@ function bulkRemoveVehicle() {
 }
 
 function bulkMoveToRoute() {
-    // Збираємо вибраних пасажирів
-    const selected = [...selectedIds].map(uid => findPassengerByUid(uid)).filter(Boolean);
+    // Збираємо вибраних пасажирів і сортуємо по order (щоб зберігати порядок оптимізації)
+    const selected = [...selectedIds].map(uid => findPassengerByUid(uid)).filter(Boolean)
+        .sort((a, b) => (a.order || 0) - (b.order || 0));
     if (!selected.length) return showToast('⚠️ Оберіть пасажирів');
-    
+
     // Перевіряємо чи є авто
     const withVehicle = selected.filter(p => p.vehicle);
     if (!withVehicle.length) return showToast('⚠️ Спочатку призначте авто');
@@ -4814,6 +4842,7 @@ function bulkArchive() {
             const allSuccess = results.every(d => d.success);
             if (allSuccess) {
                 archiveLocally();
+                archiveLoaded = false; // Скидаємо кеш архіву для перезавантаження
                 const total = results.reduce((s, d) => s + (d.count || d.archived || 0), 0);
                 showToast(`📦 Архівовано: ${total}`);
             } else {
@@ -5133,7 +5162,12 @@ function showStatusFilter(status) {
     document.getElementById('pcDirectionEuUa')?.classList.remove('active');
     document.getElementById('pcNewLeads')?.classList.remove('active');
 
-    render();
+    // Завантажуємо архів з сервера якщо ще не завантажено
+    if (!archiveLoaded) {
+        loadArchivedPassengers();
+    } else {
+        render();
+    }
     updateAllCounts();
     updateFilterButtons();
     renderCalendars();
@@ -5721,6 +5755,21 @@ function confirmOptimization() {
         showToast('⚠️ Синхронізуй дані перед маршрутом');
     }
     closeOptimization();
+}
+
+// Кнопка "Сортувати" у вікні результату оптимізації
+function applyOptimizedSort() {
+    // Закриваємо модалку оптимізації
+    closeModal('optimizeModal');
+
+    // Виділення (selectedIds) вже збережене — не чіпаємо
+    // order та status='optimize' вже виставлені в applyOptimizedOrder()
+
+    // Перерендерюємо картки — тепер getFilteredData() сортує optimize по order
+    render();
+    updateBulkBar();
+
+    showToast('📊 Ліди відсортовані по оптимізованому маршруту');
 }
 
 // UNDO SYSTEM
@@ -6332,6 +6381,79 @@ const ROUTE_API_URL = 'https://script.google.com/macros/s/AKfycbzPJHn3OlBJbRlHvv
 
 // Архів v1.0
 const ARCHIVE_API_URL = 'https://script.google.com/macros/s/AKfycbwJLGZgYT333VdMW-nM5kPjYs2WIGGjfqkZnDJYjJxUt8nzE8GDGCPm7EzMHhcxNDOn/exec';
+
+// Завантаження архівних пасажирів з API архіву
+async function loadArchivedPassengers(forceReload) {
+    if (archiveLoaded && !forceReload) {
+        render();
+        updateAllCounts();
+        return;
+    }
+    showLoader('Завантаження архіву...', '');
+    try {
+        const [mainRes, routeRes] = await Promise.all([
+            fetch(ARCHIVE_API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain' },
+                body: JSON.stringify({ action: 'getArchived', archiveSheet: 'Пасажири', limit: 500 })
+            }).then(r => r.json()),
+            fetch(ARCHIVE_API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain' },
+                body: JSON.stringify({ action: 'getArchived', archiveSheet: 'Пасажири маршрут', limit: 500 })
+            }).then(r => r.json())
+        ]);
+
+        archivedPassengers = [];
+
+        const mapArchiveRecord = (rec, source) => ({
+            id: rec['ІД'] || rec['ARCHIVE_ID'] || 'arch_' + rec.rowNum,
+            date: normalizeDate(rec['Дата виїзду'] || ''),
+            name: rec['ПіБ'] || '',
+            phone: rec['Телефон Пасажира'] || '',
+            phoneReg: rec['Телефон Реєстратора'] || '',
+            from: rec['Адреса Відправки'] || rec['Адреса Відправки!'] || '',
+            to: rec['Адреса прибуття'] || '',
+            seats: parseInt(rec['Кількість місць']) || 1,
+            payment: rec['Оплата'] || '',
+            percent: rec['Відсоток'] || '',
+            mark: rec['Відмітка'] || '',
+            dispatcher: rec['Диспечер'] || '',
+            weight: rec['Вага'] || '',
+            vehicle: rec['Автомобіль'] || '',
+            timing: rec['Таймінг'] || '',
+            dateReg: normalizeDate(rec['дата оформлення'] || ''),
+            note: rec['Примітка'] || '',
+            direction: (rec['SOURCE_SHEET'] || '').includes('Європа') ? 'eu-ua' : 'ua-eu',
+            status: 'archived',
+            archiveType: (rec['ARCHIVE_REASON'] || 'archived').toLowerCase().replace('bulk_archive', 'archived'),
+            statusDate: normalizeDate(rec['DATE_ARCHIVE'] || ''),
+            archivedBy: rec['ARCHIVED_BY'] || '',
+            archiveReason: rec['ARCHIVE_REASON'] || '',
+            sourceSheet: rec['SOURCE_SHEET'] || '',
+            archiveId: rec['ARCHIVE_ID'] || '',
+            _isArchiveData: true,
+            _archiveSource: source,
+            _rowNum: rec.rowNum
+        });
+
+        if (mainRes.success && mainRes.records) {
+            archivedPassengers = archivedPassengers.concat(mainRes.records.map(r => mapArchiveRecord(r, 'main')));
+        }
+        if (routeRes.success && routeRes.records) {
+            archivedPassengers = archivedPassengers.concat(routeRes.records.map(r => mapArchiveRecord(r, 'route')));
+        }
+
+        archiveLoaded = true;
+        hideLoader();
+        render();
+        updateAllCounts();
+    } catch (err) {
+        hideLoader();
+        console.error('Archive load error:', err);
+        showToast('❌ Помилка завантаження архіву');
+    }
+}
 
 // Нормалізація дати до формату YYYY-MM-DD
 function normalizeDate(dateStr) {

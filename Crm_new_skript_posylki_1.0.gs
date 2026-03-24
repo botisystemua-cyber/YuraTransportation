@@ -711,34 +711,41 @@ function archivePackage(data) {
     var archiveSS = SpreadsheetApp.openById(ARCHIVE_SS_ID_LOG);
     var archiveSheet = archiveSS.getSheetByName('Посилки');
     if (!archiveSheet) {
-      return { success: false, error: 'Архівний аркуш "Посилки" не знайдено' };
+      archiveSheet = archiveSS.insertSheet('Посилки');
+      archiveSheet.getRange(1, 1, 1, 27).setValues([[
+        'ВО', 'Номер№', 'Номер ТТН', 'Вага', 'Адреса Отримувача',
+        'Напрямок', 'Телефон Отримувача', 'Сума Є', 'Статус оплати', 'Оплата',
+        'Телефон Реєстратора', 'Примітка', 'Статус посилки', 'ІД', 'ПіБ',
+        'дата оформлення', 'Таймінг', 'Примітка смс', 'Дата отримання', 'Фото', 'Статус',
+        'Автомобіль',
+        'DATE_ARCHIVE', 'ARCHIVED_BY', 'ARCHIVE_REASON', 'SOURCE_SHEET', 'ARCHIVE_ID'
+      ]]);
     }
 
-    // Будуємо рядок: 26 колонок (A-Z)
-    // A-U (0-20): дані | V(21): дата | W(22): хто | X(23): причина | Y(24): аркуш | Z(25): ARCHIVE_ID
+    // Будуємо рядок: 27 колонок (A-AA)
+    // A-U (0-20): дані | V(21): Автомобіль | W(22): дата | X(23): хто | Y(24): причина | Z(25): аркуш | AA(26): ARCHIVE_ID
     var archiveRow = [];
     for (var i = 0; i < 21; i++) {
       archiveRow.push(rowData[i] !== undefined ? rowData[i] : '');
     }
-    archiveRow.push(dateNow);       // V - DATE_ARCHIVE
-    archiveRow.push(user);          // W - ARCHIVED_BY
-    archiveRow.push(reason);        // X - ARCHIVE_REASON
-    archiveRow.push(sheetName);     // Y - SOURCE_SHEET
-    archiveRow.push(archiveId);     // Z - ARCHIVE_ID
+    archiveRow.push(rowData[COL.VEHICLE] || '');  // V - Автомобіль
+    archiveRow.push(dateNow);       // W - DATE_ARCHIVE
+    archiveRow.push(user);          // X - ARCHIVED_BY
+    archiveRow.push(reason);        // Y - ARCHIVE_REASON
+    archiveRow.push(sheetName);     // Z - SOURCE_SHEET
+    archiveRow.push(archiveId);     // AA - ARCHIVE_ID
 
     archiveSheet.appendRow(archiveRow);
   } catch (err) {
     return { success: false, error: 'Помилка запису в архів: ' + err.toString() };
   }
 
-  // === КРОК 2: Оновлюємо джерело (тільки після успішного запису в архів) ===
-  sheet.getRange(rowNum, COL.STATUS + 1).setValue('archived');
-  sheet.getRange(rowNum, COL.DATE_ARCHIVE + 1).setValue(dateNow.substring(0, 10));
-  sheet.getRange(rowNum, COL.ARCHIVE_ID + 1).setValue(archiveId);
+  // === КРОК 2: Видаляємо рядок з джерела (дані вже в архіві) ===
+  sheet.deleteRow(rowNum);
 
   var recordId = String(rowData[COL.ID] || '');
   writeLog('archivePackage', sheetName, rowNum, 'archived',
-    'ІД: ' + recordId + ' | ArchiveID: ' + archiveId);
+    'ІД: ' + recordId + ' | ArchiveID: ' + archiveId + ' | видалено з джерела');
 
   return {
     success: true,
@@ -769,7 +776,15 @@ function bulkArchive(data) {
     archiveSS = SpreadsheetApp.openById(ARCHIVE_SS_ID_LOG);
     archiveSheet = archiveSS.getSheetByName('Посилки');
     if (!archiveSheet) {
-      return { success: false, error: 'Архівний аркуш "Посилки" не знайдено' };
+      archiveSheet = archiveSS.insertSheet('Посилки');
+      archiveSheet.getRange(1, 1, 1, 27).setValues([[
+        'ВО', 'Номер№', 'Номер ТТН', 'Вага', 'Адреса Отримувача',
+        'Напрямок', 'Телефон Отримувача', 'Сума Є', 'Статус оплати', 'Оплата',
+        'Телефон Реєстратора', 'Примітка', 'Статус посилки', 'ІД', 'ПіБ',
+        'дата оформлення', 'Таймінг', 'Примітка смс', 'Дата отримання', 'Фото', 'Статус',
+        'Автомобіль',
+        'DATE_ARCHIVE', 'ARCHIVED_BY', 'ARCHIVE_REASON', 'SOURCE_SHEET', 'ARCHIVE_ID'
+      ]]);
     }
   } catch (err) {
     return { success: false, error: 'Не вдалося відкрити архів: ' + err.toString() };
@@ -803,16 +818,17 @@ function bulkArchive(data) {
 
     var archiveId = generateArchiveId_();
 
-    // Будуємо рядок архіву: 26 колонок
+    // Будуємо рядок архіву: 27 колонок
     var archiveRow = [];
     for (var j = 0; j < 21; j++) {
       archiveRow.push(rowData[j] !== undefined ? rowData[j] : '');
     }
-    archiveRow.push(dateNow);       // V - DATE_ARCHIVE
-    archiveRow.push(user);          // W - ARCHIVED_BY
-    archiveRow.push(reason);        // X - ARCHIVE_REASON
-    archiveRow.push(item.sheet);    // Y - SOURCE_SHEET
-    archiveRow.push(archiveId);     // Z - ARCHIVE_ID
+    archiveRow.push(rowData[COL.VEHICLE] || '');  // V - Автомобіль
+    archiveRow.push(dateNow);       // W - DATE_ARCHIVE
+    archiveRow.push(user);          // X - ARCHIVED_BY
+    archiveRow.push(reason);        // Y - ARCHIVE_REASON
+    archiveRow.push(item.sheet);    // Z - SOURCE_SHEET
+    archiveRow.push(archiveId);     // AA - ARCHIVE_ID
 
     archiveRows.push(archiveRow);
     successItems.push({ sheet: item.sheet, rowNum: item.rowNum, archiveId: archiveId, srcSheet: sheet });
@@ -825,21 +841,28 @@ function bulkArchive(data) {
   // === КРОК 1: Batch-запис в архів ===
   try {
     var startRow = archiveSheet.getLastRow() + 1;
-    archiveSheet.getRange(startRow, 1, archiveRows.length, 26).setValues(archiveRows);
+    archiveSheet.getRange(startRow, 1, archiveRows.length, 27).setValues(archiveRows);
   } catch (err) {
     return { success: false, error: 'Помилка batch-запису в архів: ' + err.toString() };
   }
 
-  // === КРОК 2: Оновлюємо джерело ===
+  // === КРОК 2: Видаляємо рядки з джерела (знизу вгору щоб не збити номери) ===
+  var rowsBySheet = {};
   for (var k = 0; k < successItems.length; k++) {
     var si = successItems[k];
-    si.srcSheet.getRange(si.rowNum, COL.STATUS + 1).setValue('archived');
-    si.srcSheet.getRange(si.rowNum, COL.DATE_ARCHIVE + 1).setValue(dateShort);
-    si.srcSheet.getRange(si.rowNum, COL.ARCHIVE_ID + 1).setValue(si.archiveId);
+    if (!rowsBySheet[si.sheet]) rowsBySheet[si.sheet] = { sheet: si.srcSheet, rows: [] };
+    rowsBySheet[si.sheet].rows.push(si.rowNum);
+  }
+  for (var shName in rowsBySheet) {
+    var entry = rowsBySheet[shName];
+    entry.rows.sort(function(a, b) { return b - a; });
+    for (var r = 0; r < entry.rows.length; r++) {
+      entry.sheet.deleteRow(entry.rows[r]);
+    }
   }
 
   writeLog('bulkArchive', 'bulk', 0, 'archived',
-    archiveRows.length + '/' + items.length + ' записано в архів');
+    archiveRows.length + '/' + items.length + ' записано в архів і видалено з джерела');
 
   return {
     success: true,

@@ -4978,7 +4978,7 @@ function bulkArchive() {
             const allSuccess = results.every(d => d.success);
             if (allSuccess) {
                 archiveLocally();
-                const total = results.reduce((s, d) => s + (d.archived || d.changed || 0), 0);
+                const total = results.reduce((s, d) => s + (d.count || d.archived || d.changed || 0), 0);
                 showToast(`📦 Архівовано: ${total}`);
             } else {
                 const errors = results.filter(d => !d.success).map(d => d.error).join('; ');
