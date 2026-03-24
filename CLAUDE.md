@@ -153,8 +153,8 @@ POST: `archiveByStatus`, `archiveByIds`, `archiveByAge`, `archiveAll`, `restoreA
 |---|---|
 | **Бот Пасажири** (`Script-Passengers.gs`) | `https://script.google.com/macros/s/AKfycbwIHwCKKabHJmODRV_L8v89B1b0GMT0EUuvUGt1QJGe2moACGCI3kOyOZt372InMGQr/exec` |
 | **Бот Посилки** (`Script-Cargo.gs`) | `https://script.google.com/macros/s/AKfycbyMWUcDENjdTFwJeMkvv5s3G0v3SeCXaWBljp8l8TLaL1rJjl73lIcQxwXO9RQcewst/exec` |
-| **Маршрути пасажирів** (`Script-passengers-marshrut.gs`) | `https://script.google.com/macros/s/AKfycbzPJHn3OlBJbRlHvveT453NKUZMViUMMmfD9yqttGZ0b7mVCeKcUum_UsmamUe43g/exec` |
-| **Маршрути посилок** (`Script-cargo-marshrut.gs`) | `https://script.google.com/macros/s/AKfycbwlo9O9RO_LUDmtTGD3GL8e1i1jkklM6heaypRGMZF_QidhBsDmagflqUhAMmwwguLYwg/exec` |
+| **Маршрути пасажирів** (`Script-passengers-marshrut.gs`) | `https://script.google.com/macros/s/AKfycbz2qmOqa_CgBWxUgY7Hc9Ni_pWQ8gfOBjN7iYhC0UwJKK36ha6BNfaz4MWGdCFmjMmy/exec` |
+| **Маршрути посилок** (`Script-cargo-marshrut.gs`) | `https://script.google.com/macros/s/AKfycbzmBTSKUMZ8XCvH46whGhiV5eVvG1FRbvkZRIQjyFC2VqzsRd4Lox_sqm09Zqlamm1vVg/exec` |
 | **Архів** (`Script-Archiv.gs`) | `https://script.google.com/macros/s/AKfycbwJLGZgYT333VdMW-nM5kPjYs2WIGGjfqkZnDJYjJxUt8nzE8GDGCPm7EzMHhcxNDOn/exec` |
 | **Авторизація** (Login) | `https://script.google.com/macros/s/AKfycbzZ6QAMEANL2DI5cbBgSpcg5KaW9xW8643u5SEkbQplljr4fh3BU_bek4WBQH6ikO34ww/exec` |
 
