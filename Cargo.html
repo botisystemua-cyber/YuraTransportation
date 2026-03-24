@@ -2405,10 +2405,6 @@ function silentSync() {
                         sp.order = local.order;
                         sp._notGeocoded = local._notGeocoded;
                         if (!sp.grupaOpt) sp.grupaOpt = local.grupaOpt;
-                    } else if (local.status === 'optimize') {
-                        sp.status = 'optimize';
-                        sp.order = local.order;
-                        sp._notGeocoded = local._notGeocoded;
                     } else if (local.order !== undefined) {
                         sp.order = local.order;
                     }
@@ -5762,7 +5758,6 @@ function applyOptimizedOrder(orderedPassengers, notGeocodedList) {
         const p = findPackageByUid(uid);
         if (p) {
             p.order = idx;
-            p.status = 'optimize';
             p._notGeocoded = notGeocodedUids.has(uid);
             p.grupaOpt = newGroupLetter + String(idx + 1);
 
@@ -5792,7 +5787,7 @@ function applyOptimizedSort() {
     closeModal('optimizeModal');
 
     // Виділення (selectedIds) вже збережене — не чіпаємо
-    // order та status='optimize' вже виставлені в applyOptimizedOrder()
+    // order та grupaOpt вже виставлені в applyOptimizedOrder()
 
     // Перерендерюємо картки — тепер getFilteredData() сортує optimize по order
     render();
