@@ -385,6 +385,7 @@ function getRoutePackages(payload) {
         photo: str(row[COL.PHOTO]),
         status: str(row[COL.STATUS]),
         archiveId: str(row[COL.ARCHIVE_ID]),
+        grupaOpt: readCols > COL.GROUP_OPT ? str(row[COL.GROUP_OPT]) : '',
         rowColor: backgrounds[i][0],
         sheet: sheetName
       });
