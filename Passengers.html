@@ -3027,15 +3027,26 @@ function getFilteredData() {
     }
     
     return data.sort((a,b) => {
-        // Оптимізовані ліди — сортуємо по order першочергово
+        // Оптимізовані ліди (в поточній сесії) — сортуємо по order першочергово
         const aOpt = a.status === 'optimize';
         const bOpt = b.status === 'optimize';
         if (aOpt || bOpt) {
-            // Оптимізовані завжди зверху перед звичайними
             if (aOpt && !bOpt) return -1;
             if (!aOpt && bOpt) return 1;
-            // Обидва оптимізовані — по order
             return (a.order||0) - (b.order||0);
+        }
+        // Збережена оптимізація (grupaOpt з сервера) — працює після перезавантаження
+        const aGrp = a.grupaOpt || '';
+        const bGrp = b.grupaOpt || '';
+        if (aGrp || bGrp) {
+            if (aGrp && !bGrp) return -1;
+            if (!aGrp && bGrp) return 1;
+            // Одна група — по номеру (A-1, A-2...)
+            const aParts = aGrp.split('-');
+            const bParts = bGrp.split('-');
+            if (aParts[0] === bParts[0]) return (parseInt(aParts[1])||0) - (parseInt(bParts[1])||0);
+            // Різні групи — по літері
+            return aGrp.localeCompare(bGrp);
         }
         // Нові (isNew) завжди зверху
         if (a.isNew && !b.isNew) return -1;
@@ -5695,20 +5706,40 @@ function applyOptimizedOrder(orderedPassengers, notGeocodedList) {
             if (item.uid) notGeocodedUids.add(item.uid);
         });
     }
-    
-    // Оновлюємо порядок в масиві passengers
+
+    // Генеруємо літеру групи (A, B, C... по колу)
+    const usedGroups = new Set(passengers.map(p => (p.grupaOpt || '').split('-')[0]).filter(Boolean));
+    let groupLetter = 'A';
+    while (usedGroups.has(groupLetter) && groupLetter < 'Z') {
+        groupLetter = String.fromCharCode(groupLetter.charCodeAt(0) + 1);
+    }
+
+    // Оновлюємо порядок в масиві passengers + записуємо grupaOpt
     orderedPassengers.forEach((op, idx) => {
         const uid = op._uid || (op._sheet && op._rowNum ? `${op._sheet}_${op._rowNum}` : null);
         if (!uid) return;
-        
+
         const p = findPassengerByUid(uid);
         if (p) {
             p.order = idx;
             p.status = 'optimize';
             p._notGeocoded = notGeocodedUids.has(uid);
+            p.grupaOpt = groupLetter + '-' + (idx + 1);
+
+            // Зберігаємо grupaOpt на сервер
+            if (p._sheet && p._rowNum) {
+                fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify({
+                        action: 'updateField',
+                        payload: { sheet: p._sheet, rowNum: p._rowNum, field: 'grupaOpt', value: p.grupaOpt }
+                    })
+                }).catch(err => console.error('grupaOpt save error:', err));
+            }
         }
     });
-    
+
     saveSettings();
     render();
     updateBulkBar();
