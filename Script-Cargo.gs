@@ -537,12 +537,22 @@ function updateField(data) {
 // ============================================
 function clearAllGrupaOpt(data) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheetsToClean = [SHEET_REG, SHEET_COURIER];
   var cleared = 0;
 
+  // Якщо передано sheetName — очищаємо тільки конкретний аркуш
+  var sheetsToClean = [];
+  if (data && data.sheetName) {
+    var sh = findSheet(ss, data.sheetName);
+    if (sh) sheetsToClean.push(sh);
+  } else {
+    var sh1 = findSheet(ss, SHEET_REG);
+    var sh2 = findSheet(ss, SHEET_COURIER);
+    if (sh1) sheetsToClean.push(sh1);
+    if (sh2) sheetsToClean.push(sh2);
+  }
+
   for (var s = 0; s < sheetsToClean.length; s++) {
-    var sheet = findSheet(ss, sheetsToClean[s]);
-    if (!sheet) continue;
+    var sheet = sheetsToClean[s];
     var lastRow = sheet.getLastRow();
     if (lastRow < 2) continue;
 
@@ -557,7 +567,7 @@ function clearAllGrupaOpt(data) {
     range.setValues(newValues);
   }
 
-  writeLog('clearAllGrupaOpt', 'all', 0, 'grupaOpt', 'cleared ' + cleared);
+  writeLog('clearAllGrupaOpt', data && data.sheetName || 'all', 0, 'grupaOpt', 'cleared ' + cleared);
   return { success: true, cleared: cleared };
 }
 

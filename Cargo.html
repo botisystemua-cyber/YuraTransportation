@@ -5749,16 +5749,28 @@ function applyOptimizedOrder(orderedPassengers, notGeocodedList) {
         }
     }
 
-    // Якщо всі літери A-Z зайняті — очищаємо ВСІ групи і починаємо з A
+    // Якщо всі літери A-Z зайняті — очищаємо групи ТІЛЬКИ в поточному аркуші і починаємо з A
     if (!newGroupLetter) {
+        // Визначаємо поточний аркуш
+        const currentSheet = isRouteData
+            ? (currentRouteVehicle?.routeSheet || currentRouteVehicle?.name || orderedPassengers[0]?._sheet || orderedPassengers[0]?.sheet || '')
+            : (orderedPassengers[0]?._sheet || orderedPassengers[0]?.sheet || '');
+
+        // Очищаємо grupaOpt тільки у записів поточного аркуша (в пам'яті)
         allPackagesList.forEach(p => {
-            if (p.grupaOpt) p.grupaOpt = '';
+            const pSheet = p._sheet || p.sheet || '';
+            if (pSheet === currentSheet && p.grupaOpt) p.grupaOpt = '';
         });
+
+        // Очищаємо на сервері тільки конкретний аркуш
+        const clearPayload = { action: 'clearAllGrupaOpt' };
+        if (currentSheet) clearPayload.sheetName = currentSheet;
         fetch(targetApiUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'text/plain' },
-            body: JSON.stringify({ action: 'clearAllGrupaOpt' })
+            body: JSON.stringify(clearPayload)
         }).catch(err => console.error('clearAllGrupaOpt error:', err));
+
         existingGroups.clear();
         newGroupLetter = 'A';
         showToast('🔄 Всі 26 груп використано — групи очищено, починаємо з A');
