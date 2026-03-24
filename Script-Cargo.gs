@@ -158,6 +158,9 @@ function doPost(e) {
       case 'checkDuplicates':
         return respond(checkDuplicates(data));
 
+      case 'clearAllGrupaOpt':
+        return respond(clearAllGrupaOpt(data));
+
       default:
         return respond({ success: false, error: 'Невідома дія: ' + action });
     }
@@ -527,6 +530,35 @@ function updateField(data) {
   writeLog('updateField', sheetName, rowNum, field, String(value));
 
   return { success: true, sheet: sheetName, rowNum: rowNum, field: field };
+}
+
+// ============================================
+// clearAllGrupaOpt — Очистити grupaOpt у всіх записах
+// ============================================
+function clearAllGrupaOpt(data) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheetsToClean = [SHEET_REG, SHEET_COURIER];
+  var cleared = 0;
+
+  for (var s = 0; s < sheetsToClean.length; s++) {
+    var sheet = findSheet(ss, sheetsToClean[s]);
+    if (!sheet) continue;
+    var lastRow = sheet.getLastRow();
+    if (lastRow < 2) continue;
+
+    var col = COL.GROUP_OPT + 1;
+    var range = sheet.getRange(2, col, lastRow - 1, 1);
+    var values = range.getValues();
+    var newValues = [];
+    for (var i = 0; i < values.length; i++) {
+      if (String(values[i][0] || '').trim() !== '') cleared++;
+      newValues.push(['']);
+    }
+    range.setValues(newValues);
+  }
+
+  writeLog('clearAllGrupaOpt', 'all', 0, 'grupaOpt', 'cleared ' + cleared);
+  return { success: true, cleared: cleared };
 }
 
 // ============================================

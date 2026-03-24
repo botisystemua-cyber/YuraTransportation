@@ -69,9 +69,10 @@ var COL = {
   ARCHIVED_BY: 22,    // W — ARCHIVED_BY
   ARCHIVE_REASON: 23, // X — ARCHIVE_REASON
   SOURCE_SHEET: 24,   // Y — SOURCE_SHEET
-  ARCHIVE_ID: 25      // Z — ARCHIVE_ID
+  ARCHIVE_ID: 25,     // Z — ARCHIVE_ID
+  GROUP_OPT: 26       // AA — Група ОПТ (група оптимізації)
 };
-var TOTAL_COLS = 26;
+var TOTAL_COLS = 27;
 
 // Заголовки для нового аркуша
 var HEADERS = [
@@ -80,7 +81,7 @@ var HEADERS = [
   'Телефон Реєстратора', 'Примітка', 'Статус посилки', 'ІД', 'ПіБ',
   'дата оформлення', 'Таймінг', 'Примітка смс', 'Дата отримання', 'фото',
   'Статус', 'DATE_ARCHIVE', 'ARCHIVED_BY', 'ARCHIVE_REASON',
-  'SOURCE_SHEET', 'ARCHIVE_ID'
+  'SOURCE_SHEET', 'ARCHIVE_ID', 'Група ОПТ'
 ];
 
 // Статуси для архівації
@@ -113,7 +114,8 @@ var FIELD_MAP = {
   archivedBy: COL.ARCHIVED_BY,
   archiveReason: COL.ARCHIVE_REASON,
   sourceSheet: COL.SOURCE_SHEET,
-  archiveId: COL.ARCHIVE_ID
+  archiveId: COL.ARCHIVE_ID,
+  grupaOpt: COL.GROUP_OPT
 };
 
 // ============================================
@@ -225,6 +227,10 @@ function doPost(e) {
       case 'clearOldMailing':
         return respond(clearOldMailing(payload));
 
+      // --- ОПТИМІЗАЦІЯ ---
+      case 'clearAllGrupaOpt':
+        return respond(clearAllGrupaOpt(payload));
+
       // --- ДЕБАГ ---
       case 'getStructure':
         return respond(getStructure());
@@ -291,6 +297,7 @@ function getDeliveries(sheetName) {
         photo: str(row[COL.PHOTO]),
         status: crmStatus || 'new',
         archiveId: str(row[COL.ARCHIVE_ID]),
+        grupaOpt: str(row[COL.GROUP_OPT]),
         sheet: sheetName
       });
     }
@@ -704,6 +711,43 @@ function updateField(payload) {
   writeLog('updateField', sheetName, rowNum, field, String(value));
 
   return { success: true, sheet: sheetName, rowNum: rowNum, field: field };
+}
+
+// ============================================
+// clearAllGrupaOpt — Очистити grupaOpt у всіх або вказаному аркуші
+// ============================================
+function clearAllGrupaOpt(payload) {
+  var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  var cleared = 0;
+
+  var sheetsToClean = [];
+  if (payload && payload.sheetName) {
+    var sh = ss.getSheetByName(payload.sheetName);
+    if (sh) sheetsToClean.push(sh);
+  } else {
+    sheetsToClean = ss.getSheets();
+  }
+
+  for (var s = 0; s < sheetsToClean.length; s++) {
+    var sheet = sheetsToClean[s];
+    var lastRow = sheet.getLastRow();
+    if (lastRow < 2) continue;
+    var lastCol = sheet.getLastColumn();
+    if (lastCol < COL.GROUP_OPT + 1) continue;
+
+    var col = COL.GROUP_OPT + 1;
+    var range = sheet.getRange(2, col, lastRow - 1, 1);
+    var values = range.getValues();
+    var newValues = [];
+    for (var i = 0; i < values.length; i++) {
+      if (String(values[i][0] || '').trim() !== '') cleared++;
+      newValues.push(['']);
+    }
+    range.setValues(newValues);
+  }
+
+  writeLog('clearAllGrupaOpt', payload && payload.sheetName || 'all', 0, 'grupaOpt', 'cleared ' + cleared);
+  return { success: true, cleared: cleared };
 }
 
 // ============================================

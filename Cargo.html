@@ -5721,20 +5721,14 @@ function applyOptimizedOrder(orderedPassengers, notGeocodedList) {
     // Якщо всі літери A-Z зайняті — очищаємо ВСІ групи і починаємо з A
     if (!newGroupLetter) {
         packages.forEach(p => {
-            if (p.grupaOpt) {
-                p.grupaOpt = '';
-                if (p._sheet && p._rowNum) {
-                    fetch(API_URL, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'text/plain' },
-                        body: JSON.stringify({
-                            action: 'updateField',
-                            payload: { sheet: p._sheet, rowNum: p._rowNum, field: 'grupaOpt', value: '' }
-                        })
-                    }).catch(err => console.error('grupaOpt clear error:', err));
-                }
-            }
+            if (p.grupaOpt) p.grupaOpt = '';
         });
+        // Один bulk-запит на сервер замість сотень окремих
+        fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify({ action: 'clearAllGrupaOpt' })
+        }).catch(err => console.error('clearAllGrupaOpt error:', err));
         existingGroups.clear();
         newGroupLetter = 'A';
         showToast('🔄 Всі 26 груп використано — групи очищено, починаємо з A');

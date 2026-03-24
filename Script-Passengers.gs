@@ -207,6 +207,9 @@ function doPost(e) {
       case 'addMailingRecord':
         return respond(addMailingRecord(payload));
 
+      case 'clearAllGrupaOpt':
+        return respond(clearAllGrupaOpt(payload));
+
       default:
         return respond({ success: false, error: 'Невідома дія: ' + action });
     }
@@ -573,6 +576,35 @@ function updateField(payload) {
   writeLog('updateField', sheetName, rowNum, field, String(value));
 
   return { success: true, sheet: sheetName, rowNum: rowNum, field: field };
+}
+
+// ============================================
+// clearAllGrupaOpt — Очистити grupaOpt у всіх записах
+// ============================================
+function clearAllGrupaOpt(payload) {
+  var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  var sheetsToClean = [SHEET_UA_EU, SHEET_EU_UA];
+  var cleared = 0;
+
+  for (var s = 0; s < sheetsToClean.length; s++) {
+    var sheet = ss.getSheetByName(sheetsToClean[s]);
+    if (!sheet) continue;
+    var lastRow = sheet.getLastRow();
+    if (lastRow < 2) continue;
+
+    var col = COL.GROUP_OPT + 1;
+    var range = sheet.getRange(2, col, lastRow - 1, 1);
+    var values = range.getValues();
+    var newValues = [];
+    for (var i = 0; i < values.length; i++) {
+      if (String(values[i][0] || '').trim() !== '') cleared++;
+      newValues.push(['']);
+    }
+    range.setValues(newValues);
+  }
+
+  writeLog('clearAllGrupaOpt', 'all', 0, 'grupaOpt', 'cleared ' + cleared);
+  return { success: true, cleared: cleared };
 }
 
 // ============================================
