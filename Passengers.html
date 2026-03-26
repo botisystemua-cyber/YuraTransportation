@@ -223,164 +223,74 @@
         }
 
         /* DASHBOARD - Owner Only */
-        .dashboard-panel {
-            background: white;
-            border-radius: 12px;
-            margin-bottom: 16px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-            overflow: hidden;
-        }
-        .dashboard-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 14px 18px;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            color: white;
-            cursor: pointer;
-        }
+        .dashboard-panel { background: white; border-radius: 12px; margin-bottom: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); overflow: hidden; }
+        .dashboard-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: white; cursor: pointer; }
         .dashboard-header:hover { opacity: 0.95; }
-        .dashboard-title {
-            font-size: 14px;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .dashboard-toggle {
-            font-size: 12px;
-            transition: transform 0.3s;
-        }
+        .dashboard-title { font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+        .dashboard-toggle { font-size: 12px; transition: transform 0.3s; }
         .dashboard-header.collapsed .dashboard-toggle { transform: rotate(-90deg); }
-        .dashboard-content {
-            padding: 16px;
-            max-height: 2000px;
-            overflow: hidden;
-            transition: max-height 0.4s ease, padding 0.3s ease, opacity 0.3s ease;
-            opacity: 1;
-        }
-        .dashboard-content.collapsed {
-            max-height: 0;
-            padding: 0 16px;
-            opacity: 0;
-        }
-        
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 16px;
-        }
-        .dashboard-card {
-            background: var(--bg-main);
-            border-radius: 10px;
-            padding: 16px;
-            border: 1px solid var(--border);
-        }
-        .dashboard-card-title {
-            font-size: 12px;
-            font-weight: 700;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .dashboard-stats {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-        }
-        .dashboard-stat {
-            text-align: center;
-            padding: 12px 8px;
-            background: white;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-        }
-        .dashboard-stat-value {
-            font-size: 24px;
-            font-weight: 800;
-            color: var(--primary);
-        }
-        .dashboard-stat-value.success { color: var(--success); }
-        .dashboard-stat-value.warning { color: var(--warning); }
-        .dashboard-stat-value.danger { color: var(--danger); }
-        .dashboard-stat-label {
-            font-size: 10px;
-            color: var(--text-secondary);
-            margin-top: 4px;
-            font-weight: 600;
-        }
-        
-        .dashboard-table {
-            width: 100%;
-            font-size: 12px;
-            border-collapse: collapse;
-        }
-        .dashboard-table th {
-            text-align: left;
-            padding: 8px 10px;
-            background: white;
-            font-weight: 700;
-            color: var(--primary);
-            border-bottom: 2px solid var(--border);
-        }
-        .dashboard-table td {
-            padding: 8px 10px;
-            border-bottom: 1px solid var(--border);
-        }
-        .dashboard-table tr:hover td {
-            background: rgba(26, 58, 94, 0.03);
-        }
+        .dashboard-content { padding: 16px; max-height: 5000px; overflow: hidden; transition: max-height 0.4s ease, padding 0.3s ease, opacity 0.3s ease; opacity: 1; }
+        .dashboard-content.collapsed { max-height: 0; padding: 0 16px; opacity: 0; }
+        .dash-loader { display: flex; justify-content: center; align-items: center; padding: 40px; font-size: 14px; color: var(--text-secondary); gap: 10px; }
+        .dash-loader .spinner { width: 20px; height: 20px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .dash-period-bar { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+        .dash-period-btn { padding: 6px 14px; border-radius: 6px; border: 1px solid var(--border); background: white; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .dash-period-btn:hover { border-color: var(--primary); color: var(--primary); }
+        .dash-period-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .dash-kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 16px; }
+        .dash-kpi { text-align: center; padding: 12px 8px; background: var(--bg-main); border-radius: 8px; border: 1px solid var(--border); }
+        .dash-kpi-value { font-size: 22px; font-weight: 800; color: var(--primary); }
+        .dash-kpi-value.success { color: var(--success); }
+        .dash-kpi-value.danger { color: var(--danger); }
+        .dash-kpi-label { font-size: 10px; color: var(--text-secondary); margin-top: 3px; font-weight: 600; }
+        .dash-tabs { display: flex; gap: 0; margin-bottom: 16px; border-bottom: 2px solid var(--border); }
+        .dash-tab { padding: 10px 20px; font-size: 13px; font-weight: 700; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.2s; color: var(--text-secondary); }
+        .dash-tab:hover { color: var(--primary); }
+        .dash-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+        .dash-tab-content { display: none; }
+        .dash-tab-content.active { display: block; }
+        .dash-section { background: var(--bg-main); border-radius: 10px; padding: 14px; border: 1px solid var(--border); margin-bottom: 12px; }
+        .dash-section-title { font-size: 12px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+        .dash-alerts-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+        .dash-alert { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: white; border-radius: 8px; border-left: 4px solid var(--warning); }
+        .dash-alert.danger { border-left-color: var(--danger); }
+        .dash-alert-text { font-size: 12px; font-weight: 600; }
+        .dash-alert-count { font-size: 16px; font-weight: 800; color: var(--warning); }
+        .dash-alert.danger .dash-alert-count { color: var(--danger); }
+        .dash-dir-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .dash-dir-card { background: white; border-radius: 8px; padding: 14px; text-align: center; border: 1px solid var(--border); }
+        .dash-dir-label { font-size: 11px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px; }
+        .dash-dir-value { font-size: 20px; font-weight: 800; color: var(--primary); }
+        .dash-dir-count { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+        .dashboard-table { width: 100%; font-size: 12px; border-collapse: collapse; }
+        .dashboard-table th { text-align: left; padding: 8px 10px; background: white; font-weight: 700; color: var(--primary); border-bottom: 2px solid var(--border); }
+        .dashboard-table td { padding: 7px 10px; border-bottom: 1px solid var(--border); }
+        .dashboard-table tr:hover td { background: rgba(26,58,94,0.03); }
         .dashboard-table .text-right { text-align: right; }
         .dashboard-table .text-center { text-align: center; }
         .dashboard-table .font-bold { font-weight: 700; }
-        
-        .dashboard-alert {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 10px 14px;
-            background: white;
-            border-radius: 8px;
-            margin-bottom: 8px;
-            border-left: 4px solid var(--warning);
+        .dash-progress { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; min-width: 60px; }
+        .dash-progress-fill { height: 100%; border-radius: 3px; background: var(--success); transition: width 0.3s; }
+        .dash-progress-fill.warning { background: var(--warning); }
+        .dash-progress-fill.danger { background: var(--danger); }
+        .dash-statuses { display: flex; gap: 8px; flex-wrap: wrap; }
+        .dash-status-item { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: white; border-radius: 8px; cursor: pointer; transition: all 0.2s; flex: 1; min-width: 120px; }
+        .dash-status-item:hover { background: var(--bg-main); transform: translateX(4px); }
+        .dash-status-item .s-icon { font-size: 16px; }
+        .dash-status-item .s-name { font-size: 12px; font-weight: 600; }
+        .dash-status-item .s-count { font-size: 14px; font-weight: 700; margin-left: auto; background: var(--bg-main); padding: 3px 10px; border-radius: 12px; }
+        .dash-route-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+        .dash-route-stat { background: white; border-radius: 8px; padding: 12px; text-align: center; border: 1px solid var(--border); }
+        .dash-route-stat-val { font-size: 20px; font-weight: 800; color: var(--primary); }
+        .dash-route-stat-lbl { font-size: 10px; color: var(--text-secondary); font-weight: 600; margin-top: 2px; }
+        @media (max-width: 768px) {
+            .dash-kpi-row { grid-template-columns: repeat(2, 1fr); }
+            .dash-alerts-row { grid-template-columns: 1fr; }
+            .dash-dir-row { grid-template-columns: 1fr; }
+            .dash-route-stats { grid-template-columns: 1fr; }
+            .dash-statuses { flex-direction: column; }
         }
-        .dashboard-alert.danger { border-left-color: var(--danger); }
-        
-        /* Dashboard status items */
-        .dashboard-statuses { display: flex; flex-direction: column; gap: 6px; }
-        .dashboard-status-item { 
-            display: flex; 
-            align-items: center; 
-            gap: 10px; 
-            padding: 10px 12px; 
-            background: white; 
-            border-radius: 8px;
-            transition: all 0.2s ease;
-        }
-        .dashboard-status-item:hover { background: var(--bg-main); transform: translateX(4px); }
-        .dashboard-status-item .status-icon { font-size: 16px; }
-        .dashboard-status-item .status-name { flex: 1; font-size: 13px; font-weight: 600; }
-        .dashboard-status-item .status-count { 
-            font-size: 14px; 
-            font-weight: 700; 
-            background: var(--bg-main); 
-            padding: 4px 10px; 
-            border-radius: 12px; 
-        }
-        .dashboard-alert-text {
-            font-size: 12px;
-            font-weight: 600;
-        }
-        .dashboard-alert-count {
-            font-size: 14px;
-            font-weight: 800;
-            color: var(--warning);
-        }
-        .dashboard-alert.danger .dashboard-alert-count { color: var(--danger); }
 
         /* SIDE MENU (Mobile) */
         .side-menu-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 200; }
@@ -1626,108 +1536,20 @@
         <!-- DASHBOARD - Owner Only -->
         <div class="dashboard-panel" id="dashboardPanel" data-access="owner">
             <div class="dashboard-header collapsed" onclick="toggleDashboard()">
-                <span class="dashboard-title">📊 Дашборд власника</span>
+                <span class="dashboard-title">📊 Дашборд</span>
                 <span class="dashboard-toggle" id="dashboardToggle">▼</span>
             </div>
             <div class="dashboard-content collapsed" id="dashboardContent">
-                <div class="dashboard-grid">
-                    <!-- Загальна статистика -->
-                    <div class="dashboard-card">
-                        <div class="dashboard-card-title">📈 Загальна статистика</div>
-                        <div class="dashboard-stats">
-                            <div class="dashboard-stat">
-                                <div class="dashboard-stat-value" id="dashTotalOrders">0</div>
-                                <div class="dashboard-stat-label">Всього заявок</div>
-                            </div>
-                            <div class="dashboard-stat">
-                                <div class="dashboard-stat-value success" id="dashCompleted">0</div>
-                                <div class="dashboard-stat-label">Виконано</div>
-                            </div>
-                            <div class="dashboard-stat">
-                                <div class="dashboard-stat-value" id="dashTotalSeats">0</div>
-                                <div class="dashboard-stat-label">Пасажирів</div>
-                            </div>
-                            <div class="dashboard-stat">
-                                <div class="dashboard-stat-value success" id="dashTotalSum">€0</div>
-                                <div class="dashboard-stat-label">Загальна сума</div>
-                            </div>
-                        </div>
+                <div id="dashLoader" class="dash-loader" style="display:none;"><div class="spinner"></div> Завантаження даних...</div>
+                <div id="dashBody" style="display:none;">
+                    <div class="dash-period-bar" id="dashPeriodBar"></div>
+                    <div class="dash-kpi-row" id="dashKpiRow"></div>
+                    <div class="dash-tabs">
+                        <div class="dash-tab active" onclick="setDashTab('passengers')">👥 Пасажири</div>
+                        <div class="dash-tab" onclick="setDashTab('cargo')">📦 Посилки</div>
                     </div>
-                    
-                    <!-- Потребують уваги -->
-                    <div class="dashboard-card">
-                        <div class="dashboard-card-title">⚠️ Потребують уваги</div>
-                        <div class="dashboard-alert">
-                            <span class="dashboard-alert-text">❓ Без авто</span>
-                            <span class="dashboard-alert-count" id="dashNoVehicle">0</span>
-                        </div>
-                        <div class="dashboard-alert danger">
-                            <span class="dashboard-alert-text">💰 Без оплати</span>
-                            <span class="dashboard-alert-count" id="dashNoPayment">0</span>
-                        </div>
-                        <div class="dashboard-alert">
-                            <span class="dashboard-alert-text">🔄 В роботі</span>
-                            <span class="dashboard-alert-count" id="dashInWork">0</span>
-                        </div>
-                    </div>
-                    
-                    <!-- По авто -->
-                    <div class="dashboard-card">
-                        <div class="dashboard-card-title">🚐 Статистика по авто</div>
-                        <table class="dashboard-table">
-                            <thead>
-                                <tr>
-                                    <th>Авто</th>
-                                    <th class="text-center">Заявок</th>
-                                    <th class="text-center">Місць</th>
-                                    <th class="text-right">Сума</th>
-                                </tr>
-                            </thead>
-                            <tbody id="dashVehicleStats"></tbody>
-                        </table>
-                    </div>
-                    
-                    <!-- Постійні клієнти -->
-                    <div class="dashboard-card">
-                        <div class="dashboard-card-title">👥 Постійні клієнти (топ-10)</div>
-                        <table class="dashboard-table">
-                            <thead>
-                                <tr>
-                                    <th>Клієнт</th>
-                                    <th class="text-center">Поїздок</th>
-                                    <th class="text-right">Сума</th>
-                                </tr>
-                            </thead>
-                            <tbody id="dashTopClients"></tbody>
-                        </table>
-                    </div>
-                    
-                    <!-- Статуси заявок -->
-                    <div class="dashboard-card">
-                        <div class="dashboard-card-title">📋 Статуси заявок</div>
-                        <div class="dashboard-statuses">
-                            <div class="dashboard-status-item" onclick="showStatusFilter('archived')" style="cursor:pointer;">
-                                <span class="status-icon">📦</span>
-                                <span class="status-name">Архів</span>
-                                <span class="status-count" id="dashArchived">0</span>
-                            </div>
-                            <div class="dashboard-status-item" onclick="showStatusFilter('refused')" style="cursor:pointer;color:var(--danger);">
-                                <span class="status-icon">❌</span>
-                                <span class="status-name">Відмови</span>
-                                <span class="status-count" id="dashRefused">0</span>
-                            </div>
-                            <div class="dashboard-status-item" onclick="showStatusFilter('transferred')" style="cursor:pointer;color:var(--teal);">
-                                <span class="status-icon">🤝</span>
-                                <span class="status-name">Пересадки</span>
-                                <span class="status-count" id="dashTransferred">0</span>
-                            </div>
-                            <div class="dashboard-status-item" onclick="showStatusFilter('deleted')" style="cursor:pointer;color:#6b7280;">
-                                <span class="status-icon">🗑️</span>
-                                <span class="status-name">Видалені</span>
-                                <span class="status-count" id="dashDeleted">0</span>
-                            </div>
-                        </div>
-                    </div>
+                    <div class="dash-tab-content active" id="dashTabPassengers"></div>
+                    <div class="dash-tab-content" id="dashTabCargo"></div>
                 </div>
             </div>
         </div>
@@ -2517,123 +2339,298 @@ function togglePcSidebar() {
 // DASHBOARD - Owner Only
 // ============================================
 const USER_ACCESS = 'owner'; // 'owner' | 'admin' | 'dispatcher'
+const DASH_CARGO_API = 'https://script.google.com/macros/s/AKfycbwcDN56bo3y83T18u3ns2RF3yr7SUOLeXztgAJM1ust9yEuHVw6rPS3yIh7-J-SpDf8NQ/exec';
+const DASH_PASS_API = 'https://script.google.com/macros/s/AKfycbxYdvmKOtY6vG5Kc60g2g6MA5jLgF2S__JPFQ2g9hP0qCmDGAyt_FQ4O04DOAO_MLc1/exec';
+
+let dashPassengers = [];
+let dashPackages = [];
+let dashLoading = false;
+let dashPeriod = 'all';
+let dashTab = 'passengers';
 
 function toggleDashboard() {
     const content = document.getElementById('dashboardContent');
     const header = document.querySelector('.dashboard-header');
     content.classList.toggle('collapsed');
     header.classList.toggle('collapsed');
-    
-    // Оновлюємо дані при відкритті
     if (!content.classList.contains('collapsed')) {
-        updateDashboard();
+        loadDashboardData();
     }
 }
 
-function updateDashboard() {
-    // Перевірка доступу (на майбутнє)
+function loadDashboardData() {
+    if (dashLoading) return;
+    dashLoading = true;
+    const loader = document.getElementById('dashLoader');
+    const body = document.getElementById('dashBody');
+    loader.style.display = 'flex';
+    body.style.display = 'none';
+
+    Promise.all([
+        fetch(DASH_PASS_API, { method: 'POST', body: JSON.stringify({ action: 'getAll' }) }).then(r => r.json()),
+        fetch(DASH_CARGO_API, { method: 'POST', body: JSON.stringify({ action: 'getAll' }) }).then(r => r.json())
+    ]).then(([passRes, cargoRes]) => {
+        dashPassengers = Array.isArray(passRes) ? passRes : (passRes.data || passRes.passengers || []);
+        dashPackages = Array.isArray(cargoRes) ? cargoRes : (cargoRes.data || cargoRes.packages || []);
+        dashLoading = false;
+        loader.style.display = 'none';
+        body.style.display = 'block';
+        renderDashboard();
+    }).catch(err => {
+        console.error('Dashboard fetch error:', err);
+        dashLoading = false;
+        loader.style.display = 'none';
+        body.style.display = 'block';
+        dashPassengers = passengers || [];
+        dashPackages = [];
+        renderDashboard();
+    });
+}
+
+function parseDashAmount(val) {
+    return parseFloat(String(val || '0').replace(/[^0-9.,]/g, '').replace(',', '.')) || 0;
+}
+
+function filterByPeriod(items, period) {
+    if (period === 'all') return items;
+    const now = new Date();
+    const today = now.toISOString().split('T')[0];
+    return items.filter(item => {
+        const d = item.dateReg || item.date || '';
+        if (!d) return false;
+        if (period === 'today') return d === today;
+        if (period === 'week') {
+            const weekAgo = new Date(now);
+            weekAgo.setDate(weekAgo.getDate() - 7);
+            return d >= weekAgo.toISOString().split('T')[0];
+        }
+        if (period === 'month') {
+            const monthAgo = new Date(now);
+            monthAgo.setMonth(monthAgo.getMonth() - 1);
+            return d >= monthAgo.toISOString().split('T')[0];
+        }
+        return true;
+    });
+}
+
+function setDashPeriod(period) {
+    dashPeriod = period;
+    document.querySelectorAll('.dash-period-btn').forEach(b => b.classList.toggle('active', b.dataset.period === period));
+    renderDashboard();
+}
+
+function setDashTab(tab) {
+    dashTab = tab;
+    document.querySelectorAll('.dash-tab').forEach(t => {
+        const isPass = t.textContent.includes('Пасажири');
+        const isCargo = t.textContent.includes('Посилки');
+        t.classList.toggle('active', (tab === 'passengers' && isPass) || (tab === 'cargo' && isCargo));
+    });
+    document.getElementById('dashTabPassengers').classList.toggle('active', tab === 'passengers');
+    document.getElementById('dashTabCargo').classList.toggle('active', tab === 'cargo');
+}
+
+function renderDashboard() {
     if (USER_ACCESS !== 'owner') {
         document.getElementById('dashboardPanel').style.display = 'none';
         return;
     }
-    
-    const active = passengers.filter(p => p.status !== 'archived');
 
-    // 1. Загальна статистика
-    const totalOrders = active.length;
-    const completed = active.filter(p => p.status === 'route' || p.status === 'done').length;
-    const totalSeats = active.reduce((sum, p) => sum + (parseInt(p.seats) || 1), 0);
-    const totalSum = active.reduce((sum, p) => {
-        const payment = parseFloat(String(p.payment || '0').replace(/[^0-9.,]/g, '').replace(',', '.')) || 0;
-        return sum + payment;
-    }, 0);
-    
-    document.getElementById('dashTotalOrders').textContent = totalOrders;
-    document.getElementById('dashCompleted').textContent = completed;
-    document.getElementById('dashTotalSeats').textContent = totalSeats;
-    document.getElementById('dashTotalSum').textContent = '€' + totalSum.toFixed(0);
-    
-    // 2. Потребують уваги
-    const noVehicle = active.filter(p => !p.vehicle).length;
-    const noPayment = active.filter(p => !p.payment || p.payment === '' || p.payment === '0').length;
-    const inWork = active.filter(p => p.status === 'work' || p.status === 'new').length;
-    
-    document.getElementById('dashNoVehicle').textContent = noVehicle;
-    document.getElementById('dashNoPayment').textContent = noPayment;
-    document.getElementById('dashInWork').textContent = inWork;
-    
-    // 3. Статистика по авто
-    const vehicleStats = {};
-    vehicles.forEach(v => {
-        vehicleStats[v.id] = { name: v.name, orders: 0, seats: 0, sum: 0 };
+    const excludeStatuses = ['archived', 'refused', 'deleted', 'transferred'];
+    const allPass = dashPassengers.filter(p => !excludeStatuses.includes(p.status));
+    const allPkg = dashPackages.filter(p => !excludeStatuses.includes(p.status));
+    const filtPass = filterByPeriod(allPass, dashPeriod);
+    const filtPkg = filterByPeriod(allPkg, dashPeriod);
+
+    renderPeriodBar();
+    renderKpi(filtPass, filtPkg);
+    renderTabContent('dashTabPassengers', filtPass, 'passengers');
+    renderTabContent('dashTabCargo', filtPkg, 'cargo');
+}
+
+function renderPeriodBar() {
+    const bar = document.getElementById('dashPeriodBar');
+    const periods = [
+        { key: 'today', label: 'Сьогодні' },
+        { key: 'week', label: 'Тиждень' },
+        { key: 'month', label: 'Місяць' },
+        { key: 'all', label: 'Все' }
+    ];
+    bar.innerHTML = periods.map(p =>
+        `<button class="dash-period-btn${p.key === dashPeriod ? ' active' : ''}" data-period="${p.key}" onclick="setDashPeriod('${p.key}')">${p.label}</button>`
+    ).join('');
+}
+
+function renderKpi(passData, pkgData) {
+    const totalCount = passData.length + pkgData.length;
+
+    const passRevenue = passData.reduce((s, p) => s + parseDashAmount(p.payment), 0);
+    const pkgRevenue = pkgData.reduce((s, p) => s + (parseDashAmount(p.amount) || parseDashAmount(p.payment)), 0);
+    const totalRevenue = passRevenue + pkgRevenue;
+
+    const passPaid = passData.filter(p => p.payment && p.payment !== '' && p.payment !== '0').reduce((s, p) => s + parseDashAmount(p.payment), 0);
+    const pkgPaid = pkgData.filter(p => {
+        const v = p.amount || p.payment;
+        return v && v !== '' && v !== '0';
+    }).reduce((s, p) => s + (parseDashAmount(p.amount) || parseDashAmount(p.payment)), 0);
+    const totalPaid = passPaid + pkgPaid;
+    const totalDebt = totalRevenue - totalPaid;
+
+    const today = new Date().toISOString().split('T')[0];
+    const newToday = passData.filter(p => (p.dateReg || p.date) === today).length + pkgData.filter(p => (p.dateReg || p.date) === today).length;
+    const avgCheck = totalCount > 0 ? totalRevenue / totalCount : 0;
+
+    const routePass = passData.filter(p => p.status === 'route').reduce((s, p) => s + parseDashAmount(p.payment), 0);
+    const routePkg = pkgData.filter(p => p.status === 'route').reduce((s, p) => s + (parseDashAmount(p.amount) || parseDashAmount(p.payment)), 0);
+    const routeRevenue = routePass + routePkg;
+
+    document.getElementById('dashKpiRow').innerHTML = `
+        <div class="dash-kpi"><div class="dash-kpi-value">${totalCount}</div><div class="dash-kpi-label">Всього заявок</div></div>
+        <div class="dash-kpi"><div class="dash-kpi-value">&euro;${totalRevenue.toFixed(0)}</div><div class="dash-kpi-label">Загальний дохід</div></div>
+        <div class="dash-kpi"><div class="dash-kpi-value success">&euro;${totalPaid.toFixed(0)}</div><div class="dash-kpi-label">Оплачено</div></div>
+        <div class="dash-kpi"><div class="dash-kpi-value danger">&euro;${totalDebt.toFixed(0)}</div><div class="dash-kpi-label">Борг</div></div>
+        <div class="dash-kpi"><div class="dash-kpi-value">${newToday}</div><div class="dash-kpi-label">Нові сьогодні</div></div>
+        <div class="dash-kpi"><div class="dash-kpi-value">&euro;${avgCheck.toFixed(0)}</div><div class="dash-kpi-label">Середній чек</div></div>
+        <div class="dash-kpi"><div class="dash-kpi-value">&euro;${routeRevenue.toFixed(0)}</div><div class="dash-kpi-label">Вартість рейсів</div></div>
+    `;
+}
+
+function renderTabContent(containerId, data, type) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    const noVehicle = data.filter(p => !p.vehicle).length;
+    const noPayment = data.filter(p => {
+        const v = type === 'cargo' ? (p.amount || p.payment) : p.payment;
+        return !v || v === '' || v === '0';
+    }).length;
+    const inWork = data.filter(p => p.status === 'work' || p.status === 'new').length;
+
+    const uaEu = data.filter(p => p.direction === 'ua-eu');
+    const euUa = data.filter(p => p.direction === 'eu-ua');
+    const revFn = type === 'cargo'
+        ? (p) => parseDashAmount(p.amount) || parseDashAmount(p.payment)
+        : (p) => parseDashAmount(p.payment);
+    const uaEuRev = uaEu.reduce((s, p) => s + revFn(p), 0);
+    const euUaRev = euUa.reduce((s, p) => s + revFn(p), 0);
+
+    const managerField = type === 'cargo' ? 'vo' : 'dispatcher';
+    const managerMap = {};
+    data.forEach(p => {
+        const mgr = p[managerField] || 'Невідомий';
+        if (!managerMap[mgr]) managerMap[mgr] = { count: 0, sum: 0 };
+        managerMap[mgr].count++;
+        managerMap[mgr].sum += revFn(p);
     });
-    
-    active.forEach(p => {
+    const managerRows = Object.entries(managerMap)
+        .sort((a, b) => b[1].sum - a[1].sum)
+        .map(([name, d]) => `<tr><td class="font-bold">${name}</td><td class="text-center">${d.count}</td><td class="text-right font-bold">&euro;${d.sum.toFixed(0)}</td></tr>`)
+        .join('') || '<tr><td colspan="3" style="text-align:center;color:var(--text-secondary);">Немає даних</td></tr>';
+
+    const vehMap = {};
+    data.forEach(p => {
         const veh = vehicles.find(v => v.id === p.vehicle || v.name === p.vehicle);
-        if (veh && vehicleStats[veh.id]) {
-            vehicleStats[veh.id].orders++;
-            vehicleStats[veh.id].seats += parseInt(p.seats) || 1;
-            const payment = parseFloat(String(p.payment || '0').replace(/[^0-9.,]/g, '').replace(',', '.')) || 0;
-            vehicleStats[veh.id].sum += payment;
+        const vName = veh ? veh.name : (p.vehicle || '');
+        if (!vName) return;
+        if (!vehMap[vName]) vehMap[vName] = { orders: 0, weight: 0, sum: 0, limit: 0 };
+        vehMap[vName].orders++;
+        if (type === 'cargo') {
+            vehMap[vName].weight += parseFloat(p.weight) || 0;
+            vehMap[vName].limit = veh ? (parseInt(veh.maxWeight) || 2000) : 2000;
+        } else {
+            vehMap[vName].weight += parseInt(p.seats) || 1;
+            vehMap[vName].limit = veh ? (parseInt(veh.seats) || 8) : 8;
         }
+        vehMap[vName].sum += revFn(p);
     });
-    
-    const vehicleStatsHtml = Object.values(vehicleStats)
-        .filter(v => v.orders > 0)
-        .sort((a, b) => b.sum - a.sum)
-        .map(v => `
-            <tr>
-                <td class="font-bold">🚐 ${v.name}</td>
-                <td class="text-center">${v.orders}</td>
-                <td class="text-center">${v.seats}</td>
-                <td class="text-right font-bold">€${v.sum.toFixed(0)}</td>
-            </tr>
-        `).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--text-secondary);">Немає даних</td></tr>';
-    
-    document.getElementById('dashVehicleStats').innerHTML = vehicleStatsHtml;
-    
-    // 4. Постійні клієнти (групування по телефону)
-    const clientsMap = {};
-    active.forEach(p => {
+    const weightLabel = type === 'cargo' ? 'Вага' : 'Місця';
+    const vehRows = Object.entries(vehMap)
+        .sort((a, b) => b[1].sum - a[1].sum)
+        .map(([name, d]) => {
+            const pct = d.limit > 0 ? Math.min(100, Math.round(d.weight / d.limit * 100)) : 0;
+            const fillClass = pct >= 90 ? 'danger' : pct >= 70 ? 'warning' : '';
+            const wVal = type === 'cargo' ? d.weight.toFixed(1) + ' кг' : d.weight;
+            return `<tr><td class="font-bold">${name}</td><td class="text-center">${d.orders}</td><td class="text-center">${wVal}</td><td class="text-right font-bold">&euro;${d.sum.toFixed(0)}</td><td><div class="dash-progress"><div class="dash-progress-fill ${fillClass}" style="width:${pct}%"></div></div><div style="font-size:10px;text-align:center;margin-top:2px;">${pct}%</div></td></tr>`;
+        }).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--text-secondary);">Немає даних</td></tr>';
+
+    const clientMap = {};
+    data.forEach(p => {
         const phone = (p.phone || '').replace(/\D/g, '');
         if (!phone) return;
-        
-        if (!clientsMap[phone]) {
-            clientsMap[phone] = { 
-                phone: p.phone, 
-                name: p.name || 'Невідомий', 
-                trips: 0, 
-                sum: 0 
-            };
-        }
-        clientsMap[phone].trips++;
-        const payment = parseFloat(String(p.payment || '0').replace(/[^0-9.,]/g, '').replace(',', '.')) || 0;
-        clientsMap[phone].sum += payment;
-        // Оновлюємо ім'я якщо є
-        if (p.name && p.name.length > clientsMap[phone].name.length) {
-            clientsMap[phone].name = p.name;
-        }
+        if (!clientMap[phone]) clientMap[phone] = { name: p.name || 'Невідомий', phone: p.phone, count: 0, sum: 0 };
+        clientMap[phone].count++;
+        clientMap[phone].sum += revFn(p);
+        if (p.name && p.name.length > clientMap[phone].name.length) clientMap[phone].name = p.name;
     });
-    
-    const topClients = Object.values(clientsMap)
-        .filter(c => c.trips >= 2) // Мінімум 2 поїздки
-        .sort((a, b) => b.trips - a.trips || b.sum - a.sum)
-        .slice(0, 10);
-    
-    const clientsHtml = topClients.length > 0 
-        ? topClients.map(c => `
-            <tr>
-                <td>
-                    <div class="font-bold">${c.name}</div>
-                    <div style="font-size:10px;color:var(--text-secondary);">${c.phone}</div>
-                </td>
-                <td class="text-center font-bold">${c.trips}</td>
-                <td class="text-right font-bold">€${c.sum.toFixed(0)}</td>
-            </tr>
-        `).join('')
-        : '<tr><td colspan="3" style="text-align:center;color:var(--text-secondary);">Немає постійних клієнтів</td></tr>';
-    
-    document.getElementById('dashTopClients').innerHTML = clientsHtml;
+    const clientRows = Object.values(clientMap)
+        .sort((a, b) => b.count - a.count || b.sum - a.sum)
+        .slice(0, 10)
+        .map(c => `<tr><td><div class="font-bold">${c.name}</div><div style="font-size:10px;color:var(--text-secondary);">${c.phone}</div></td><td class="text-center font-bold">${c.count}</td><td class="text-right font-bold">&euro;${c.sum.toFixed(0)}</td></tr>`)
+        .join('') || '<tr><td colspan="3" style="text-align:center;color:var(--text-secondary);">Немає клієнтів</td></tr>';
+
+    const onRoute = data.filter(p => p.status === 'route').length;
+    const optimized = data.filter(p => p.grupaOpt && p.grupaOpt !== '').length;
+    const waitRoute = data.filter(p => p.status === 'work').length;
+
+    const archived = data.filter(p => p.status === 'archived').length;
+    const refused = data.filter(p => p.status === 'refused').length;
+    const transferred = data.filter(p => p.status === 'transferred').length;
+    const deleted = data.filter(p => p.status === 'deleted').length;
+
+    container.innerHTML = `
+        <div class="dash-section">
+            <div class="dash-section-title">Потребують уваги</div>
+            <div class="dash-alerts-row">
+                <div class="dash-alert"><span class="dash-alert-text">&#10067; Без авто</span><span class="dash-alert-count">${noVehicle}</span></div>
+                <div class="dash-alert danger"><span class="dash-alert-text">&#128176; Без оплати</span><span class="dash-alert-count">${noPayment}</span></div>
+                <div class="dash-alert"><span class="dash-alert-text">&#128260; В роботі</span><span class="dash-alert-count">${inWork}</span></div>
+            </div>
+        </div>
+        <div class="dash-section">
+            <div class="dash-section-title">Дохід по напрямках</div>
+            <div class="dash-dir-row">
+                <div class="dash-dir-card"><div class="dash-dir-label">&#127482;&#127462;&#8594;&#127466;&#127482; UA&rarr;EU</div><div class="dash-dir-value">&euro;${uaEuRev.toFixed(0)}</div><div class="dash-dir-count">${uaEu.length} заявок</div></div>
+                <div class="dash-dir-card"><div class="dash-dir-label">&#127466;&#127482;&#8594;&#127482;&#127462; EU&rarr;UA</div><div class="dash-dir-value">&euro;${euUaRev.toFixed(0)}</div><div class="dash-dir-count">${euUa.length} заявок</div></div>
+            </div>
+        </div>
+        <div class="dash-section">
+            <div class="dash-section-title">Ефективність менеджерів</div>
+            <table class="dashboard-table"><thead><tr><th>Менеджер</th><th class="text-center">Заявок</th><th class="text-right">Сума &euro;</th></tr></thead><tbody>${managerRows}</tbody></table>
+        </div>
+        <div class="dash-section">
+            <div class="dash-section-title">По авто</div>
+            <table class="dashboard-table"><thead><tr><th>Авто</th><th class="text-center">Заявок</th><th class="text-center">${weightLabel}</th><th class="text-right">Сума &euro;</th><th style="min-width:80px">Завантаженість</th></tr></thead><tbody>${vehRows}</tbody></table>
+        </div>
+        <div class="dash-section">
+            <div class="dash-section-title">Топ-10 клієнтів</div>
+            <table class="dashboard-table"><thead><tr><th>Клієнт</th><th class="text-center">Заявок</th><th class="text-right">Сума &euro;</th></tr></thead><tbody>${clientRows}</tbody></table>
+        </div>
+        <div class="dash-section">
+            <div class="dash-section-title">Статистика маршрутів</div>
+            <div class="dash-route-stats">
+                <div class="dash-route-stat"><div class="dash-route-stat-val">${onRoute}</div><div class="dash-route-stat-lbl">На маршрутах</div></div>
+                <div class="dash-route-stat"><div class="dash-route-stat-val">${optimized}</div><div class="dash-route-stat-lbl">Оптимізовані</div></div>
+                <div class="dash-route-stat"><div class="dash-route-stat-val">${waitRoute}</div><div class="dash-route-stat-lbl">Чекають маршруту</div></div>
+            </div>
+        </div>
+        <div class="dash-section">
+            <div class="dash-section-title">Статуси</div>
+            <div class="dash-statuses">
+                <div class="dash-status-item" onclick="showStatusFilter('archived')"><span class="s-icon">&#128230;</span><span class="s-name">Архів</span><span class="s-count">${archived}</span></div>
+                <div class="dash-status-item" onclick="showStatusFilter('refused')"><span class="s-icon">&#10060;</span><span class="s-name">Відмови</span><span class="s-count">${refused}</span></div>
+                <div class="dash-status-item" onclick="showStatusFilter('transferred')"><span class="s-icon">&#128198;</span><span class="s-name">Перенос</span><span class="s-count">${transferred}</span></div>
+                <div class="dash-status-item" onclick="showStatusFilter('deleted')"><span class="s-icon">&#128465;&#65039;</span><span class="s-name">Видалені</span><span class="s-count">${deleted}</span></div>
+            </div>
+        </div>
+    `;
+}
+
+function updateDashboard() {
+    if (dashPassengers.length || dashPackages.length) {
+        renderDashboard();
+    } else {
+        loadDashboardData();
+    }
 }
 
 // CALENDAR
