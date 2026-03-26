@@ -264,12 +264,12 @@
         .dash-kpi-value.danger { color: #dc2626; }
         .dash-kpi-value.warning { color: #d97706; }
         .dash-kpi-label { font-size: 10px; color: #64748b; margin-top: 5px; font-weight: 600; letter-spacing: 0.4px; text-transform: uppercase; }
-        .dash-tabs { display: flex; justify-content: center; gap: 8px; margin-bottom: 20px; padding: 6px; background: #f1f5f9; border-radius: 14px; animation: fadeSlideIn 0.35s ease; }
-        .dash-tab { padding: 14px 40px; font-size: 14px; font-weight: 700; cursor: pointer; border-radius: 11px; transition: all 0.3s cubic-bezier(0.4,0,0.2,1); color: #64748b; background: transparent; user-select: none; position: relative; }
-        .dash-tab:hover { color: #1e3a5f; background: rgba(255,255,255,0.8); }
-        .dash-tab.active { color: white; background: linear-gradient(135deg, #1e3a5f, #3b82f6); box-shadow: 0 4px 16px rgba(30,58,95,0.35); transform: scale(1.02); }
-        .dash-tab-content { display: none; animation: fadeSlideIn 0.4s ease; }
-        .dash-tab-content.active { display: block; }
+        .dash-split { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        @media (max-width: 900px) { .dash-split { grid-template-columns: 1fr; } }
+        .dash-split-col { min-width: 0; }
+        .dash-split-header { font-size: 14px; font-weight: 700; padding: 10px 16px; border-radius: 10px; margin-bottom: 12px; text-align: center; }
+        .dash-split-header.pass { background: linear-gradient(135deg, #eff6ff, #dbeafe); color: #1e40af; }
+        .dash-split-header.cargo { background: linear-gradient(135deg, #fef3c7, #fde68a); color: #92400e; }
         .dash-section { background: white; border-radius: 14px; padding: 18px; border: 1px solid #e2e8f0; margin-bottom: 14px; box-shadow: 0 1px 6px rgba(0,0,0,0.04); transition: box-shadow 0.3s; }
         .dash-section:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
         .dash-section-title { font-size: 12px; font-weight: 700; color: #1e3a5f; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
@@ -323,7 +323,7 @@
             .dash-dir-row { grid-template-columns: 1fr; }
             .dash-route-stats { grid-template-columns: 1fr; }
             .dash-statuses { flex-direction: column; }
-            .dash-tab { padding: 12px 24px; font-size: 13px; }
+            .dash-split { grid-template-columns: 1fr; }
         }
 
         /* SIDE MENU (Mobile) */
@@ -1578,12 +1578,16 @@
                 <div id="dashBody" style="display:none;">
                     <div class="dash-period-bar" id="dashPeriodBar"></div>
                     <div class="dash-kpi-row" id="dashKpiRow"></div>
-                    <div class="dash-tabs">
-                        <div class="dash-tab active" onclick="setDashTab('passengers')">👥 Пасажири</div>
-                        <div class="dash-tab" onclick="setDashTab('cargo')">📦 Посилки</div>
+                    <div class="dash-split">
+                        <div class="dash-split-col">
+                            <div class="dash-split-header pass">👥 Пасажири</div>
+                            <div id="dashTabPassengers"></div>
+                        </div>
+                        <div class="dash-split-col">
+                            <div class="dash-split-header cargo">📦 Посилки</div>
+                            <div id="dashTabCargo"></div>
+                        </div>
                     </div>
-                    <div class="dash-tab-content active" id="dashTabPassengers"></div>
-                    <div class="dash-tab-content" id="dashTabCargo"></div>
                 </div>
             </div>
         </div>
@@ -2381,6 +2385,8 @@ let dashPackages = [];
 let dashLoading = false;
 let dashPeriod = 'all';
 let dashTab = 'passengers';
+let dashDateFrom = '';
+let dashDateTo = '';
 
 function toggleDashboard() {
     const content = document.getElementById('dashboardContent');
@@ -2428,6 +2434,15 @@ function parseDashAmount(val) {
 
 function filterByPeriod(items, period) {
     if (period === 'all') return items;
+    if (period === 'custom') {
+        return items.filter(item => {
+            const d = item.dateReg || item.date || '';
+            if (!d) return false;
+            if (dashDateFrom && d < dashDateFrom) return false;
+            if (dashDateTo && d > dashDateTo) return false;
+            return true;
+        });
+    }
     const now = new Date();
     const today = now.toISOString().split('T')[0];
     return items.filter(item => {
@@ -2455,14 +2470,7 @@ function setDashPeriod(period) {
 }
 
 function setDashTab(tab) {
-    dashTab = tab;
-    document.querySelectorAll('.dash-tab').forEach(t => {
-        const isPass = t.textContent.includes('Пасажири');
-        const isCargo = t.textContent.includes('Посилки');
-        t.classList.toggle('active', (tab === 'passengers' && isPass) || (tab === 'cargo' && isCargo));
-    });
-    document.getElementById('dashTabPassengers').classList.toggle('active', tab === 'passengers');
-    document.getElementById('dashTabCargo').classList.toggle('active', tab === 'cargo');
+    // No-op: both tabs are always visible in split layout
 }
 
 function renderDashboard() {
@@ -2493,7 +2501,12 @@ function renderPeriodBar() {
     ];
     bar.innerHTML = periods.map(p =>
         `<button class="dash-period-btn${p.key === dashPeriod ? ' active' : ''}" data-period="${p.key}" onclick="setDashPeriod('${p.key}')">${p.label}</button>`
-    ).join('');
+    ).join('') + `<button class="dash-period-btn${dashPeriod==='custom'?' active':''}" data-period="custom" onclick="setDashPeriod('custom')">📅 Обрати дату</button>` +
+    `<div id="dashCustomDates" style="display:${dashPeriod==='custom'?'flex':'none'};gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap;">` +
+    `<input type="date" value="${dashDateFrom}" onchange="dashDateFrom=this.value;renderDashboard()" style="padding:6px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-family:inherit;">` +
+    `<span style="color:#64748b;font-weight:600;">—</span>` +
+    `<input type="date" value="${dashDateTo}" onchange="dashDateTo=this.value;renderDashboard()" style="padding:6px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-family:inherit;">` +
+    `</div>`;
 }
 
 function renderKpi(passData, pkgData) {
@@ -2564,17 +2577,17 @@ function renderTabContent(containerId, data, type) {
 
     const vehMap = {};
     data.forEach(p => {
-        const veh = vehicles.find(v => v.id === p.vehicle || v.name === p.vehicle);
-        const vName = veh ? veh.name : (p.vehicle || '');
+        const vName = p.vehicle || '';
         if (!vName) return;
-        if (!vehMap[vName]) vehMap[vName] = { orders: 0, weight: 0, sum: 0, limit: 0 };
+        if (!vehMap[vName]) {
+            const veh = vehicles.find(v => v.id === vName || v.name === vName);
+            vehMap[vName] = { orders: 0, weight: 0, sum: 0, limit: type === 'cargo' ? (veh ? parseInt(veh.maxWeight) || 2000 : 2000) : (veh ? parseInt(veh.seats) || 8 : 8) };
+        }
         vehMap[vName].orders++;
         if (type === 'cargo') {
             vehMap[vName].weight += parseFloat(p.weight) || 0;
-            vehMap[vName].limit = veh ? (parseInt(veh.maxWeight) || 2000) : 2000;
         } else {
             vehMap[vName].weight += parseInt(p.seats) || 1;
-            vehMap[vName].limit = veh ? (parseInt(veh.seats) || 8) : 8;
         }
         vehMap[vName].sum += revFn(p);
     });
@@ -2651,10 +2664,10 @@ function renderTabContent(containerId, data, type) {
         <div class="dash-section">
             <div class="dash-section-title">Статуси</div>
             <div class="dash-statuses">
-                <div class="dash-status-item" onclick="showStatusFilter('archived')"><span class="s-icon">&#128230;</span><span class="s-name">Архів</span><span class="s-count">${archived}</span></div>
-                <div class="dash-status-item" onclick="showStatusFilter('refused')"><span class="s-icon">&#10060;</span><span class="s-name">Відмови</span><span class="s-count">${refused}</span></div>
-                <div class="dash-status-item" onclick="showStatusFilter('transferred')"><span class="s-icon">&#128198;</span><span class="s-name">Перенос</span><span class="s-count">${transferred}</span></div>
-                <div class="dash-status-item" onclick="showStatusFilter('deleted')"><span class="s-icon">&#128465;&#65039;</span><span class="s-name">Видалені</span><span class="s-count">${deleted}</span></div>
+                <div class="dash-status-item" onclick="showStatusFilter('archived'); toggleDashboard();"><span class="s-icon">&#128230;</span><span class="s-name">Архів</span><span class="s-count">${archived}</span></div>
+                <div class="dash-status-item" onclick="showStatusFilter('refused'); toggleDashboard();"><span class="s-icon">&#10060;</span><span class="s-name">Відмови</span><span class="s-count">${refused}</span></div>
+                <div class="dash-status-item" onclick="showStatusFilter('transferred'); toggleDashboard();"><span class="s-icon">&#128198;</span><span class="s-name">Перенос</span><span class="s-count">${transferred}</span></div>
+                <div class="dash-status-item" onclick="showStatusFilter('deleted'); toggleDashboard();"><span class="s-icon">&#128465;&#65039;</span><span class="s-name">Видалені</span><span class="s-count">${deleted}</span></div>
             </div>
         </div>
     `;

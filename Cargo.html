@@ -230,12 +230,18 @@
         .dash-kpi-value.danger { color: #dc2626; }
         .dash-kpi-value.warning { color: #d97706; }
         .dash-kpi-label { font-size: 10px; color: #64748b; margin-top: 5px; font-weight: 600; letter-spacing: 0.4px; text-transform: uppercase; }
-        .dash-tabs { display: flex; justify-content: center; gap: 8px; margin-bottom: 20px; padding: 6px; background: #f1f5f9; border-radius: 14px; animation: fadeSlideIn 0.35s ease; }
-        .dash-tab { padding: 14px 40px; font-size: 14px; font-weight: 700; cursor: pointer; border-radius: 11px; transition: all 0.3s cubic-bezier(0.4,0,0.2,1); color: #64748b; background: transparent; user-select: none; position: relative; }
-        .dash-tab:hover { color: #1e3a5f; background: rgba(255,255,255,0.8); }
-        .dash-tab.active { color: white; background: linear-gradient(135deg, #1e3a5f, #3b82f6); box-shadow: 0 4px 16px rgba(30,58,95,0.35); transform: scale(1.02); }
-        .dash-tab-content { display: none; animation: fadeSlideIn 0.4s ease; }
-        .dash-tab-content.active { display: block; }
+        .dash-tabs { display: none; }
+        .dash-tab-content { display: block; animation: fadeSlideIn 0.4s ease; }
+        .dash-split { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        @media (max-width: 900px) { .dash-split { grid-template-columns: 1fr; } }
+        .dash-split-col { min-width: 0; }
+        .dash-split-header { font-size: 14px; font-weight: 700; padding: 10px 16px; border-radius: 10px; margin-bottom: 12px; text-align: center; }
+        .dash-split-header.pass { background: linear-gradient(135deg, #eff6ff, #dbeafe); color: #1e40af; }
+        .dash-split-header.cargo { background: linear-gradient(135deg, #fef3c7, #fde68a); color: #92400e; }
+        .dash-custom-dates { display: none; align-items: center; gap: 8px; margin-left: 8px; }
+        .dash-custom-dates input[type="date"] { padding: 6px 10px; border-radius: 18px; border: 1.5px solid #e2e8f0; font-size: 12px; font-family: inherit; font-weight: 600; color: #475569; outline: none; transition: border-color 0.2s; }
+        .dash-custom-dates input[type="date"]:focus { border-color: #3b82f6; }
+        .dash-custom-dates span { color: #94a3b8; font-size: 12px; }
         .dash-section { background: white; border-radius: 14px; padding: 18px; border: 1px solid #e2e8f0; margin-bottom: 14px; box-shadow: 0 1px 6px rgba(0,0,0,0.04); transition: box-shadow 0.3s; }
         .dash-section:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
         .dash-section-title { font-size: 12px; font-weight: 700; color: #1e3a5f; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
@@ -1549,12 +1555,16 @@
                 <div id="dashBody" style="display:none;">
                     <div class="dash-period-bar" id="dashPeriodBar"></div>
                     <div class="dash-kpi-row" id="dashKpiRow"></div>
-                    <div class="dash-tabs" id="dashTabs">
-                        <div class="dash-tab active" onclick="setDashTab('passengers')">👥 Пасажири</div>
-                        <div class="dash-tab" onclick="setDashTab('cargo')">📦 Посилки</div>
+                    <div class="dash-split">
+                        <div class="dash-split-col">
+                            <div class="dash-split-header pass">👥 Пасажири</div>
+                            <div id="dashTabPassengers"></div>
+                        </div>
+                        <div class="dash-split-col">
+                            <div class="dash-split-header cargo">📦 Посилки</div>
+                            <div id="dashTabCargo"></div>
+                        </div>
                     </div>
-                    <div class="dash-tab-content active" id="dashTabPassengers"></div>
-                    <div class="dash-tab-content" id="dashTabCargo"></div>
                 </div>
             </div>
         </div>
@@ -2355,7 +2365,8 @@ let dashPassengers = [];
 let dashPackages = [];
 let dashLoading = false;
 let dashPeriod = 'all';
-let dashTab = 'passengers';
+let dashDateFrom = '';
+let dashDateTo = '';
 
 function toggleDashboard() {
     const content = document.getElementById('dashboardContent');
@@ -2411,6 +2422,14 @@ function dashFilterByPeriod(items) {
         const monthAgo = d.toISOString().split('T')[0];
         return items.filter(p => p.dateReg >= monthAgo);
     }
+    if (dashPeriod === 'custom') {
+        return items.filter(p => {
+            if (!p.dateReg) return false;
+            if (dashDateFrom && p.dateReg < dashDateFrom) return false;
+            if (dashDateTo && p.dateReg > dashDateTo) return false;
+            return true;
+        });
+    }
     return items;
 }
 
@@ -2439,17 +2458,24 @@ async function loadDashboardData() {
 
 function setDashPeriod(period) {
     dashPeriod = period;
-    renderDashboard();
+    const customDatesEl = document.getElementById('dashCustomDates');
+    if (customDatesEl) {
+        customDatesEl.style.display = period === 'custom' ? 'flex' : 'none';
+    }
+    if (period !== 'custom') {
+        renderDashboard();
+    } else {
+        // Update button states
+        renderDashPeriodBar();
+    }
 }
 
-function setDashTab(tab) {
-    dashTab = tab;
-    document.querySelectorAll('#dashTabs .dash-tab').forEach((el, i) => {
-        el.classList.toggle('active', (i === 0 && tab === 'passengers') || (i === 1 && tab === 'cargo'));
-    });
-    document.getElementById('dashTabPassengers').classList.toggle('active', tab === 'passengers');
-    document.getElementById('dashTabCargo').classList.toggle('active', tab === 'cargo');
-    renderDashTabContent();
+function applyCustomDates() {
+    dashDateFrom = document.getElementById('dashDateFrom').value || '';
+    dashDateTo = document.getElementById('dashDateTo').value || '';
+    if (dashDateFrom || dashDateTo) {
+        renderDashboard();
+    }
 }
 
 function renderDashboard() {
@@ -2464,9 +2490,16 @@ function renderDashboard() {
 
 function renderDashPeriodBar() {
     const periods = [['today','Сьогодні'],['week','Тиждень'],['month','Місяць'],['all','Все']];
-    document.getElementById('dashPeriodBar').innerHTML = periods.map(([k, l]) =>
+    const btns = periods.map(([k, l]) =>
         `<button class="dash-period-btn${dashPeriod === k ? ' active' : ''}" onclick="setDashPeriod('${k}')">${l}</button>`
     ).join('');
+    const customBtn = `<button class="dash-period-btn${dashPeriod === 'custom' ? ' active' : ''}" onclick="setDashPeriod('custom')">📅 Обрати дату</button>`;
+    const customDates = `<div id="dashCustomDates" class="dash-custom-dates" style="display:${dashPeriod === 'custom' ? 'flex' : 'none'};">
+        <input type="date" id="dashDateFrom" value="${dashDateFrom}" onchange="applyCustomDates()">
+        <span>—</span>
+        <input type="date" id="dashDateTo" value="${dashDateTo}" onchange="applyCustomDates()">
+    </div>`;
+    document.getElementById('dashPeriodBar').innerHTML = btns + customBtn + customDates;
 }
 
 function renderDashKPI() {
@@ -2533,16 +2566,18 @@ function renderDashTabFor(type) {
         .map(([name, d]) => `<tr><td class="font-bold">${name}</td><td class="text-center">${d.count}</td><td class="text-right font-bold">&euro;${d.sum.toFixed(0)}</td></tr>`)
         .join('') || '<tr><td colspan="3" style="text-align:center;color:var(--text-secondary);">Немає даних</td></tr>';
 
-    // D. Vehicles
+    // D. Vehicles - group by vehicle field directly
     const vehMap = {};
-    vehicles.forEach(v => { vehMap[v.id] = { name: v.name, count: 0, load: 0, sum: 0, limit: isPass ? (parseInt(v.seats) || 8) : (parseInt(v.maxWeight) || 2000) }; });
     items.forEach(p => {
-        const veh = vehicles.find(v => v.id === p.vehicle || v.name === p.vehicle);
-        if (veh && vehMap[veh.id]) {
-            vehMap[veh.id].count++;
-            vehMap[veh.id].load += isPass ? (parseFloat(p.seats) || 1) : (parseFloat(p.weight) || 1);
-            vehMap[veh.id].sum += dashGetRevenue(p, typeKey);
-        }
+        const vName = p.vehicle || '';
+        if (!vName) return;
+        if (!vehMap[vName]) vehMap[vName] = { name: vName, count: 0, load: 0, sum: 0, limit: isPass ? 8 : 2000 };
+        vehMap[vName].count++;
+        vehMap[vName].load += isPass ? (parseFloat(p.seats) || 1) : (parseFloat(p.weight) || 1);
+        vehMap[vName].sum += dashGetRevenue(p, typeKey);
+        // Try to get limit from vehicles array
+        const veh = vehicles.find(v => v.id === vName || v.name === vName);
+        if (veh) vehMap[vName].limit = isPass ? (parseInt(veh.seats) || 8) : (parseInt(veh.maxWeight) || 2000);
     });
     const loadLabel = isPass ? 'Місця' : 'Вага';
     const loadUnit = isPass ? '' : ' кг';
@@ -2624,10 +2659,10 @@ function renderDashTabFor(type) {
         <div class="dash-section">
             <div class="dash-section-title">Статуси</div>
             <div class="dash-statuses">
-                <div class="dash-status-item" onclick="showStatusFilter('archived')"><span class="s-icon">📦</span><span class="s-name">Архів</span><span class="s-count">${archived}</span></div>
-                <div class="dash-status-item" onclick="showStatusFilter('refused')"><span class="s-icon">❌</span><span class="s-name">Відмови</span><span class="s-count">${refused}</span></div>
-                <div class="dash-status-item" onclick="showStatusFilter('transferred')"><span class="s-icon">📆</span><span class="s-name">Перенос</span><span class="s-count">${transferred}</span></div>
-                <div class="dash-status-item" onclick="showStatusFilter('deleted')"><span class="s-icon">🗑️</span><span class="s-name">Видалені</span><span class="s-count">${deleted}</span></div>
+                <div class="dash-status-item" onclick="showStatusFilter('archived'); toggleDashboard();"><span class="s-icon">📦</span><span class="s-name">Архів</span><span class="s-count">${archived}</span></div>
+                <div class="dash-status-item" onclick="showStatusFilter('refused'); toggleDashboard();"><span class="s-icon">❌</span><span class="s-name">Відмови</span><span class="s-count">${refused}</span></div>
+                <div class="dash-status-item" onclick="showStatusFilter('transferred'); toggleDashboard();"><span class="s-icon">📆</span><span class="s-name">Перенос</span><span class="s-count">${transferred}</span></div>
+                <div class="dash-status-item" onclick="showStatusFilter('deleted'); toggleDashboard();"><span class="s-icon">🗑️</span><span class="s-name">Видалені</span><span class="s-count">${deleted}</span></div>
             </div>
         </div>
     `;
