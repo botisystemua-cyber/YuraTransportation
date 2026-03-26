@@ -2505,7 +2505,7 @@ function renderPeriodBar() {
         { key: 'today', label: 'Сьогодні' },
         { key: 'week', label: 'Тиждень' },
         { key: 'month', label: 'Місяць' },
-        { key: 'all', label: 'Все' }
+        { key: 'all', label: 'Всі' }
     ];
     bar.innerHTML = periods.map(p =>
         `<button class="dash-period-btn${p.key === dashPeriod ? ' active' : ''}" data-period="${p.key}" onclick="setDashPeriod('${p.key}')">${p.label}</button>`
@@ -2585,19 +2585,20 @@ function renderTabContent(containerId, data, type) {
 
     const vehMap = {};
     data.forEach(p => {
-        const vName = p.vehicle || '';
-        if (!vName) return;
-        if (!vehMap[vName]) {
-            const veh = vehicles.find(v => v.id === vName || v.name === vName);
-            vehMap[vName] = { orders: 0, weight: 0, sum: 0, limit: type === 'cargo' ? (veh ? parseInt(veh.maxWeight) || 2000 : 2000) : (veh ? parseInt(veh.seats) || 8 : 8) };
+        const rawV = p.vehicle || '';
+        if (!rawV) return;
+        const veh = vehicles.find(v => v.id === rawV || v.name === rawV);
+        const displayName = veh ? veh.name : rawV;
+        if (!vehMap[displayName]) {
+            vehMap[displayName] = { orders: 0, weight: 0, sum: 0, limit: type === 'cargo' ? (veh ? parseInt(veh.maxWeight) || 2000 : 2000) : (veh ? parseInt(veh.seats) || 8 : 8) };
         }
-        vehMap[vName].orders++;
+        vehMap[displayName].orders++;
         if (type === 'cargo') {
-            vehMap[vName].weight += parseFloat(p.weight) || 0;
+            vehMap[displayName].weight += parseFloat(p.weight) || 0;
         } else {
-            vehMap[vName].weight += parseInt(p.seats) || 1;
+            vehMap[displayName].weight += parseInt(p.seats) || 1;
         }
-        vehMap[vName].sum += revFn(p);
+        vehMap[displayName].sum += revFn(p);
     });
     const weightLabel = type === 'cargo' ? 'Вага' : 'Місця';
     const vehRows = Object.entries(vehMap)
@@ -2626,7 +2627,7 @@ function renderTabContent(containerId, data, type) {
 
     const onRoute = data.filter(p => p.status === 'route').length;
     const optimized = data.filter(p => p.grupaOpt && p.grupaOpt !== '').length;
-    const waitRoute = data.filter(p => p.status === 'work').length;
+    const withVehicle = data.filter(p => p.vehicle && p.status !== 'route').length;
 
     const archived = data.filter(p => p.status === 'archived').length;
     const refused = data.filter(p => p.status === 'refused').length;
@@ -2664,9 +2665,9 @@ function renderTabContent(containerId, data, type) {
         <div class="dash-section">
             <div class="dash-section-title">Статистика маршрутів</div>
             <div class="dash-route-stats">
-                <div class="dash-route-stat"><div class="dash-route-stat-val">${onRoute}</div><div class="dash-route-stat-lbl">На маршрутах</div></div>
+                <div class="dash-route-stat"><div class="dash-route-stat-val">${onRoute}</div><div class="dash-route-stat-lbl">В маршрутах</div></div>
                 <div class="dash-route-stat"><div class="dash-route-stat-val">${optimized}</div><div class="dash-route-stat-lbl">Оптимізовані</div></div>
-                <div class="dash-route-stat"><div class="dash-route-stat-val">${waitRoute}</div><div class="dash-route-stat-lbl">Чекають маршруту</div></div>
+                <div class="dash-route-stat"><div class="dash-route-stat-val">${withVehicle}</div><div class="dash-route-stat-lbl">З авто (готові)</div></div>
             </div>
         </div>
         <div class="dash-section">

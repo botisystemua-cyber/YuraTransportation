@@ -2496,7 +2496,7 @@ function renderDashboard() {
 }
 
 function renderDashPeriodBar() {
-    const periods = [['today','Сьогодні'],['week','Тиждень'],['month','Місяць'],['all','Все']];
+    const periods = [['today','Сьогодні'],['week','Тиждень'],['month','Місяць'],['all','Всі']];
     const btns = periods.map(([k, l]) =>
         `<button class="dash-period-btn${dashPeriod === k ? ' active' : ''}" onclick="setDashPeriod('${k}')">${l}</button>`
     ).join('');
@@ -2573,18 +2573,17 @@ function renderDashTabFor(type) {
         .map(([name, d]) => `<tr><td class="font-bold">${name}</td><td class="text-center">${d.count}</td><td class="text-right font-bold">&euro;${d.sum.toFixed(0)}</td></tr>`)
         .join('') || '<tr><td colspan="3" style="text-align:center;color:var(--text-secondary);">Немає даних</td></tr>';
 
-    // D. Vehicles - group by vehicle field directly
+    // D. Vehicles - group by resolved vehicle name
     const vehMap = {};
     items.forEach(p => {
-        const vName = p.vehicle || '';
-        if (!vName) return;
-        if (!vehMap[vName]) vehMap[vName] = { name: vName, count: 0, load: 0, sum: 0, limit: isPass ? 8 : 2000 };
-        vehMap[vName].count++;
-        vehMap[vName].load += isPass ? (parseFloat(p.seats) || 1) : (parseFloat(p.weight) || 1);
-        vehMap[vName].sum += dashGetRevenue(p, typeKey);
-        // Try to get limit from vehicles array
-        const veh = vehicles.find(v => v.id === vName || v.name === vName);
-        if (veh) vehMap[vName].limit = isPass ? (parseInt(veh.seats) || 8) : (parseInt(veh.maxWeight) || 2000);
+        const rawV = p.vehicle || '';
+        if (!rawV) return;
+        const veh = vehicles.find(v => v.id === rawV || v.name === rawV);
+        const displayName = veh ? veh.name : rawV;
+        if (!vehMap[displayName]) vehMap[displayName] = { name: displayName, count: 0, load: 0, sum: 0, limit: isPass ? (veh ? parseInt(veh.seats) || 8 : 8) : (veh ? parseInt(veh.maxWeight) || 2000 : 2000) };
+        vehMap[displayName].count++;
+        vehMap[displayName].load += isPass ? (parseFloat(p.seats) || 1) : (parseFloat(p.weight) || 1);
+        vehMap[displayName].sum += dashGetRevenue(p, typeKey);
     });
     const loadLabel = isPass ? 'Місця' : 'Вага';
     const loadUnit = isPass ? '' : ' кг';
@@ -2619,7 +2618,7 @@ function renderDashTabFor(type) {
     // F. Route stats
     const onRoute = items.filter(p => p.status === 'route').length;
     const optimized = items.filter(p => p.grupaOpt && p.grupaOpt !== '').length;
-    const waitRoute = items.filter(p => p.status === 'work').length;
+    const withVehicle = items.filter(p => p.vehicle && p.status !== 'route').length;
 
     // G. Statuses
     const archived = allActive.length ? raw.filter(p => p.status === 'archived').length : 0;
@@ -2658,9 +2657,9 @@ function renderDashTabFor(type) {
         <div class="dash-section">
             <div class="dash-section-title">Статистика маршрутів</div>
             <div class="dash-route-stats">
-                <div class="dash-route-stat"><div class="dash-route-stat-val">${onRoute}</div><div class="dash-route-stat-lbl">На маршрутах</div></div>
+                <div class="dash-route-stat"><div class="dash-route-stat-val">${onRoute}</div><div class="dash-route-stat-lbl">В маршрутах</div></div>
                 <div class="dash-route-stat"><div class="dash-route-stat-val">${optimized}</div><div class="dash-route-stat-lbl">Оптимізовані</div></div>
-                <div class="dash-route-stat"><div class="dash-route-stat-val">${waitRoute}</div><div class="dash-route-stat-lbl">Чекають маршруту</div></div>
+                <div class="dash-route-stat"><div class="dash-route-stat-val">${withVehicle}</div><div class="dash-route-stat-lbl">З авто (готові)</div></div>
             </div>
         </div>
         <div class="dash-section">
