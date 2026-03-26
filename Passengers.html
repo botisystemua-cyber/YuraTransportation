@@ -2383,8 +2383,12 @@ function togglePcSidebar() {
 const USER_ACCESS = 'owner'; // 'owner' | 'admin' | 'dispatcher'
 const DASH_CARGO_API = 'https://script.google.com/macros/s/AKfycbwcDN56bo3y83T18u3ns2RF3yr7SUOLeXztgAJM1ust9yEuHVw6rPS3yIh7-J-SpDf8NQ/exec';
 const DASH_PASS_API = 'https://script.google.com/macros/s/AKfycbxYdvmKOtY6vG5Kc60g2g6MA5jLgF2S__JPFQ2g9hP0qCmDGAyt_FQ4O04DOAO_MLc1/exec';
+const DASH_PASS_ROUTE_API = 'https://script.google.com/macros/s/AKfycbz2qmOqa_CgBWxUgY7Hc9Ni_pWQ8gfOBjN7iYhC0UwJKK36ha6BNfaz4MWGdCFmjMmy/exec';
+const DASH_CARGO_ROUTE_API = 'https://script.google.com/macros/s/AKfycbxRhO2tU2COaPbh7c-xp8VNY5B6PYLvTACBxjc3DDN_x4-2rK5AkfnTFncvUPmXaOZi3w/exec';
 
 let dashPassengers = [];
+let dashPassRouteCount = 0;
+let dashCargoRouteCount = 0;
 let dashPackages = [];
 let dashLoading = false;
 let dashPeriod = 'all';
@@ -2412,10 +2416,14 @@ function loadDashboardData() {
 
     Promise.all([
         fetch(DASH_PASS_API, { method: 'POST', body: JSON.stringify({ action: 'getAll' }) }).then(r => r.json()),
-        fetch(DASH_CARGO_API, { method: 'POST', body: JSON.stringify({ action: 'getAll' }) }).then(r => r.json())
-    ]).then(([passRes, cargoRes]) => {
+        fetch(DASH_CARGO_API, { method: 'POST', body: JSON.stringify({ action: 'getAll' }) }).then(r => r.json()),
+        fetch(DASH_PASS_ROUTE_API, { method: 'POST', body: JSON.stringify({ action: 'getAvailableRoutes' }) }).then(r => r.json()).catch(() => ({ routes: [] })),
+        fetch(DASH_CARGO_ROUTE_API, { method: 'POST', body: JSON.stringify({ action: 'getAvailableRoutes' }) }).then(r => r.json()).catch(() => ({ routes: [] }))
+    ]).then(([passRes, cargoRes, passRouteRes, cargoRouteRes]) => {
         dashPassengers = Array.isArray(passRes) ? passRes : (passRes.data || passRes.passengers || []);
         dashPackages = Array.isArray(cargoRes) ? cargoRes : (cargoRes.data || cargoRes.packages || []);
+        dashPassRouteCount = (passRouteRes.routes || []).reduce((s, r) => s + (r.count || 0), 0);
+        dashCargoRouteCount = (cargoRouteRes.routes || []).reduce((s, r) => s + (r.count || 0), 0);
         dashLoading = false;
         loader.style.display = 'none';
         body.style.display = 'block';
@@ -2625,10 +2633,9 @@ function renderTabContent(containerId, data, type) {
         .map(c => `<tr><td><div class="font-bold">${c.name}</div><div style="font-size:10px;color:var(--text-secondary);">${c.phone}</div></td><td class="text-center font-bold">${c.count}</td><td class="text-right font-bold">&euro;${c.sum.toFixed(0)}</td></tr>`)
         .join('') || '<tr><td colspan="3" style="text-align:center;color:var(--text-secondary);">Немає клієнтів</td></tr>';
 
-    const isOnRoute = p => p.status === 'route' || (p.mark || '').toLowerCase().includes('маршрут');
-    const onRoute = data.filter(isOnRoute).length;
+    const routeCount = type === 'passengers' ? dashPassRouteCount : dashCargoRouteCount;
     const optimized = data.filter(p => p.grupaOpt && p.grupaOpt !== '').length;
-    const withVehicle = data.filter(p => p.vehicle && !isOnRoute(p)).length;
+    const withVehicle = data.filter(p => p.vehicle).length;
 
     const archived = data.filter(p => p.status === 'archived').length;
     const refused = data.filter(p => p.status === 'refused').length;
@@ -2666,9 +2673,9 @@ function renderTabContent(containerId, data, type) {
         <div class="dash-section">
             <div class="dash-section-title">Статистика маршрутів</div>
             <div class="dash-route-stats">
-                <div class="dash-route-stat"><div class="dash-route-stat-val">${onRoute}</div><div class="dash-route-stat-lbl">В маршрутах</div></div>
+                <div class="dash-route-stat"><div class="dash-route-stat-val">${routeCount}</div><div class="dash-route-stat-lbl">В маршрутах</div></div>
                 <div class="dash-route-stat"><div class="dash-route-stat-val">${optimized}</div><div class="dash-route-stat-lbl">Оптимізовані</div></div>
-                <div class="dash-route-stat"><div class="dash-route-stat-val">${withVehicle}</div><div class="dash-route-stat-lbl">З авто (готові)</div></div>
+                <div class="dash-route-stat"><div class="dash-route-stat-val">${withVehicle}</div><div class="dash-route-stat-lbl">З авто</div></div>
             </div>
         </div>
         <div class="dash-section">
