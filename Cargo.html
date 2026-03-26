@@ -204,7 +204,7 @@
         @keyframes fadeSlideIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes pulseGlow { 0%, 100% { box-shadow: 0 0 0 0 rgba(59,130,246,0.15); } 50% { box-shadow: 0 0 0 6px rgba(59,130,246,0); } }
         .dash-period-bar { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; animation: fadeSlideIn 0.3s ease; }
-        .dash-period-btn { padding: 8px 18px; border-radius: 22px; border: 1.5px solid #e2e8f0; background: white; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.3s cubic-bezier(0.4,0,0.2,1); font-family: inherit; color: #64748b; }
+        .dash-period-btn { padding: 10px 22px; border-radius: 22px; border: 1.5px solid #e2e8f0; background: white; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.3s cubic-bezier(0.4,0,0.2,1); font-family: inherit; color: #64748b; }
         .dash-period-btn:hover { border-color: #3b82f6; color: #3b82f6; background: #eff6ff; transform: translateY(-1px); }
         .dash-period-btn.active { background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; border-color: transparent; box-shadow: 0 4px 12px rgba(59,130,246,0.35); transform: translateY(-1px); }
         .dash-kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(125px, 1fr)); gap: 12px; margin-bottom: 20px; animation: fadeSlideIn 0.4s ease; }
@@ -2616,9 +2616,10 @@ function renderDashTabFor(type) {
         : '<tr><td colspan="3" style="text-align:center;color:var(--text-secondary);">Немає даних</td></tr>';
 
     // F. Route stats
-    const onRoute = items.filter(p => p.status === 'route').length;
+    const isOnRoute = p => p.status === 'route' || (p.mark || '').toLowerCase().includes('маршрут');
+    const onRoute = items.filter(isOnRoute).length;
     const optimized = items.filter(p => p.grupaOpt && p.grupaOpt !== '').length;
-    const withVehicle = items.filter(p => p.vehicle && p.status !== 'route').length;
+    const withVehicle = items.filter(p => p.vehicle && !isOnRoute(p)).length;
 
     // G. Statuses
     const archived = allActive.length ? raw.filter(p => p.status === 'archived').length : 0;
