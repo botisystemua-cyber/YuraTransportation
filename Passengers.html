@@ -2633,7 +2633,10 @@ function renderTabContent(containerId, data, type) {
         .map(c => `<tr><td><div class="font-bold">${c.name}</div><div style="font-size:10px;color:var(--text-secondary);">${c.phone}</div></td><td class="text-center font-bold">${c.count}</td><td class="text-right font-bold">&euro;${c.sum.toFixed(0)}</td></tr>`)
         .join('') || '<tr><td colspan="3" style="text-align:center;color:var(--text-secondary);">Немає клієнтів</td></tr>';
 
-    const routeCount = type === 'passengers' ? dashPassRouteCount : dashCargoRouteCount;
+    // Route stats — локальні дані (як каунтер в меню) + fallback на маршрутний API
+    const localPassRoute = (typeof passengers !== 'undefined' && Array.isArray(passengers)) ? passengers.filter(p => p.status === 'route').length : 0;
+    const localCargoRoute = (typeof packages !== 'undefined' && Array.isArray(packages)) ? packages.filter(p => p.status === 'route').length : 0;
+    const routeCount = type === 'passengers' ? (localPassRoute || dashPassRouteCount) : (localCargoRoute || dashCargoRouteCount);
     const optimized = data.filter(p => p.grupaOpt && p.grupaOpt !== '').length;
     const withVehicle = data.filter(p => p.vehicle).length;
 
