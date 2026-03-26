@@ -2626,7 +2626,7 @@ function renderDashTabFor(type) {
     // F. Route stats — локальні дані (як каунтер в меню) + fallback на маршрутний API
     const localPassRoute = (typeof passengers !== 'undefined' && Array.isArray(passengers)) ? passengers.filter(p => p.status === 'route').length : 0;
     const localCargoRoute = (typeof packages !== 'undefined' && Array.isArray(packages)) ? packages.filter(p => p.status === 'route').length : 0;
-    const routeCount = isPass ? (localPassRoute || dashPassRouteCount) : (localCargoRoute || dashCargoRouteCount);
+    const routeCount = isPass ? Math.max(localPassRoute, dashPassRouteCount) : Math.max(localCargoRoute, dashCargoRouteCount);
     const optimized = items.filter(p => p.grupaOpt && p.grupaOpt !== '').length;
     const withVehicle = items.filter(p => p.vehicle).length;
 

@@ -2636,7 +2636,7 @@ function renderTabContent(containerId, data, type) {
     // Route stats — локальні дані (як каунтер в меню) + fallback на маршрутний API
     const localPassRoute = (typeof passengers !== 'undefined' && Array.isArray(passengers)) ? passengers.filter(p => p.status === 'route').length : 0;
     const localCargoRoute = (typeof packages !== 'undefined' && Array.isArray(packages)) ? packages.filter(p => p.status === 'route').length : 0;
-    const routeCount = type === 'passengers' ? (localPassRoute || dashPassRouteCount) : (localCargoRoute || dashCargoRouteCount);
+    const routeCount = type === 'passengers' ? Math.max(localPassRoute, dashPassRouteCount) : Math.max(localCargoRoute, dashCargoRouteCount);
     const optimized = data.filter(p => p.grupaOpt && p.grupaOpt !== '').length;
     const withVehicle = data.filter(p => p.vehicle).length;
 
