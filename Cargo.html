@@ -2368,7 +2368,6 @@ let dashPassengers = [];
 let dashPackages = [];
 let dashPassRouteCount = 0;
 let dashCargoRouteCount = 0;
-let dashLoading = false;
 let dashPeriod = 'all';
 let dashTab = 'passengers';
 let dashDateFrom = '';
@@ -2381,16 +2380,35 @@ function toggleDashboard() {
     content.classList.toggle('collapsed');
     header.classList.toggle('collapsed');
     if (!content.classList.contains('collapsed')) {
-        const loader = document.getElementById('dashLoader');
-        const body = document.getElementById('dashBody');
-        if (dashLoadFromCache()) {
+        dashShow();
+    }
+}
+
+function dashShow() {
+    const loader = document.getElementById('dashLoader');
+    const body = document.getElementById('dashBody');
+    // Є дані в пам'яті (від prefetch) або в кеші — показати одразу
+    if ((dashPassengers.length || dashPackages.length) || dashLoadFromCache()) {
+        loader.style.display = 'none';
+        body.style.display = 'block';
+        renderDashboard();
+        // Тихо оновити у фоні
+        dashFetchAll().then(() => {
+            const c = document.getElementById('dashboardContent');
+            if (c && !c.classList.contains('collapsed')) renderDashboard();
+        }).catch(() => {});
+    } else {
+        // Нічого немає — показати лоадер і чекати
+        loader.style.display = 'flex';
+        body.style.display = 'none';
+        dashFetchAll().then(() => {
             loader.style.display = 'none';
             body.style.display = 'block';
             renderDashboard();
-            dashRefreshInBackground();
-        } else {
-            loadDashboardData();
-        }
+        }).catch(() => {
+            loader.style.display = 'none';
+            body.style.display = 'block';
+        });
     }
 }
 
@@ -2491,46 +2509,10 @@ function dashLoadFromCache() {
     } catch(e) { return false; }
 }
 
-// Повне завантаження з лоадером (перший раз, без кешу)
-async function loadDashboardData() {
-    if (dashLoading) return;
-    dashLoading = true;
-    const loader = document.getElementById('dashLoader');
-    const body = document.getElementById('dashBody');
-    loader.style.display = 'flex';
-    body.style.display = 'none';
-    try {
-        await dashFetchAll();
-    } catch (e) {
-        console.error('Dashboard fetch error:', e);
-    }
-    loader.style.display = 'none';
-    body.style.display = 'block';
-    dashLoading = false;
-    renderDashboard();
-}
-
-// Тихе оновлення у фоні (без лоадера, без зміни UI поки не готово)
-async function dashRefreshInBackground() {
-    if (dashLoading) return;
-    dashLoading = true;
-    try {
-        await dashFetchAll();
-        // Якщо дашборд відкритий — перерендерити
-        const content = document.getElementById('dashboardContent');
-        if (content && !content.classList.contains('collapsed')) {
-            renderDashboard();
-        }
-    } catch(e) {
-        console.error('Dashboard bg refresh error:', e);
-    }
-    dashLoading = false;
-}
-
 // Prefetch при заході на сторінку (фон, без UI)
 function dashPrefetch() {
     if (USER_ACCESS !== 'owner') return;
-    dashRefreshInBackground();
+    dashFetchAll().catch(() => {});
 }
 
 function setDashTab(tab) {

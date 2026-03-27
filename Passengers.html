@@ -2393,7 +2393,6 @@ let dashPassengers = [];
 let dashPassRouteCount = 0;
 let dashCargoRouteCount = 0;
 let dashPackages = [];
-let dashLoading = false;
 let dashPeriod = 'all';
 let dashTab = 'passengers';
 let dashDateFrom = '';
@@ -2406,16 +2405,32 @@ function toggleDashboard() {
     content.classList.toggle('collapsed');
     header.classList.toggle('collapsed');
     if (!content.classList.contains('collapsed')) {
-        const loader = document.getElementById('dashLoader');
-        const body = document.getElementById('dashBody');
-        if (dashLoadFromCache()) {
+        dashShow();
+    }
+}
+
+function dashShow() {
+    const loader = document.getElementById('dashLoader');
+    const body = document.getElementById('dashBody');
+    if ((dashPassengers.length || dashPackages.length) || dashLoadFromCache()) {
+        loader.style.display = 'none';
+        body.style.display = 'block';
+        renderDashboard();
+        dashFetchAll().then(() => {
+            const c = document.getElementById('dashboardContent');
+            if (c && !c.classList.contains('collapsed')) renderDashboard();
+        }).catch(() => {});
+    } else {
+        loader.style.display = 'flex';
+        body.style.display = 'none';
+        dashFetchAll().then(() => {
             loader.style.display = 'none';
             body.style.display = 'block';
             renderDashboard();
-            dashRefreshInBackground();
-        } else {
-            loadDashboardData();
-        }
+        }).catch(() => {
+            loader.style.display = 'none';
+            body.style.display = 'block';
+        });
     }
 }
 
@@ -2459,48 +2474,9 @@ function dashLoadFromCache() {
     } catch(e) { return false; }
 }
 
-function loadDashboardData() {
-    if (dashLoading) return;
-    dashLoading = true;
-    const loader = document.getElementById('dashLoader');
-    const body = document.getElementById('dashBody');
-    loader.style.display = 'flex';
-    body.style.display = 'none';
-
-    dashFetchAll().then(() => {
-        dashLoading = false;
-        loader.style.display = 'none';
-        body.style.display = 'block';
-        renderDashboard();
-    }).catch(err => {
-        console.error('Dashboard fetch error:', err);
-        dashLoading = false;
-        loader.style.display = 'none';
-        body.style.display = 'block';
-        dashPassengers = passengers || [];
-        dashPackages = [];
-        renderDashboard();
-    });
-}
-
-async function dashRefreshInBackground() {
-    if (dashLoading) return;
-    dashLoading = true;
-    try {
-        await dashFetchAll();
-        const content = document.getElementById('dashboardContent');
-        if (content && !content.classList.contains('collapsed')) {
-            renderDashboard();
-        }
-    } catch(e) {
-        console.error('Dashboard bg refresh error:', e);
-    }
-    dashLoading = false;
-}
-
 function dashPrefetch() {
     if (USER_ACCESS !== 'owner') return;
-    dashRefreshInBackground();
+    dashFetchAll().catch(() => {});
 }
 
 function parseDashAmount(val) {
@@ -2760,11 +2736,7 @@ function renderTabContent(containerId, data, type) {
 }
 
 function updateDashboard() {
-    if (dashPassengers.length || dashPackages.length) {
-        renderDashboard();
-    } else {
-        loadDashboardData();
-    }
+    dashShow();
 }
 
 // CALENDAR
