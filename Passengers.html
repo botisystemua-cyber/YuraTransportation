@@ -2660,15 +2660,23 @@ function renderTabContent(containerId, data, type) {
         .map(([name, d]) => `<tr><td class="font-bold">${name}</td><td class="text-center">${d.count}</td><td class="text-right font-bold">&euro;${d.sum.toFixed(0)}</td></tr>`)
         .join('') || '<tr><td colspan="3" style="text-align:center;color:var(--text-secondary);">Немає даних</td></tr>';
 
-    // Топ-5 міст/адрес
+    // Топ-5 міст
     const cityMap = {};
-    data.forEach(p => {
-        const addr = type === 'passengers' ? (p.from || p.to || '') : (p.address || '');
+    const addCity = (addr) => {
         if (!addr || addr.trim().length < 2) return;
-        const city = addr.trim().split(',')[0].trim();
-        if (!city) return;
+        let city = addr.trim().split(',')[0].trim().split(/\s+\d/)[0].trim();
+        city = city.charAt(0).toUpperCase() + city.slice(1).toLowerCase();
+        if (!city || city.length < 2) return;
         if (!cityMap[city]) cityMap[city] = 0;
         cityMap[city]++;
+    };
+    data.forEach(p => {
+        if (type === 'passengers') {
+            addCity(p.from);
+            addCity(p.to);
+        } else {
+            addCity(p.address);
+        }
     });
     const topCities = Object.entries(cityMap).sort((a, b) => b[1] - a[1]).slice(0, 5);
     const maxCityCount = topCities.length > 0 ? topCities[0][1] : 1;
