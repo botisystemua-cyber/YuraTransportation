@@ -2706,10 +2706,21 @@ function renderDashTabFor(type) {
         </div>
         <div class="dash-section">
             <div class="dash-section-title">Топ-5 міст</div>
-            ${topCities.length > 0 ? topCities.map(([city, cnt]) => {
+            ${topCities.length > 0 ? topCities.map(([city, cnt], i) => {
                 const pct = Math.round(cnt / maxCityCount * 100);
-                return `<div style="margin-bottom:8px;"><div style="display:flex;justify-content:space-between;font-size:12px;font-weight:600;margin-bottom:3px;"><span>${city}</span><span style="color:var(--text-secondary);">${cnt}</span></div><div class="dash-progress" style="height:6px;"><div class="dash-progress-fill" style="width:${pct}%"></div></div></div>`;
-            }).join('') : '<div style="text-align:center;color:var(--text-secondary);font-size:12px;">Немає даних</div>'}
+                const colors = ['#3b82f6','#8b5cf6','#14b8a6','#f59e0b','#ef4444'];
+                const bgColors = ['#eff6ff','#faf5ff','#f0fdfa','#fffbeb','#fef2f2'];
+                const c = colors[i] || '#64748b';
+                const bg = bgColors[i] || '#f8fafc';
+                return `<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:${bg};border-radius:10px;margin-bottom:8px;border-left:4px solid ${c};transition:transform 0.2s;" onmouseenter="this.style.transform='translateX(4px)'" onmouseleave="this.style.transform=''">
+                    <div style="min-width:24px;height:24px;background:${c};color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;">${i+1}</div>
+                    <div style="flex:1;">
+                        <div style="font-size:13px;font-weight:700;color:#1e293b;margin-bottom:4px;">${city}</div>
+                        <div class="dash-progress" style="height:6px;"><div style="height:100%;border-radius:4px;background:${c};width:${pct}%;transition:width 0.6s;"></div></div>
+                    </div>
+                    <div style="font-size:16px;font-weight:800;color:${c};">${cnt}</div>
+                </div>`;
+            }).join('') : '<div style="text-align:center;color:var(--text-secondary);font-size:12px;padding:20px;">Немає даних</div>'}
         </div>
         <div class="dash-section">
             <div class="dash-section-title">Топ-10 клієнтів</div>
