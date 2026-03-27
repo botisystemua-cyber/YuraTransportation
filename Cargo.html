@@ -2193,6 +2193,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Тихе авто-оновлення кожні 60 секунд
     setInterval(() => silentSync(), 60000);
+
+    // Prefetch дашборду у фоні (для миттєвого відкриття)
+    setTimeout(() => dashPrefetch(), 3000);
 });
 
 // Тиха синхронізація (без loader)
@@ -2372,12 +2375,19 @@ let dashDateFrom = '';
 let dashDateTo = '';
 
 function toggleDashboard() {
+    if (USER_ACCESS !== 'owner') return;
     const content = document.getElementById('dashboardContent');
     const header = document.querySelector('.dashboard-header');
     content.classList.toggle('collapsed');
     header.classList.toggle('collapsed');
     if (!content.classList.contains('collapsed')) {
-        loadDashboardData();
+        // Спробувати кеш → показати миттєво, потім оновити у фоні
+        if (dashLoadFromCache()) {
+            renderDashboard();
+            dashRefreshInBackground();
+        } else {
+            loadDashboardData();
+        }
     }
 }
 
@@ -2436,6 +2446,49 @@ function dashFilterByPeriod(items) {
     return items;
 }
 
+// Фонове завантаження даних дашборду (fetch + кеш)
+async function dashFetchAll() {
+    const [cargoRes, passRes, passRouteRes, cargoRouteRes] = await Promise.all([
+        fetch(DASH_CARGO_API, { method: 'POST', body: JSON.stringify({ action: 'getAll' }) }).then(r => r.json()),
+        fetch(DASH_PASS_API, { method: 'POST', body: JSON.stringify({ action: 'getAll' }) }).then(r => r.json()),
+        fetch(DASH_PASS_ROUTE_API, { method: 'POST', body: JSON.stringify({ action: 'getAvailableRoutes' }) }).then(r => r.json()).catch(() => ({ routes: [] })),
+        fetch(DASH_CARGO_ROUTE_API, { method: 'POST', body: JSON.stringify({ action: 'getAvailableRoutes' }) }).then(r => r.json()).catch(() => ({ routes: [] }))
+    ]);
+    dashPackages = Array.isArray(cargoRes) ? cargoRes : (cargoRes.data || cargoRes.packages || []);
+    dashPassengers = Array.isArray(passRes) ? passRes : (passRes.data || passRes.passengers || []);
+    dashPassRouteCount = (passRouteRes.routes || []).reduce((s, r) => s + (r.count || 0), 0);
+    dashCargoRouteCount = (cargoRouteRes.routes || []).reduce((s, r) => s + (r.count || 0), 0);
+    dashSaveToCache();
+}
+
+// Зберегти в localStorage
+function dashSaveToCache() {
+    try {
+        localStorage.setItem('dashCache', JSON.stringify({
+            t: Date.now(),
+            pass: dashPassengers,
+            cargo: dashPackages,
+            passRoute: dashPassRouteCount,
+            cargoRoute: dashCargoRouteCount
+        }));
+    } catch(e) {}
+}
+
+// Завантажити з кешу (повертає true якщо є свіжий кеш)
+function dashLoadFromCache() {
+    try {
+        const raw = localStorage.getItem('dashCache');
+        if (!raw) return false;
+        const c = JSON.parse(raw);
+        dashPassengers = c.pass || [];
+        dashPackages = c.cargo || [];
+        dashPassRouteCount = c.passRoute || 0;
+        dashCargoRouteCount = c.cargoRoute || 0;
+        return dashPassengers.length > 0 || dashPackages.length > 0;
+    } catch(e) { return false; }
+}
+
+// Повне завантаження з лоадером (перший раз, без кешу)
 async function loadDashboardData() {
     if (dashLoading) return;
     dashLoading = true;
@@ -2444,16 +2497,7 @@ async function loadDashboardData() {
     loader.style.display = 'flex';
     body.style.display = 'none';
     try {
-        const [cargoRes, passRes, passRouteRes, cargoRouteRes] = await Promise.all([
-            fetch(DASH_CARGO_API, { method: 'POST', body: JSON.stringify({ action: 'getAll' }) }).then(r => r.json()),
-            fetch(DASH_PASS_API, { method: 'POST', body: JSON.stringify({ action: 'getAll' }) }).then(r => r.json()),
-            fetch(DASH_PASS_ROUTE_API, { method: 'POST', body: JSON.stringify({ action: 'getAvailableRoutes' }) }).then(r => r.json()).catch(() => ({ routes: [] })),
-            fetch(DASH_CARGO_ROUTE_API, { method: 'POST', body: JSON.stringify({ action: 'getAvailableRoutes' }) }).then(r => r.json()).catch(() => ({ routes: [] }))
-        ]);
-        dashPackages = Array.isArray(cargoRes) ? cargoRes : (cargoRes.data || cargoRes.packages || []);
-        dashPassengers = Array.isArray(passRes) ? passRes : (passRes.data || passRes.passengers || []);
-        dashPassRouteCount = (passRouteRes.routes || []).reduce((s, r) => s + (r.count || 0), 0);
-        dashCargoRouteCount = (cargoRouteRes.routes || []).reduce((s, r) => s + (r.count || 0), 0);
+        await dashFetchAll();
     } catch (e) {
         console.error('Dashboard fetch error:', e);
     }
@@ -2461,6 +2505,29 @@ async function loadDashboardData() {
     body.style.display = 'block';
     dashLoading = false;
     renderDashboard();
+}
+
+// Тихе оновлення у фоні (без лоадера, без зміни UI поки не готово)
+async function dashRefreshInBackground() {
+    if (dashLoading) return;
+    dashLoading = true;
+    try {
+        await dashFetchAll();
+        // Якщо дашборд відкритий — перерендерити
+        const content = document.getElementById('dashboardContent');
+        if (content && !content.classList.contains('collapsed')) {
+            renderDashboard();
+        }
+    } catch(e) {
+        console.error('Dashboard bg refresh error:', e);
+    }
+    dashLoading = false;
+}
+
+// Prefetch при заході на сторінку (фон, без UI)
+function dashPrefetch() {
+    if (USER_ACCESS !== 'owner') return;
+    dashRefreshInBackground();
 }
 
 function setDashTab(tab) {
