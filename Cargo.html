@@ -2384,6 +2384,25 @@ function toggleDashboard() {
     }
 }
 
+function closeDashboard() {
+    const content = document.getElementById('dashboardContent');
+    const header = document.querySelector('.dashboard-header');
+    if (content && !content.classList.contains('collapsed')) {
+        content.classList.add('collapsed');
+        header.classList.add('collapsed');
+    }
+}
+
+// Закривати дашборд при кліку на бокове меню
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('pcSidebar')?.addEventListener('click', e => {
+        if (e.target.closest('.pc-sidebar-item, .direction-option')) closeDashboard();
+    });
+    document.getElementById('sideMenu')?.addEventListener('click', e => {
+        if (e.target.closest('.side-menu-item, .direction-option')) closeDashboard();
+    });
+});
+
 function dashShow() {
     const loader = document.getElementById('dashLoader');
     const body = document.getElementById('dashBody');
@@ -2633,32 +2652,6 @@ function renderDashTabFor(type) {
         .map(([name, d]) => `<tr><td class="font-bold">${name}</td><td class="text-center">${d.count}</td><td class="text-right font-bold">&euro;${d.sum.toFixed(0)}</td></tr>`)
         .join('') || '<tr><td colspan="3" style="text-align:center;color:var(--text-secondary);">Немає даних</td></tr>';
 
-    // D. Vehicles — ізольовано, без vehicles масиву
-    const vehMap = {};
-    items.forEach(p => {
-        const v = p.vehicle || '';
-        if (!v) return;
-        if (!vehMap[v]) vehMap[v] = { name: v, count: 0, load: 0, sum: 0 };
-        vehMap[v].count++;
-        vehMap[v].load += isPass ? (parseFloat(p.seats) || 1) : (parseFloat(p.weight) || 1);
-        vehMap[v].sum += dashGetRevenue(p, typeKey);
-    });
-    const loadLabel = isPass ? 'Місця' : 'Вага';
-    const loadUnit = isPass ? '' : ' кг';
-    const defLimit = isPass ? 8 : 2000;
-    const vehRows = Object.values(vehMap).filter(v => v.count > 0).sort((a, b) => b.sum - a.sum)
-        .map(v => {
-            const pct = defLimit > 0 ? Math.min((v.load / defLimit) * 100, 100) : 0;
-            const cls = pct > 90 ? 'danger' : pct > 70 ? 'warning' : '';
-            return `<tr>
-                <td class="font-bold">🚐 ${v.name}</td>
-                <td class="text-center">${v.count}</td>
-                <td class="text-center">${isPass ? v.load.toFixed(0) : v.load.toFixed(1)}${loadUnit}</td>
-                <td class="text-right font-bold">&euro;${v.sum.toFixed(0)}</td>
-                <td><div class="dash-progress"><div class="dash-progress-fill ${cls}" style="width:${pct.toFixed(0)}%"></div></div><div style="font-size:10px;text-align:center;color:var(--text-secondary);">${pct.toFixed(0)}%</div></td>
-            </tr>`;
-        }).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--text-secondary);">Немає даних</td></tr>';
-
     // E. Top clients
     const clientMap = {};
     items.forEach(p => {
@@ -2706,10 +2699,6 @@ function renderDashTabFor(type) {
         <div class="dash-section">
             <div class="dash-section-title">Ефективність менеджерів</div>
             <table class="dashboard-table"><thead><tr><th>Менеджер</th><th class="text-center">Заявок</th><th class="text-right">Сума &euro;</th></tr></thead><tbody>${mgrRows}</tbody></table>
-        </div>
-        <div class="dash-section">
-            <div class="dash-section-title">По авто</div>
-            <table class="dashboard-table"><thead><tr><th>Авто</th><th class="text-center">Заявок</th><th class="text-center">${loadLabel}</th><th class="text-right">Сума &euro;</th><th style="min-width:80px">Завантаженість</th></tr></thead><tbody>${vehRows}</tbody></table>
         </div>
         <div class="dash-section">
             <div class="dash-section-title">Топ-10 клієнтів</div>

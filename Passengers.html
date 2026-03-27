@@ -2409,6 +2409,25 @@ function toggleDashboard() {
     }
 }
 
+function closeDashboard() {
+    const content = document.getElementById('dashboardContent');
+    const header = document.querySelector('.dashboard-header');
+    if (content && !content.classList.contains('collapsed')) {
+        content.classList.add('collapsed');
+        header.classList.add('collapsed');
+    }
+}
+
+// Закривати дашборд при кліку на бокове меню
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('pcSidebar')?.addEventListener('click', e => {
+        if (e.target.closest('.pc-sidebar-item, .direction-option')) closeDashboard();
+    });
+    document.getElementById('sideMenu')?.addEventListener('click', e => {
+        if (e.target.closest('.side-menu-item, .direction-option')) closeDashboard();
+    });
+});
+
 function dashShow() {
     const loader = document.getElementById('dashLoader');
     const body = document.getElementById('dashBody');
@@ -2631,31 +2650,6 @@ function renderTabContent(containerId, data, type) {
         .map(([name, d]) => `<tr><td class="font-bold">${name}</td><td class="text-center">${d.count}</td><td class="text-right font-bold">&euro;${d.sum.toFixed(0)}</td></tr>`)
         .join('') || '<tr><td colspan="3" style="text-align:center;color:var(--text-secondary);">Немає даних</td></tr>';
 
-    // Авто — ізольовано, без vehicles масиву
-    const vehMap = {};
-    data.forEach(p => {
-        const v = p.vehicle || '';
-        if (!v) return;
-        if (!vehMap[v]) vehMap[v] = { orders: 0, weight: 0, sum: 0 };
-        vehMap[v].orders++;
-        if (type === 'cargo') {
-            vehMap[v].weight += parseFloat(p.weight) || 0;
-        } else {
-            vehMap[v].weight += parseInt(p.seats) || 1;
-        }
-        vehMap[v].sum += revFn(p);
-    });
-    const weightLabel = type === 'cargo' ? 'Вага' : 'Місця';
-    const defLimit = type === 'cargo' ? 2000 : 8;
-    const vehRows = Object.entries(vehMap)
-        .sort((a, b) => b[1].sum - a[1].sum)
-        .map(([name, d]) => {
-            const pct = defLimit > 0 ? Math.min(100, Math.round(d.weight / defLimit * 100)) : 0;
-            const fillClass = pct >= 90 ? 'danger' : pct >= 70 ? 'warning' : '';
-            const wVal = type === 'cargo' ? d.weight.toFixed(1) + ' кг' : d.weight;
-            return `<tr><td class="font-bold">${name}</td><td class="text-center">${d.orders}</td><td class="text-center">${wVal}</td><td class="text-right font-bold">&euro;${d.sum.toFixed(0)}</td><td><div class="dash-progress"><div class="dash-progress-fill ${fillClass}" style="width:${pct}%"></div></div><div style="font-size:10px;text-align:center;margin-top:2px;">${pct}%</div></td></tr>`;
-        }).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--text-secondary);">Немає даних</td></tr>';
-
     const clientMap = {};
     data.forEach(p => {
         const phone = (p.phone || '').replace(/\D/g, '');
@@ -2702,10 +2696,6 @@ function renderTabContent(containerId, data, type) {
         <div class="dash-section">
             <div class="dash-section-title">Ефективність менеджерів</div>
             <table class="dashboard-table"><thead><tr><th>Менеджер</th><th class="text-center">Заявок</th><th class="text-right">Сума &euro;</th></tr></thead><tbody>${managerRows}</tbody></table>
-        </div>
-        <div class="dash-section">
-            <div class="dash-section-title">По авто</div>
-            <table class="dashboard-table"><thead><tr><th>Авто</th><th class="text-center">Заявок</th><th class="text-center">${weightLabel}</th><th class="text-right">Сума &euro;</th><th style="min-width:80px">Завантаженість</th></tr></thead><tbody>${vehRows}</tbody></table>
         </div>
         <div class="dash-section">
             <div class="dash-section-title">Топ-10 клієнтів</div>
