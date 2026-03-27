@@ -2418,15 +2418,6 @@ function closeDashboard() {
     }
 }
 
-// Закривати дашборд при кліку на бокове меню
-document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('pcSidebar')?.addEventListener('click', e => {
-        if (e.target.closest('.pc-sidebar-item, .direction-option')) closeDashboard();
-    });
-    document.getElementById('sideMenu')?.addEventListener('click', e => {
-        if (e.target.closest('.side-menu-item, .direction-option')) closeDashboard();
-    });
-});
 
 function dashShow() {
     const loader = document.getElementById('dashLoader');
@@ -2650,6 +2641,19 @@ function renderTabContent(containerId, data, type) {
         .map(([name, d]) => `<tr><td class="font-bold">${name}</td><td class="text-center">${d.count}</td><td class="text-right font-bold">&euro;${d.sum.toFixed(0)}</td></tr>`)
         .join('') || '<tr><td colspan="3" style="text-align:center;color:var(--text-secondary);">Немає даних</td></tr>';
 
+    // Топ-5 міст/адрес
+    const cityMap = {};
+    data.forEach(p => {
+        const addr = type === 'passengers' ? (p.from || p.to || '') : (p.address || '');
+        if (!addr || addr.trim().length < 2) return;
+        const city = addr.trim().split(',')[0].trim();
+        if (!city) return;
+        if (!cityMap[city]) cityMap[city] = 0;
+        cityMap[city]++;
+    });
+    const topCities = Object.entries(cityMap).sort((a, b) => b[1] - a[1]).slice(0, 5);
+    const maxCityCount = topCities.length > 0 ? topCities[0][1] : 1;
+
     const clientMap = {};
     data.forEach(p => {
         const phone = (p.phone || '').replace(/\D/g, '');
@@ -2696,6 +2700,13 @@ function renderTabContent(containerId, data, type) {
         <div class="dash-section">
             <div class="dash-section-title">Ефективність менеджерів</div>
             <table class="dashboard-table"><thead><tr><th>Менеджер</th><th class="text-center">Заявок</th><th class="text-right">Сума &euro;</th></tr></thead><tbody>${managerRows}</tbody></table>
+        </div>
+        <div class="dash-section">
+            <div class="dash-section-title">Топ-5 міст</div>
+            ${topCities.length > 0 ? topCities.map(([city, cnt]) => {
+                const pct = Math.round(cnt / maxCityCount * 100);
+                return `<div style="margin-bottom:8px;"><div style="display:flex;justify-content:space-between;font-size:12px;font-weight:600;margin-bottom:3px;"><span>${city}</span><span style="color:var(--text-secondary);">${cnt}</span></div><div class="dash-progress" style="height:6px;"><div class="dash-progress-fill" style="width:${pct}%"></div></div></div>`;
+            }).join('') : '<div style="text-align:center;color:var(--text-secondary);font-size:12px;">Немає даних</div>'}
         </div>
         <div class="dash-section">
             <div class="dash-section-title">Топ-10 клієнтів</div>
@@ -3155,8 +3166,9 @@ function highlightSearch(text) {
 }
 
 function render() {
+    closeDashboard();
     const c = document.getElementById('cardsList');
-    
+
     // Якщо це режим маршруту - рендеримо пасажирів з таблиці маршрутів
     if (filters.statusFilter === 'route' && filters.routeVehicle) {
         renderRoutePassengers();
