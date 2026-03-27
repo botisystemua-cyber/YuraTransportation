@@ -3626,9 +3626,10 @@ function updatePcVehiclesList() {
         const _cl2 = ['archived','refused','transferred','deleted'];
         const count = passengers.filter(p => (p.vehicle === v.id || p.vehicle === v.name) && !_cl2.includes(p.status)).length;
         const isActive = filters.vehicle === v.id;
-        return `<div class="pc-sidebar-item ${isActive ? 'active' : ''}" onclick="setVehicleFilter('${v.id}')">
-            <span><span class="item-icon">🚐</span>${v.name}</span>
-            <span class="item-count">${count}</span>
+        return `<div class="pc-sidebar-item ${isActive ? 'active' : ''}" onclick="setVehicleFilter('${v.id}')" style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="flex:1;"><span class="item-icon">🚐</span>${v.name}</span>
+            <span class="item-count" style="margin-right:8px;">${count}</span>
+            <button onclick="event.stopPropagation();deleteVehicle('${v.id}')" style="background:none;border:none;cursor:pointer;font-size:12px;opacity:0.5;padding:4px;" title="Видалити авто">🗑️</button>
         </div>`;
     }).join('');
 
