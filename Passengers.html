@@ -2631,32 +2631,26 @@ function renderTabContent(containerId, data, type) {
         .map(([name, d]) => `<tr><td class="font-bold">${name}</td><td class="text-center">${d.count}</td><td class="text-right font-bold">&euro;${d.sum.toFixed(0)}</td></tr>`)
         .join('') || '<tr><td colspan="3" style="text-align:center;color:var(--text-secondary);">Немає даних</td></tr>';
 
-    // Авто — свій тип: тільки з меню, чужий тип: всі
-    const isOwnType = (type === 'passengers' && typeof passengers !== 'undefined' && Array.isArray(passengers)) ||
-                      (type === 'cargo' && typeof packages !== 'undefined' && Array.isArray(packages));
+    // Авто — ізольовано, без vehicles масиву
     const vehMap = {};
     data.forEach(p => {
-        const rawV = p.vehicle || '';
-        if (!rawV) return;
-        const veh = vehicles.find(v => v.id === rawV || v.name === rawV);
-        if (isOwnType && !veh) return; // свій тип: ігноруємо невідомі авто
-        const displayName = veh ? veh.name : rawV;
-        if (!vehMap[displayName]) {
-            vehMap[displayName] = { orders: 0, weight: 0, sum: 0, limit: type === 'cargo' ? (veh ? parseInt(veh.maxWeight) || 2000 : 2000) : (veh ? parseInt(veh.seats) || 8 : 8) };
-        }
-        vehMap[displayName].orders++;
+        const v = p.vehicle || '';
+        if (!v) return;
+        if (!vehMap[v]) vehMap[v] = { orders: 0, weight: 0, sum: 0 };
+        vehMap[v].orders++;
         if (type === 'cargo') {
-            vehMap[displayName].weight += parseFloat(p.weight) || 0;
+            vehMap[v].weight += parseFloat(p.weight) || 0;
         } else {
-            vehMap[displayName].weight += parseInt(p.seats) || 1;
+            vehMap[v].weight += parseInt(p.seats) || 1;
         }
-        vehMap[displayName].sum += revFn(p);
+        vehMap[v].sum += revFn(p);
     });
     const weightLabel = type === 'cargo' ? 'Вага' : 'Місця';
+    const defLimit = type === 'cargo' ? 2000 : 8;
     const vehRows = Object.entries(vehMap)
         .sort((a, b) => b[1].sum - a[1].sum)
         .map(([name, d]) => {
-            const pct = d.limit > 0 ? Math.min(100, Math.round(d.weight / d.limit * 100)) : 0;
+            const pct = defLimit > 0 ? Math.min(100, Math.round(d.weight / defLimit * 100)) : 0;
             const fillClass = pct >= 90 ? 'danger' : pct >= 70 ? 'warning' : '';
             const wVal = type === 'cargo' ? d.weight.toFixed(1) + ' кг' : d.weight;
             return `<tr><td class="font-bold">${name}</td><td class="text-center">${d.orders}</td><td class="text-center">${wVal}</td><td class="text-right font-bold">&euro;${d.sum.toFixed(0)}</td><td><div class="dash-progress"><div class="dash-progress-fill ${fillClass}" style="width:${pct}%"></div></div><div style="font-size:10px;text-align:center;margin-top:2px;">${pct}%</div></td></tr>`;
