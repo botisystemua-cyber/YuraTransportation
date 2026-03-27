@@ -189,164 +189,116 @@
         @media (max-width: 1099px) { .main-content-area.shifted-by-bulk { margin-left: 0; margin-right: 0; } }
 
         /* DASHBOARD - Owner Only */
-        .dashboard-panel {
-            background: white;
-            border-radius: 12px;
-            margin-bottom: 16px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-            overflow: hidden;
-        }
-        .dashboard-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 14px 18px;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            color: white;
-            cursor: pointer;
-        }
-        .dashboard-header:hover { opacity: 0.95; }
-        .dashboard-title {
-            font-size: 14px;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .dashboard-toggle {
-            font-size: 12px;
-            transition: transform 0.3s;
-        }
+        .dashboard-panel { background: white; border-radius: 16px; margin-bottom: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.1); overflow: hidden; }
+        .dashboard-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 22px; background: linear-gradient(135deg, #1e3a5f 0%, #0d253f 50%, #1a365d 100%); color: white; cursor: pointer; position: relative; overflow: hidden; }
+        .dashboard-header::after { content: ''; position: absolute; top: -50%; right: -20%; width: 200px; height: 200px; background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%); border-radius: 50%; }
+        .dashboard-header:hover { filter: brightness(1.05); }
+        .dashboard-title { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 10px; z-index: 1; }
+        .dashboard-toggle { font-size: 12px; transition: transform 0.4s cubic-bezier(0.4,0,0.2,1); z-index: 1; }
         .dashboard-header.collapsed .dashboard-toggle { transform: rotate(-90deg); }
-        .dashboard-content {
-            padding: 16px;
-            max-height: 2000px;
-            overflow: hidden;
-            transition: max-height 0.4s ease, padding 0.3s ease, opacity 0.3s ease;
-            opacity: 1;
-        }
-        .dashboard-content.collapsed {
-            max-height: 0;
-            padding: 0 16px;
-            opacity: 0;
-        }
-        
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 16px;
-        }
-        .dashboard-card {
-            background: var(--bg-main);
-            border-radius: 10px;
-            padding: 16px;
-            border: 1px solid var(--border);
-        }
-        .dashboard-card-title {
-            font-size: 12px;
-            font-weight: 700;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .dashboard-stats {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-        }
-        .dashboard-stat {
-            text-align: center;
-            padding: 12px 8px;
-            background: white;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-        }
-        .dashboard-stat-value {
-            font-size: 24px;
-            font-weight: 800;
-            color: var(--primary);
-        }
-        .dashboard-stat-value.success { color: var(--success); }
-        .dashboard-stat-value.warning { color: var(--warning); }
-        .dashboard-stat-value.danger { color: var(--danger); }
-        .dashboard-stat-label {
-            font-size: 10px;
-            color: var(--text-secondary);
-            margin-top: 4px;
-            font-weight: 600;
-        }
-        
-        .dashboard-table {
-            width: 100%;
-            font-size: 12px;
-            border-collapse: collapse;
-        }
-        .dashboard-table th {
-            text-align: left;
-            padding: 8px 10px;
-            background: white;
-            font-weight: 700;
-            color: var(--primary);
-            border-bottom: 2px solid var(--border);
-        }
-        .dashboard-table td {
-            padding: 8px 10px;
-            border-bottom: 1px solid var(--border);
-        }
-        .dashboard-table tr:hover td {
-            background: rgba(26, 58, 94, 0.03);
-        }
+        .dashboard-content { padding: 20px; max-height: 8000px; overflow: hidden; transition: max-height 0.5s ease, padding 0.3s ease, opacity 0.4s ease; opacity: 1; background: linear-gradient(180deg, #f8fafd 0%, #ffffff 100%); }
+        .dashboard-content.collapsed { max-height: 0; padding: 0 20px; opacity: 0; }
+        .dash-loader { display: flex; justify-content: center; align-items: center; padding: 50px; font-size: 14px; color: var(--text-secondary); gap: 12px; }
+        .dash-loader .spinner { width: 24px; height: 24px; border: 3px solid #e2e8f0; border-top-color: #3b82f6; border-radius: 50%; animation: spin 0.7s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes fadeSlideIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulseGlow { 0%, 100% { box-shadow: 0 0 0 0 rgba(59,130,246,0.15); } 50% { box-shadow: 0 0 0 6px rgba(59,130,246,0); } }
+        .dash-period-bar { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; animation: fadeSlideIn 0.3s ease; }
+        .dash-period-btn { padding: 10px 22px; border-radius: 22px; border: 1.5px solid #e2e8f0; background: white; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.3s cubic-bezier(0.4,0,0.2,1); font-family: inherit; color: #64748b; }
+        .dash-period-btn:hover { border-color: #3b82f6; color: #3b82f6; background: #eff6ff; transform: translateY(-1px); }
+        .dash-period-btn.active { background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; border-color: transparent; box-shadow: 0 4px 12px rgba(59,130,246,0.35); transform: translateY(-1px); }
+        .dash-kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(125px, 1fr)); gap: 12px; margin-bottom: 20px; animation: fadeSlideIn 0.4s ease; }
+        .dash-kpi { text-align: center; padding: 16px 10px; border-radius: 14px; border: 1px solid transparent; transition: all 0.3s cubic-bezier(0.4,0,0.2,1); position: relative; overflow: hidden; }
+        .dash-kpi::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; border-radius: 3px 3px 0 0; }
+        .dash-kpi:nth-child(1) { background: linear-gradient(135deg, #eff6ff, #dbeafe); }
+        .dash-kpi:nth-child(1)::before { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
+        .dash-kpi:nth-child(2) { background: linear-gradient(135deg, #f0fdf4, #dcfce7); }
+        .dash-kpi:nth-child(2)::before { background: linear-gradient(90deg, #22c55e, #4ade80); }
+        .dash-kpi:nth-child(3) { background: linear-gradient(135deg, #ecfdf5, #d1fae5); }
+        .dash-kpi:nth-child(3)::before { background: linear-gradient(90deg, #10b981, #34d399); }
+        .dash-kpi:nth-child(4) { background: linear-gradient(135deg, #fef2f2, #fecaca); }
+        .dash-kpi:nth-child(4)::before { background: linear-gradient(90deg, #ef4444, #f87171); }
+        .dash-kpi:nth-child(5) { background: linear-gradient(135deg, #fffbeb, #fef3c7); }
+        .dash-kpi:nth-child(5)::before { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+        .dash-kpi:nth-child(6) { background: linear-gradient(135deg, #faf5ff, #ede9fe); }
+        .dash-kpi:nth-child(6)::before { background: linear-gradient(90deg, #8b5cf6, #a78bfa); }
+        .dash-kpi:nth-child(7) { background: linear-gradient(135deg, #f0fdfa, #ccfbf1); }
+        .dash-kpi:nth-child(7)::before { background: linear-gradient(90deg, #14b8a6, #2dd4bf); }
+        .dash-kpi:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
+        .dash-kpi-value { font-size: 24px; font-weight: 800; color: #1e293b; }
+        .dash-kpi-value.success { color: #16a34a; }
+        .dash-kpi-value.danger { color: #dc2626; }
+        .dash-kpi-value.warning { color: #d97706; }
+        .dash-kpi-label { font-size: 10px; color: #64748b; margin-top: 5px; font-weight: 600; letter-spacing: 0.4px; text-transform: uppercase; }
+        .dash-tab-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin-bottom: 20px; border-radius: 14px; overflow: hidden; border: 2px solid #e2e8f0; }
+        .dash-tab-btn { padding: 16px 20px; font-size: 15px; font-weight: 800; cursor: pointer; text-align: center; transition: all 0.3s cubic-bezier(0.4,0,0.2,1); color: #64748b; background: #f8fafc; user-select: none; position: relative; letter-spacing: 0.3px; }
+        .dash-tab-btn:first-child { border-right: 1px solid #e2e8f0; }
+        .dash-tab-btn:last-child { border-left: 1px solid #e2e8f0; }
+        .dash-tab-btn:hover:not(.active) { background: #f1f5f9; color: #1e3a5f; }
+        .dash-tab-btn.active { color: white; border-color: transparent; z-index: 1; }
+        .dash-tab-btn.active:first-child { background: linear-gradient(135deg, #1e40af, #3b82f6); box-shadow: 0 4px 16px rgba(30,64,175,0.35); }
+        .dash-tab-btn.active:last-child { background: linear-gradient(135deg, #92400e, #d97706); box-shadow: 0 4px 16px rgba(146,64,14,0.35); }
+        .dash-tab-btn.active::after { content: ''; position: absolute; bottom: -2px; left: 50%; transform: translateX(-50%); width: 40px; height: 3px; background: white; border-radius: 2px; opacity: 0.5; }
+        .dash-custom-dates { display: flex; align-items: center; gap: 10px; margin-top: 10px; padding: 12px 16px; background: linear-gradient(135deg, #f8fafc, #eff6ff); border-radius: 12px; border: 1.5px solid #dbeafe; animation: fadeSlideIn 0.3s ease; }
+        .dash-custom-dates input[type="date"] { padding: 8px 12px; border-radius: 10px; border: 1.5px solid #cbd5e1; font-size: 13px; font-family: inherit; font-weight: 600; color: #1e293b; outline: none; transition: all 0.25s; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+        .dash-custom-dates input[type="date"]:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
+        .dash-custom-dates input[type="date"]:hover { border-color: #93c5fd; }
+        .dash-custom-dates span { color: #64748b; font-size: 13px; font-weight: 700; }
+        .dash-section { background: white; border-radius: 14px; padding: 18px; border: 1px solid #e2e8f0; margin-bottom: 14px; box-shadow: 0 1px 6px rgba(0,0,0,0.04); transition: box-shadow 0.3s; }
+        .dash-section:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+        .dash-section-title { font-size: 12px; font-weight: 700; color: #1e3a5f; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+        .dash-section-title::before { content: ''; width: 4px; height: 16px; background: linear-gradient(180deg, #3b82f6, #8b5cf6); border-radius: 2px; }
+        .dash-alerts-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .dash-alert { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; background: linear-gradient(135deg, #fffbeb, #fef9ee); border-radius: 12px; border-left: 4px solid #f59e0b; transition: all 0.25s; }
+        .dash-alert:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(245,158,11,0.15); }
+        .dash-alert.danger { background: linear-gradient(135deg, #fef2f2, #fef5f5); border-left-color: #ef4444; }
+        .dash-alert.danger:hover { box-shadow: 0 4px 12px rgba(239,68,68,0.15); }
+        .dash-alert-text { font-size: 12px; font-weight: 600; color: #475569; }
+        .dash-alert-count { font-size: 20px; font-weight: 800; color: #d97706; }
+        .dash-alert.danger .dash-alert-count { color: #dc2626; }
+        .dash-dir-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .dash-dir-card { background: linear-gradient(135deg, #f8fafc, #f1f5f9); border-radius: 12px; padding: 18px; text-align: center; border: 1px solid #e2e8f0; transition: all 0.3s; position: relative; overflow: hidden; }
+        .dash-dir-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+        .dash-dir-card:first-child::before { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
+        .dash-dir-card:last-child::before { background: linear-gradient(90deg, #8b5cf6, #a78bfa); }
+        .dash-dir-card:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
+        .dash-dir-label { font-size: 13px; font-weight: 700; color: #475569; margin-bottom: 8px; }
+        .dash-dir-value { font-size: 26px; font-weight: 800; color: #1e293b; }
+        .dash-dir-count { font-size: 11px; color: #94a3b8; margin-top: 4px; font-weight: 500; }
+        .dashboard-table { width: 100%; font-size: 12px; border-collapse: separate; border-spacing: 0; }
+        .dashboard-table th { text-align: left; padding: 10px 12px; background: #f8fafc; font-weight: 700; color: #1e3a5f; border-bottom: 2px solid #e2e8f0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.3px; }
+        .dashboard-table td { padding: 10px 12px; border-bottom: 1px solid #f1f5f9; transition: background 0.2s; }
+        .dashboard-table tr:hover td { background: #f8fafc; }
         .dashboard-table .text-right { text-align: right; }
         .dashboard-table .text-center { text-align: center; }
         .dashboard-table .font-bold { font-weight: 700; }
-        
-        .dashboard-alert {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 10px 14px;
-            background: white;
-            border-radius: 8px;
-            margin-bottom: 8px;
-            border-left: 4px solid var(--warning);
+        .dash-progress { height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; min-width: 60px; }
+        .dash-progress-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, #22c55e, #4ade80); transition: width 0.6s cubic-bezier(0.4,0,0.2,1); }
+        .dash-progress-fill.warning { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+        .dash-progress-fill.danger { background: linear-gradient(90deg, #ef4444, #fb7185); }
+        .dash-statuses { display: flex; gap: 10px; flex-wrap: wrap; }
+        .dash-status-item { display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: linear-gradient(135deg, #f8fafc, #f1f5f9); border-radius: 12px; cursor: pointer; transition: all 0.3s; flex: 1; min-width: 130px; border: 1px solid #e2e8f0; }
+        .dash-status-item:hover { background: white; transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.08); border-color: #3b82f6; }
+        .dash-status-item .s-icon { font-size: 18px; }
+        .dash-status-item .s-name { font-size: 12px; font-weight: 600; color: #475569; }
+        .dash-status-item .s-count { font-size: 15px; font-weight: 800; margin-left: auto; background: white; padding: 4px 12px; border-radius: 20px; color: #1e3a5f; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+        .dash-route-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .dash-route-stat { background: white; border-radius: 12px; padding: 16px; text-align: center; border: 1px solid #e2e8f0; transition: all 0.3s; position: relative; overflow: hidden; }
+        .dash-route-stat::before { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px; }
+        .dash-route-stat:nth-child(1)::before { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
+        .dash-route-stat:nth-child(2)::before { background: linear-gradient(90deg, #22c55e, #4ade80); }
+        .dash-route-stat:nth-child(3)::before { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+        .dash-route-stat:hover { transform: translateY(-3px); box-shadow: 0 6px 16px rgba(0,0,0,0.08); }
+        .dash-route-stat-val { font-size: 26px; font-weight: 800; color: #1e293b; }
+        .dash-route-stat-lbl { font-size: 10px; color: #64748b; font-weight: 600; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.3px; }
+        @media (max-width: 768px) {
+            .dash-kpi-row { grid-template-columns: repeat(2, 1fr); }
+            .dash-alerts-row { grid-template-columns: 1fr; }
+            .dash-dir-row { grid-template-columns: 1fr; }
+            .dash-route-stats { grid-template-columns: 1fr; }
+            .dash-statuses { flex-direction: column; }
+            .dash-tab-btn { padding: 12px 16px; font-size: 13px; }
         }
-        .dashboard-alert.danger { border-left-color: var(--danger); }
-        
-        /* Dashboard status items */
-        .dashboard-statuses { display: flex; flex-direction: column; gap: 6px; }
-        .dashboard-status-item { 
-            display: flex; 
-            align-items: center; 
-            gap: 10px; 
-            padding: 10px 12px; 
-            background: white; 
-            border-radius: 8px;
-            transition: all 0.2s ease;
-        }
-        .dashboard-status-item:hover { background: var(--bg-main); transform: translateX(4px); }
-        .dashboard-status-item .status-icon { font-size: 16px; }
-        .dashboard-status-item .status-name { flex: 1; font-size: 13px; font-weight: 600; }
-        .dashboard-status-item .status-count { 
-            font-size: 14px; 
-            font-weight: 700; 
-            background: var(--bg-main); 
-            padding: 4px 10px; 
-            border-radius: 12px; 
-        }
-        .dashboard-alert-text {
-            font-size: 12px;
-            font-weight: 600;
-        }
-        .dashboard-alert-count {
-            font-size: 14px;
-            font-weight: 800;
-            color: var(--warning);
-        }
-        .dashboard-alert.danger .dashboard-alert-count { color: var(--danger); }
 
         /* SIDE MENU (Mobile) */
         .side-menu-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 200; }
@@ -1595,112 +1547,22 @@
 
     <!-- MAIN CONTENT AREA -->
     <main class="main-content-area">
-        <!-- DASHBOARD - Owner Only -->
         <div class="dashboard-panel" id="dashboardPanel" data-access="owner">
             <div class="dashboard-header collapsed" onclick="toggleDashboard()">
-                <span class="dashboard-title">📊 Дашборд посилок</span>
+                <span class="dashboard-title">📊 Дашборд</span>
                 <span class="dashboard-toggle" id="dashboardToggle">▼</span>
             </div>
             <div class="dashboard-content collapsed" id="dashboardContent">
-                <div class="dashboard-grid">
-                    <!-- Загальна статистика -->
-                    <div class="dashboard-card">
-                        <div class="dashboard-card-title">📈 Загальна статистика</div>
-                        <div class="dashboard-stats">
-                            <div class="dashboard-stat">
-                                <div class="dashboard-stat-value" id="dashTotalOrders">0</div>
-                                <div class="dashboard-stat-label">Всього посилок</div>
-                            </div>
-                            <div class="dashboard-stat">
-                                <div class="dashboard-stat-value success" id="dashCompleted">0</div>
-                                <div class="dashboard-stat-label">Виконано</div>
-                            </div>
-                            <div class="dashboard-stat">
-                                <div class="dashboard-stat-value" id="dashTotalSeats">0</div>
-                                <div class="dashboard-stat-label">Всього кг</div>
-                            </div>
-                            <div class="dashboard-stat">
-                                <div class="dashboard-stat-value success" id="dashTotalSum">€0</div>
-                                <div class="dashboard-stat-label">Загальна сума</div>
-                            </div>
-                        </div>
+                <div id="dashLoader" class="dash-loader" style="display:none;"><div class="spinner"></div> Завантаження даних...</div>
+                <div id="dashBody" style="display:none;">
+                    <div class="dash-period-bar" id="dashPeriodBar"></div>
+                    <div class="dash-kpi-row" id="dashKpiRow"></div>
+                    <div class="dash-tab-bar">
+                        <div class="dash-tab-btn active" id="dashBtnPass" onclick="setDashTab('passengers')">👥 Пасажири</div>
+                        <div class="dash-tab-btn" id="dashBtnCargo" onclick="setDashTab('cargo')">📦 Посилки</div>
                     </div>
-                    
-                    <!-- Потребують уваги -->
-                    <div class="dashboard-card">
-                        <div class="dashboard-card-title">⚠️ Потребують уваги</div>
-                        <div class="dashboard-alert">
-                            <span class="dashboard-alert-text">❓ Без авто</span>
-                            <span class="dashboard-alert-count" id="dashNoVehicle">0</span>
-                        </div>
-                        <div class="dashboard-alert danger">
-                            <span class="dashboard-alert-text">💰 Без оплати</span>
-                            <span class="dashboard-alert-count" id="dashNoPayment">0</span>
-                        </div>
-                        <div class="dashboard-alert">
-                            <span class="dashboard-alert-text">🔄 В роботі</span>
-                            <span class="dashboard-alert-count" id="dashInWork">0</span>
-                        </div>
-                    </div>
-                    
-                    <!-- По авто -->
-                    <div class="dashboard-card">
-                        <div class="dashboard-card-title">🚐 Статистика по авто</div>
-                        <table class="dashboard-table">
-                            <thead>
-                                <tr>
-                                    <th>Авто</th>
-                                    <th class="text-center">Посилок</th>
-                                    <th class="text-center">Вага (кг)</th>
-                                    <th class="text-right">Сума</th>
-                                </tr>
-                            </thead>
-                            <tbody id="dashVehicleStats"></tbody>
-                        </table>
-                    </div>
-                    
-                    <!-- Постійні клієнти -->
-                    <div class="dashboard-card">
-                        <div class="dashboard-card-title">👥 Топ-10 клієнтів</div>
-                        <table class="dashboard-table">
-                            <thead>
-                                <tr>
-                                    <th>Клієнт</th>
-                                    <th class="text-center">Посилок</th>
-                                    <th class="text-center">Вага (кг)</th>
-                                    <th class="text-right">Сума</th>
-                                </tr>
-                            </thead>
-                            <tbody id="dashTopClients"></tbody>
-                        </table>
-                    </div>
-                    
-                    <!-- Статуси заявок -->
-                    <div class="dashboard-card">
-                        <div class="dashboard-card-title">📋 Статуси заявок</div>
-                        <div class="dashboard-statuses">
-                            <div class="dashboard-status-item" onclick="showStatusFilter('archived')" style="cursor:pointer;">
-                                <span class="status-icon">📦</span>
-                                <span class="status-name">Архів</span>
-                                <span class="status-count" id="dashArchived">0</span>
-                            </div>
-                            <div class="dashboard-status-item" onclick="showStatusFilter('refused')" style="cursor:pointer;color:var(--danger);">
-                                <span class="status-icon">❌</span>
-                                <span class="status-name">Відмови</span>
-                                <span class="status-count" id="dashRefused">0</span>
-                            </div>
-                            <div class="dashboard-status-item" onclick="showStatusFilter('transferred')" style="cursor:pointer;color:var(--teal);">
-                                <span class="status-icon">📆</span>
-                                <span class="status-name">Перенос</span>
-                                <span class="status-count" id="dashTransferred">0</span>
-                            </div>
-                            <div class="dashboard-status-item" onclick="showStatusFilter('deleted')" style="cursor:pointer;color:#6b7280;">
-                                <span class="status-icon">🗑️</span>
-                                <span class="status-name">Видалені</span>
-                                <span class="status-count" id="dashDeleted">0</span>
-                            </div>
-                        </div>
-                    </div>
+                    <div id="dashTabPassengers"></div>
+                    <div id="dashTabCargo" style="display:none;"></div>
                 </div>
             </div>
         </div>
@@ -2302,6 +2164,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     smsNote: p.smsNote || '',
                     photo: p.photo || '',
                     note: p.note || '',
+                    grupaOpt: p.grupaOpt || '',
                     direction: p.direction,
                     status: normalizedStatus,
                     statusDate: p.dateArchive || '',
@@ -2330,6 +2193,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Тихе авто-оновлення кожні 60 секунд
     setInterval(() => silentSync(), 60000);
+
+    // Prefetch дашборду у фоні (для миттєвого відкриття)
+    setTimeout(() => dashPrefetch(), 3000);
 });
 
 // Тиха синхронізація (без loader)
@@ -2370,6 +2236,7 @@ function silentSync() {
                     smsNote: p.smsNote || '',
                     photo: p.photo || '',
                     note: p.note || '',
+                    grupaOpt: p.grupaOpt || '',
                     direction: p.direction,
                     status: normalizedStatus,
                     statusDate: p.dateArchive || '',
@@ -2398,11 +2265,11 @@ function silentSync() {
                     // Зберігаємо CRM-only поля (не зберігаються на сервері)
                     if (local.prevStatus) sp.prevStatus = local.prevStatus;
                     if (local.archiveType) sp.archiveType = local.archiveType;
-                    // Зберігаємо поля оптимізації (order, status='optimize', _notGeocoded)
-                    if (local.status === 'optimize') {
-                        sp.status = 'optimize';
+                    // Зберігаємо поля оптимізації (order, grupaOpt, _notGeocoded)
+                    if (local.grupaOpt) {
                         sp.order = local.order;
                         sp._notGeocoded = local._notGeocoded;
+                        if (!sp.grupaOpt) sp.grupaOpt = local.grupaOpt;
                     } else if (local.order !== undefined) {
                         sp.order = local.order;
                     }
@@ -2491,127 +2358,421 @@ function togglePcSection(section) {
 // ============================================
 // DASHBOARD - Owner Only
 // ============================================
-const USER_ACCESS = 'owner'; // 'owner' | 'admin' | 'dispatcher'
+const USER_ACCESS = (() => { try { const a = JSON.parse(sessionStorage.getItem('yura_auth') || '{}'); return (a.role === 'Власник') ? 'owner' : 'manager'; } catch(e) { return 'owner'; } })();
+const DASH_CARGO_API = 'https://script.google.com/macros/s/AKfycbwcDN56bo3y83T18u3ns2RF3yr7SUOLeXztgAJM1ust9yEuHVw6rPS3yIh7-J-SpDf8NQ/exec';
+const DASH_PASS_API = 'https://script.google.com/macros/s/AKfycbxYdvmKOtY6vG5Kc60g2g6MA5jLgF2S__JPFQ2g9hP0qCmDGAyt_FQ4O04DOAO_MLc1/exec';
+const DASH_PASS_ROUTE_API = 'https://script.google.com/macros/s/AKfycbz2qmOqa_CgBWxUgY7Hc9Ni_pWQ8gfOBjN7iYhC0UwJKK36ha6BNfaz4MWGdCFmjMmy/exec';
+const DASH_CARGO_ROUTE_API = 'https://script.google.com/macros/s/AKfycbxRhO2tU2COaPbh7c-xp8VNY5B6PYLvTACBxjc3DDN_x4-2rK5AkfnTFncvUPmXaOZi3w/exec';
+
+let dashPassengers = [];
+let dashPackages = [];
+let dashPassRouteCount = 0;
+let dashCargoRouteCount = 0;
+let dashPeriod = 'all';
+let dashTab = 'passengers';
+let dashDateFrom = '';
+let dashDateTo = '';
 
 function toggleDashboard() {
     const content = document.getElementById('dashboardContent');
     const header = document.querySelector('.dashboard-header');
     content.classList.toggle('collapsed');
     header.classList.toggle('collapsed');
-    
-    // Оновлюємо дані при відкритті
     if (!content.classList.contains('collapsed')) {
-        updateDashboard();
+        if (USER_ACCESS === 'owner') {
+            dashShow();
+        } else {
+            renderManagerDashboard();
+        }
     }
 }
 
-function updateDashboard() {
-    // Перевірка доступу (на майбутнє)
-    if (USER_ACCESS !== 'owner') {
-        document.getElementById('dashboardPanel').style.display = 'none';
-        return;
+function closeDashboard() {
+    const content = document.getElementById('dashboardContent');
+    const header = document.querySelector('.dashboard-header');
+    if (content && !content.classList.contains('collapsed')) {
+        content.classList.add('collapsed');
+        header.classList.add('collapsed');
     }
-    
-    const active = packages.filter(p => p.status !== 'archived');
-    
-    // 1. Загальна статистика
-    const totalOrders = active.length;
-    const completed = active.filter(p => p.status === 'route' || p.status === 'done').length;
-    const totalSeats = active.reduce((sum, p) => sum + (parseFloat(p.weight) || 0), 0);
-    const totalSum = active.reduce((sum, p) => {
-        const amount = parseFloat(String(p.amount || '0').replace(/[^0-9.,]/g, '').replace(',', '.')) || 0;
-        const payment = parseFloat(String(p.payment || '0').replace(/[^0-9.,]/g, '').replace(',', '.')) || 0;
-        return sum + (amount || payment);
+}
+
+
+function dashShow() {
+    const loader = document.getElementById('dashLoader');
+    const body = document.getElementById('dashBody');
+    // Є дані в пам'яті (від prefetch) або в кеші — показати одразу
+    if ((dashPassengers.length || dashPackages.length) || dashLoadFromCache()) {
+        loader.style.display = 'none';
+        body.style.display = 'block';
+        renderDashboard();
+        // Тихо оновити у фоні
+        dashFetchAll().then(() => {
+            const c = document.getElementById('dashboardContent');
+            if (c && !c.classList.contains('collapsed')) renderDashboard();
+        }).catch(() => {});
+    } else {
+        // Нічого немає — показати лоадер і чекати
+        loader.style.display = 'flex';
+        body.style.display = 'none';
+        dashFetchAll().then(() => {
+            loader.style.display = 'none';
+            body.style.display = 'block';
+            renderDashboard();
+        }).catch(() => {
+            loader.style.display = 'none';
+            body.style.display = 'block';
+        });
+    }
+}
+
+function dashParseAmount(val) {
+    const v = parseFloat(String(val || '0').replace(/[^0-9.,]/g, '').replace(',', '.')) || 0;
+    return v >= 1000 ? 0 : v; // Ігноруємо помилкові суми 1000€+
+}
+
+function dashGetRevenue(item, type) {
+    if (type === 'cargo') {
+        const a = dashParseAmount(item.amount);
+        const p = dashParseAmount(item.payment);
+        return a || p;
+    }
+    return dashParseAmount(item.payment);
+}
+
+function dashIsPaid(item, type) {
+    if (type === 'cargo') {
+        const p = item.payment;
+        return p && p !== '' && p !== '0';
+    }
+    const p = item.payment;
+    return p && p !== '' && p !== '0';
+}
+
+const DASH_EXCLUDED = ['archived', 'refused', 'deleted', 'transferred'];
+
+function dashFilterActive(items) {
+    return items.filter(p => !DASH_EXCLUDED.includes(p.status));
+}
+
+function dashFilterByPeriod(items) {
+    if (dashPeriod === 'all') return items;
+    const now = new Date();
+    const today = now.toISOString().split('T')[0];
+    if (dashPeriod === 'today') return items.filter(p => p.dateReg === today);
+    if (dashPeriod === 'week') {
+        const d = new Date(now); d.setDate(d.getDate() - 7);
+        const weekAgo = d.toISOString().split('T')[0];
+        return items.filter(p => p.dateReg >= weekAgo);
+    }
+    if (dashPeriod === 'month') {
+        const d = new Date(now); d.setMonth(d.getMonth() - 1);
+        const monthAgo = d.toISOString().split('T')[0];
+        return items.filter(p => p.dateReg >= monthAgo);
+    }
+    if (dashPeriod === 'custom') {
+        return items.filter(p => {
+            if (!p.dateReg) return false;
+            if (dashDateFrom && p.dateReg < dashDateFrom) return false;
+            if (dashDateTo && p.dateReg > dashDateTo) return false;
+            return true;
+        });
+    }
+    return items;
+}
+
+// Фонове завантаження даних дашборду (fetch + кеш)
+async function dashFetchAll() {
+    const [cargoRes, passRes, passRouteRes, cargoRouteRes] = await Promise.all([
+        fetch(DASH_CARGO_API, { method: 'POST', body: JSON.stringify({ action: 'getAll' }) }).then(r => r.json()),
+        fetch(DASH_PASS_API, { method: 'POST', body: JSON.stringify({ action: 'getAll' }) }).then(r => r.json()),
+        fetch(DASH_PASS_ROUTE_API, { method: 'POST', body: JSON.stringify({ action: 'getAvailableRoutes' }) }).then(r => r.json()).catch(() => ({ routes: [] })),
+        fetch(DASH_CARGO_ROUTE_API, { method: 'POST', body: JSON.stringify({ action: 'getAvailableRoutes' }) }).then(r => r.json()).catch(() => ({ routes: [] }))
+    ]);
+    dashPackages = Array.isArray(cargoRes) ? cargoRes : (cargoRes.data || cargoRes.packages || []);
+    dashPassengers = Array.isArray(passRes) ? passRes : (passRes.data || passRes.passengers || []);
+    dashPassRouteCount = (passRouteRes.routes || []).reduce((s, r) => s + (r.count || 0), 0);
+    dashCargoRouteCount = (cargoRouteRes.routes || []).reduce((s, r) => s + (r.count || 0), 0);
+    dashSaveToCache();
+}
+
+// Зберегти в localStorage
+function dashSaveToCache() {
+    try {
+        localStorage.setItem('dashCache', JSON.stringify({
+            t: Date.now(),
+            pass: dashPassengers,
+            cargo: dashPackages,
+            passRoute: dashPassRouteCount,
+            cargoRoute: dashCargoRouteCount
+        }));
+    } catch(e) {}
+}
+
+// Завантажити з кешу (повертає true якщо є свіжий кеш)
+function dashLoadFromCache() {
+    try {
+        const raw = localStorage.getItem('dashCache');
+        if (!raw) return false;
+        const c = JSON.parse(raw);
+        dashPassengers = c.pass || [];
+        dashPackages = c.cargo || [];
+        dashPassRouteCount = c.passRoute || 0;
+        dashCargoRouteCount = c.cargoRoute || 0;
+        return dashPassengers.length > 0 || dashPackages.length > 0;
+    } catch(e) { return false; }
+}
+
+// Prefetch при заході на сторінку (фон, без UI)
+function dashPrefetch() {
+    if (USER_ACCESS !== 'owner') return;
+    dashFetchAll().catch(() => {});
+}
+
+// Міні-дашборд для менеджера (без fetch, тільки локальні дані)
+function renderManagerDashboard() {
+    const loader = document.getElementById('dashLoader');
+    const body = document.getElementById('dashBody');
+    loader.style.display = 'none';
+    body.style.display = 'block';
+    const local = typeof packages !== 'undefined' ? packages : (typeof passengers !== 'undefined' ? passengers : []);
+    const active = local.filter(p => !['archived','refused','deleted','transferred'].includes(p.status));
+    const total = active.length;
+    const rev = active.reduce((s, p) => {
+        const a = dashParseAmount(p.amount);
+        const pay = dashParseAmount(p.payment);
+        return s + (a || pay);
     }, 0);
-    
-    document.getElementById('dashTotalOrders').textContent = totalOrders;
-    document.getElementById('dashCompleted').textContent = completed;
-    document.getElementById('dashTotalSeats').textContent = totalSeats.toFixed(1) + ' кг';
-    document.getElementById('dashTotalSum').textContent = '€' + totalSum.toFixed(0);
-    
-    // 2. Потребують уваги
-    const noVehicle = active.filter(p => !p.vehicle).length;
-    const noPayment = active.filter(p => !p.payment || p.payment === '' || p.payment === '0').length;
-    const inWork = active.filter(p => p.status === 'work' || p.status === 'new').length;
-    
-    document.getElementById('dashNoVehicle').textContent = noVehicle;
-    document.getElementById('dashNoPayment').textContent = noPayment;
-    document.getElementById('dashInWork').textContent = inWork;
-    
-    // 3. Статистика по авто
-    const vehicleStats = {};
-    vehicles.forEach(v => {
-        vehicleStats[v.id] = { name: v.name, orders: 0, seats: 0, sum: 0 };
+    body.innerHTML = `
+        <div class="dash-kpi-row" style="grid-template-columns:1fr 1fr;">
+            <div class="dash-kpi"><div class="dash-kpi-value">${total}</div><div class="dash-kpi-label">Всього заявок</div></div>
+            <div class="dash-kpi"><div class="dash-kpi-value success">&euro;${rev.toFixed(0)}</div><div class="dash-kpi-label">Загальний дохід</div></div>
+        </div>
+    `;
+}
+
+function setDashTab(tab) {
+    dashTab = tab;
+    document.getElementById('dashTabPassengers').style.display = tab === 'passengers' ? 'block' : 'none';
+    document.getElementById('dashTabCargo').style.display = tab === 'cargo' ? 'block' : 'none';
+    document.getElementById('dashBtnPass').classList.toggle('active', tab === 'passengers');
+    document.getElementById('dashBtnCargo').classList.toggle('active', tab === 'cargo');
+}
+
+function setDashPeriod(period) {
+    dashPeriod = period;
+    const customDatesEl = document.getElementById('dashCustomDates');
+    if (customDatesEl) {
+        customDatesEl.style.display = period === 'custom' ? 'flex' : 'none';
+    }
+    if (period !== 'custom') {
+        renderDashboard();
+    } else {
+        // Update button states
+        renderDashPeriodBar();
+    }
+}
+
+function applyCustomDates() {
+    dashDateFrom = document.getElementById('dashDateFrom').value || '';
+    dashDateTo = document.getElementById('dashDateTo').value || '';
+    if (dashDateFrom || dashDateTo) {
+        renderDashboard();
+    }
+}
+
+function renderDashboard() {
+    renderDashPeriodBar();
+    renderDashKPI();
+    renderDashTabContent();
+}
+
+function renderDashPeriodBar() {
+    const periods = [['today','Сьогодні'],['week','Тиждень'],['month','Місяць'],['all','Всі']];
+    const btns = periods.map(([k, l]) =>
+        `<button class="dash-period-btn${dashPeriod === k ? ' active' : ''}" onclick="setDashPeriod('${k}')">${l}</button>`
+    ).join('');
+    const customBtn = `<button class="dash-period-btn${dashPeriod === 'custom' ? ' active' : ''}" onclick="setDashPeriod('custom')">📅 Обрати дату</button>`;
+    const customDates = `<div id="dashCustomDates" class="dash-custom-dates" style="display:${dashPeriod === 'custom' ? 'flex' : 'none'};">
+        <input type="date" id="dashDateFrom" value="${dashDateFrom}" onchange="applyCustomDates()">
+        <span>—</span>
+        <input type="date" id="dashDateTo" value="${dashDateTo}" onchange="applyCustomDates()">
+    </div>`;
+    document.getElementById('dashPeriodBar').innerHTML = btns + customBtn + customDates;
+}
+
+function renderDashKPI() {
+    const ap = dashFilterByPeriod(dashFilterActive(dashPassengers));
+    const ac = dashFilterByPeriod(dashFilterActive(dashPackages));
+    const total = ap.length + ac.length;
+    const totalRev = ap.reduce((s, p) => s + dashGetRevenue(p, 'pass'), 0) + ac.reduce((s, p) => s + dashGetRevenue(p, 'cargo'), 0);
+    const paidSum = ap.filter(p => dashIsPaid(p, 'pass')).reduce((s, p) => s + dashGetRevenue(p, 'pass'), 0) +
+                    ac.filter(p => dashIsPaid(p, 'cargo')).reduce((s, p) => s + dashGetRevenue(p, 'cargo'), 0);
+    const debt = totalRev - paidSum;
+    const today = new Date().toISOString().split('T')[0];
+    const newToday = ap.filter(p => p.dateReg === today).length + ac.filter(p => p.dateReg === today).length;
+    const avg = total > 0 ? totalRev / total : 0;
+    const routeRev = ap.filter(p => p.status === 'route').reduce((s, p) => s + dashGetRevenue(p, 'pass'), 0) +
+                     ac.filter(p => p.status === 'route').reduce((s, p) => s + dashGetRevenue(p, 'cargo'), 0);
+
+    document.getElementById('dashKpiRow').innerHTML = `
+        <div class="dash-kpi"><div class="dash-kpi-value">${total}</div><div class="dash-kpi-label">Всього заявок</div></div>
+        <div class="dash-kpi"><div class="dash-kpi-value">&euro;${totalRev.toFixed(0)}</div><div class="dash-kpi-label">Загальний дохід</div></div>
+        <div class="dash-kpi"><div class="dash-kpi-value success">&euro;${paidSum.toFixed(0)}</div><div class="dash-kpi-label">Оплачено</div></div>
+        <div class="dash-kpi"><div class="dash-kpi-value danger">&euro;${debt.toFixed(0)}</div><div class="dash-kpi-label">Борг</div></div>
+        <div class="dash-kpi"><div class="dash-kpi-value warning">${newToday}</div><div class="dash-kpi-label">Нові сьогодні</div></div>
+        <div class="dash-kpi"><div class="dash-kpi-value">&euro;${avg.toFixed(0)}</div><div class="dash-kpi-label">Середній чек</div></div>
+        <div class="dash-kpi"><div class="dash-kpi-value">&euro;${routeRev.toFixed(0)}</div><div class="dash-kpi-label">Вартість рейсів</div></div>
+    `;
+}
+
+function renderDashTabContent() {
+    renderDashTabFor('passengers');
+    renderDashTabFor('cargo');
+}
+
+function renderDashTabFor(type) {
+    const isPass = type === 'passengers';
+    const raw = isPass ? dashPassengers : dashPackages;
+    const items = dashFilterByPeriod(dashFilterActive(raw));
+    const allActive = dashFilterActive(raw);
+    const container = document.getElementById(isPass ? 'dashTabPassengers' : 'dashTabCargo');
+    const typeKey = isPass ? 'pass' : 'cargo';
+
+    // A. Alerts
+    const noVehicle = items.filter(p => !p.vehicle).length;
+    const noPayment = items.filter(p => !dashIsPaid(p, typeKey)).length;
+    const inWork = items.filter(p => p.status === 'work' || p.status === 'new').length;
+
+    // B. Directions
+    const dirField = isPass
+        ? { uaeu: items.filter(p => (p.direction || '').toLowerCase().includes('ua') || (p.sheetSource || '').includes('Україна')),
+            euua: items.filter(p => (p.direction || '').toLowerCase().includes('eu') && !(p.direction || '').toLowerCase().startsWith('ua') || (p.sheetSource || '').includes('Європа')) }
+        : { uaeu: items.filter(p => p.direction === 'ua-eu'), euua: items.filter(p => p.direction === 'eu-ua') };
+    const uaeuRev = dirField.uaeu.reduce((s, p) => s + dashGetRevenue(p, typeKey), 0);
+    const euuaRev = dirField.euua.reduce((s, p) => s + dashGetRevenue(p, typeKey), 0);
+
+    // C. Managers
+    const mgrField = isPass ? 'dispatcher' : 'vo';
+    const mgrMap = {};
+    items.forEach(p => {
+        const mgr = p[mgrField] || 'Не призначено';
+        if (!mgrMap[mgr]) mgrMap[mgr] = { count: 0, sum: 0 };
+        mgrMap[mgr].count++;
+        mgrMap[mgr].sum += dashGetRevenue(p, typeKey);
     });
-    
-    active.forEach(p => {
-        const veh = vehicles.find(v => v.id === p.vehicle || v.name === p.vehicle);
-        if (veh && vehicleStats[veh.id]) {
-            vehicleStats[veh.id].orders++;
-            vehicleStats[veh.id].seats += parseFloat(p.weight) || 1;
-            const payment = parseFloat(String(p.payment || '0').replace(/[^0-9.,]/g, '').replace(',', '.')) || 0;
-            vehicleStats[veh.id].sum += payment;
+    const mgrRows = Object.entries(mgrMap).sort((a, b) => b[1].sum - a[1].sum)
+        .map(([name, d]) => `<tr><td class="font-bold">${name}</td><td class="text-center">${d.count}</td><td class="text-right font-bold">&euro;${d.sum.toFixed(0)}</td></tr>`)
+        .join('') || '<tr><td colspan="3" style="text-align:center;color:var(--text-secondary);">Немає даних</td></tr>';
+
+    // D. Топ-5 міст
+    const cityMap = {};
+    const addCity = (addr) => {
+        if (!addr || addr.trim().length < 2) return;
+        let city = addr.trim().split(',')[0].trim().split(/\s+\d/)[0].trim();
+        city = city.charAt(0).toUpperCase() + city.slice(1).toLowerCase();
+        if (!city || city.length < 2) return;
+        if (!cityMap[city]) cityMap[city] = 0;
+        cityMap[city]++;
+    };
+    items.forEach(p => {
+        if (isPass) {
+            addCity(p.from);
+            addCity(p.to);
+        } else {
+            addCity(p.address);
         }
     });
-    
-    const vehicleStatsHtml = Object.values(vehicleStats)
-        .filter(v => v.orders > 0)
-        .sort((a, b) => b.sum - a.sum)
-        .map(v => `
-            <tr>
-                <td class="font-bold">🚐 ${v.name}</td>
-                <td class="text-center">${v.orders}</td>
-                <td class="text-center">${v.seats.toFixed(1)} кг</td>
-                <td class="text-right font-bold">€${v.sum.toFixed(0)}</td>
-            </tr>
-        `).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--text-secondary);">Немає даних</td></tr>';
-    
-    document.getElementById('dashVehicleStats').innerHTML = vehicleStatsHtml;
-    
-    // 4. Топ клієнти (групування по телефону)
-    const clientsMap = {};
-    active.forEach(p => {
+    const topCities = Object.entries(cityMap).sort((a, b) => b[1] - a[1]).slice(0, 5);
+    const maxCityCount = topCities.length > 0 ? topCities[0][1] : 1;
+
+    // E. Top clients
+    const clientMap = {};
+    items.forEach(p => {
         const phone = (p.phone || '').replace(/\D/g, '');
         if (!phone) return;
-
-        if (!clientsMap[phone]) {
-            clientsMap[phone] = {
-                phone: p.phone,
-                name: p.name || 'Невідомий',
-                parcels: 0,
-                weight: 0,
-                sum: 0
-            };
-        }
-        clientsMap[phone].parcels++;
-        clientsMap[phone].weight += parseFloat(p.weight) || 0;
-        const amount = parseFloat(String(p.amount || '0').replace(/[^0-9.,]/g, '').replace(',', '.')) || 0;
-        const payment = parseFloat(String(p.payment || '0').replace(/[^0-9.,]/g, '').replace(',', '.')) || 0;
-        clientsMap[phone].sum += (amount || payment);
-        if (p.name && p.name.length > clientsMap[phone].name.length) {
-            clientsMap[phone].name = p.name;
-        }
+        if (!clientMap[phone]) clientMap[phone] = { name: p.name || 'Невідомий', phone: p.phone, count: 0, sum: 0 };
+        clientMap[phone].count++;
+        clientMap[phone].sum += dashGetRevenue(p, typeKey);
+        if (p.name && p.name.length > clientMap[phone].name.length) clientMap[phone].name = p.name;
     });
+    const topClients = Object.values(clientMap).sort((a, b) => b.count - a.count || b.sum - a.sum).slice(0, 10);
+    const clientRows = topClients.length > 0
+        ? topClients.map(c => `<tr><td><div class="font-bold">${c.name}</div><div style="font-size:10px;color:var(--text-secondary);">${c.phone}</div></td><td class="text-center font-bold">${c.count}</td><td class="text-right font-bold">&euro;${c.sum.toFixed(0)}</td></tr>`).join('')
+        : '<tr><td colspan="3" style="text-align:center;color:var(--text-secondary);">Немає даних</td></tr>';
 
-    const topClients = Object.values(clientsMap)
-        .sort((a, b) => b.parcels - a.parcels || b.weight - a.weight || b.sum - a.sum)
-        .slice(0, 10);
+    // F. Route stats — локальні дані (як каунтер в меню) + fallback на маршрутний API
+    const localPassRoute = (typeof passengers !== 'undefined' && Array.isArray(passengers)) ? passengers.filter(p => p.status === 'route').length : 0;
+    const localCargoRoute = (typeof packages !== 'undefined' && Array.isArray(packages)) ? packages.filter(p => p.status === 'route').length : 0;
+    const routeCount = isPass ? Math.max(localPassRoute, dashPassRouteCount) : Math.max(localCargoRoute, dashCargoRouteCount);
+    const optimized = items.filter(p => p.grupaOpt && p.grupaOpt !== '').length;
+    const withVehicle = items.filter(p => p.vehicle).length;
 
-    const clientsHtml = topClients.length > 0
-        ? topClients.map(c => `
-            <tr>
-                <td>
-                    <div class="font-bold">${c.name}</div>
-                    <div style="font-size:10px;color:var(--text-secondary);">${c.phone}</div>
-                </td>
-                <td class="text-center font-bold">${c.parcels}</td>
-                <td class="text-center font-bold">${c.weight.toFixed(1)} кг</td>
-                <td class="text-right font-bold">€${c.sum.toFixed(0)}</td>
-            </tr>
-        `).join('')
-        : '<tr><td colspan="4" style="text-align:center;color:var(--text-secondary);">Немає клієнтів</td></tr>';
-    
-    document.getElementById('dashTopClients').innerHTML = clientsHtml;
+    // G. Statuses
+    const archived = allActive.length ? raw.filter(p => p.status === 'archived').length : 0;
+    const refused = raw.filter(p => p.status === 'refused').length;
+    const transferred = raw.filter(p => p.status === 'transferred').length;
+    const deleted = raw.filter(p => p.status === 'deleted').length;
+
+    container.innerHTML = `
+        <div class="dash-section">
+            <div class="dash-section-title">Потребують уваги</div>
+            <div class="dash-alerts-row">
+                <div class="dash-alert"><span class="dash-alert-text">❓ Без авто</span><span class="dash-alert-count">${noVehicle}</span></div>
+                <div class="dash-alert danger"><span class="dash-alert-text">💰 Без оплати</span><span class="dash-alert-count">${noPayment}</span></div>
+                <div class="dash-alert"><span class="dash-alert-text">🔄 В роботі</span><span class="dash-alert-count">${inWork}</span></div>
+            </div>
+        </div>
+        <div class="dash-section">
+            <div class="dash-section-title">Дохід по напрямках</div>
+            <div class="dash-dir-row">
+                <div class="dash-dir-card"><div class="dash-dir-label">🇺🇦 → 🇪🇺 UA→EU</div><div class="dash-dir-value">&euro;${uaeuRev.toFixed(0)}</div><div class="dash-dir-count">${dirField.uaeu.length} заявок</div></div>
+                <div class="dash-dir-card"><div class="dash-dir-label">🇪🇺 → 🇺🇦 EU→UA</div><div class="dash-dir-value">&euro;${euuaRev.toFixed(0)}</div><div class="dash-dir-count">${dirField.euua.length} заявок</div></div>
+            </div>
+        </div>
+        <div class="dash-section">
+            <div class="dash-section-title">Ефективність менеджерів</div>
+            <table class="dashboard-table"><thead><tr><th>Менеджер</th><th class="text-center">Заявок</th><th class="text-right">Сума &euro;</th></tr></thead><tbody>${mgrRows}</tbody></table>
+        </div>
+        <div class="dash-section">
+            <div class="dash-section-title">Топ-5 міст</div>
+            ${topCities.length > 0 ? topCities.map(([city, cnt], i) => {
+                const pct = Math.round(cnt / maxCityCount * 100);
+                const colors = ['#3b82f6','#8b5cf6','#14b8a6','#f59e0b','#ef4444'];
+                const bgColors = ['#eff6ff','#faf5ff','#f0fdfa','#fffbeb','#fef2f2'];
+                const c = colors[i] || '#64748b';
+                const bg = bgColors[i] || '#f8fafc';
+                return `<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:${bg};border-radius:10px;margin-bottom:8px;border-left:4px solid ${c};transition:transform 0.2s;" onmouseenter="this.style.transform='translateX(4px)'" onmouseleave="this.style.transform=''">
+                    <div style="min-width:24px;height:24px;background:${c};color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;">${i+1}</div>
+                    <div style="flex:1;">
+                        <div style="font-size:13px;font-weight:700;color:#1e293b;margin-bottom:4px;">${city}</div>
+                        <div class="dash-progress" style="height:6px;"><div style="height:100%;border-radius:4px;background:${c};width:${pct}%;transition:width 0.6s;"></div></div>
+                    </div>
+                    <div style="font-size:16px;font-weight:800;color:${c};">${cnt}</div>
+                </div>`;
+            }).join('') : '<div style="text-align:center;color:var(--text-secondary);font-size:12px;padding:20px;">Немає даних</div>'}
+        </div>
+        <div class="dash-section">
+            <div class="dash-section-title">Топ-10 клієнтів</div>
+            <table class="dashboard-table"><thead><tr><th>Клієнт</th><th class="text-center">Заявок</th><th class="text-right">Сума &euro;</th></tr></thead><tbody>${clientRows}</tbody></table>
+        </div>
+        <div class="dash-section">
+            <div class="dash-section-title">Статистика маршрутів</div>
+            <div class="dash-route-stats">
+                <div class="dash-route-stat"><div class="dash-route-stat-val">${routeCount}</div><div class="dash-route-stat-lbl">В маршрутах</div></div>
+                <div class="dash-route-stat"><div class="dash-route-stat-val">${optimized}</div><div class="dash-route-stat-lbl">Оптимізовані</div></div>
+                <div class="dash-route-stat"><div class="dash-route-stat-val">${withVehicle}</div><div class="dash-route-stat-lbl">З авто</div></div>
+            </div>
+        </div>
+        <div class="dash-section">
+            <div class="dash-section-title">Статуси</div>
+            <div class="dash-statuses">
+                <div class="dash-status-item" onclick="showStatusFilter('archived'); toggleDashboard();"><span class="s-icon">📦</span><span class="s-name">Архів</span><span class="s-count">${archived}</span></div>
+                <div class="dash-status-item" onclick="showStatusFilter('refused'); toggleDashboard();"><span class="s-icon">❌</span><span class="s-name">Відмови</span><span class="s-count">${refused}</span></div>
+                <div class="dash-status-item" onclick="showStatusFilter('transferred'); toggleDashboard();"><span class="s-icon">📆</span><span class="s-name">Перенос</span><span class="s-count">${transferred}</span></div>
+                <div class="dash-status-item" onclick="showStatusFilter('deleted'); toggleDashboard();"><span class="s-icon">🗑️</span><span class="s-name">Видалені</span><span class="s-count">${deleted}</span></div>
+            </div>
+        </div>
+    `;
 }
 
 // CALENDAR
@@ -3017,15 +3178,19 @@ function getFilteredData() {
     }
     
     return data.sort((a,b) => {
-        // Оптимізовані ліди — сортуємо по order першочергово
-        const aOpt = a.status === 'optimize';
-        const bOpt = b.status === 'optimize';
-        if (aOpt || bOpt) {
-            // Оптимізовані завжди зверху перед звичайними
-            if (aOpt && !bOpt) return -1;
-            if (!aOpt && bOpt) return 1;
-            // Обидва оптимізовані — по order
-            return (a.order||0) - (b.order||0);
+        // Оптимізовані ліди — сортуємо по grupaOpt (літера групи + номер)
+        const aGrp = a.grupaOpt || '';
+        const bGrp = b.grupaOpt || '';
+        if (aGrp || bGrp) {
+            if (aGrp && !bGrp) return -1;
+            if (!aGrp && bGrp) return 1;
+            // Спочатку по літері групи (A, B, C...), потім по номеру
+            const aLetter = aGrp.match(/^([A-Z])/)?.[1] || '';
+            const bLetter = bGrp.match(/^([A-Z])/)?.[1] || '';
+            if (aLetter !== bLetter) return aLetter.localeCompare(bLetter);
+            const aNum = parseInt(aGrp.replace(/^[A-Z]/, '')) || 0;
+            const bNum = parseInt(bGrp.replace(/^[A-Z]/, '')) || 0;
+            return aNum - bNum;
         }
         // Нові (isNew) завжди зверху
         if (a.isNew && !b.isNew) return -1;
@@ -3052,8 +3217,9 @@ function highlightSearch(text) {
 }
 
 function render() {
+    closeDashboard();
     const c = document.getElementById('cardsList');
-    
+
     // Якщо це режим маршруту - рендеримо пасажирів з таблиці маршрутів
     if (filters.statusFilter === 'route' && filters.routeVehicle) {
         renderRoutePassengers();
@@ -4035,6 +4201,23 @@ function renderRoutePassengers() {
     } else if (routeStatusFilter !== 'all') {
         filteredPassengers = routePassengers.filter(p => p.driverStatus === routeStatusFilter);
     }
+
+    // Сортуємо по grupaOpt (оптимізовані першими, потім по літері + номеру)
+    filteredPassengers = [...filteredPassengers].sort((a, b) => {
+        const aGrp = a.grupaOpt || '';
+        const bGrp = b.grupaOpt || '';
+        if (aGrp || bGrp) {
+            if (aGrp && !bGrp) return -1;
+            if (!aGrp && bGrp) return 1;
+            const aLetter = aGrp.match(/^([A-Z])/)?.[1] || '';
+            const bLetter = bGrp.match(/^([A-Z])/)?.[1] || '';
+            if (aLetter !== bLetter) return aLetter.localeCompare(bLetter);
+            const aNum = parseInt(aGrp.replace(/^[A-Z]/, '')) || 0;
+            const bNum = parseInt(bGrp.replace(/^[A-Z]/, '')) || 0;
+            return aNum - bNum;
+        }
+        return 0;
+    });
     
     // Рахуємо сповіщення
     const notifiedCount = routePassengers.filter(p => mailingIds.includes(String(p.id))).length;
@@ -5315,10 +5498,17 @@ function selectAllVisible() {
 // ============================================
 let optimizeBy = 'from';
 let optimizePackagesList = [];
+let lastOptimizedGroup = ''; // Остання оптимізована група (A, B, C...)
 
 function runOptimization() {
-    // Беремо пасажирів по поточних фільтрах (дата + авто)
-    const data = getFilteredData().filter(p => p.status !== 'archived');
+    // В режимі маршруту — оптимізуємо маршрутні посилки
+    const isRouteView = filters.statusFilter === 'route' && filters.routeVehicle;
+    let data;
+    if (isRouteView && routePassengers.length > 0) {
+        data = routePassengers.filter(p => !['archived','refused','transferred','deleted'].includes(p.status));
+    } else {
+        data = getFilteredData().filter(p => p.status !== 'archived');
+    }
     if (!data.length) return showToast('⚠️ Немає заявок для оптимізації');
     openOptimizeModal(data);
 }
@@ -5537,14 +5727,14 @@ async function startOptimization() {
         for (const p of optimizePackagesList) {
             const addr = optimizeBy === 'to' ? (p.address || '') : (p.address || '');
             if (!addr.trim()) {
-                notGeocoded.push({ id: p.id, name: p.name, address: '(порожня адреса)', uid: (p._sheet && p._rowNum) ? `${p._sheet}_${p._rowNum}` : null });
+                notGeocoded.push({ id: p.id, name: p.name, address: '(порожня адреса)', uid: p._uid || (p._sheet && p._rowNum ? `${p._sheet}_${p._rowNum}` : (p.sheet && p.rowNum ? `${p.sheet}_${p.rowNum}` : null)) });
                 continue;
             }
             const coords = await geocodeAddressClient(addr);
             if (coords) {
-                items.push({ ...p, coords, address: addr, _uid: (p._sheet && p._rowNum) ? `${p._sheet}_${p._rowNum}` : null });
+                items.push({ ...p, coords, address: addr, _uid: p._uid || (p._sheet && p._rowNum ? `${p._sheet}_${p._rowNum}` : (p.sheet && p.rowNum ? `${p.sheet}_${p.rowNum}` : null)) });
             } else {
-                notGeocoded.push({ id: p.id, name: p.name, address: addr, uid: (p._sheet && p._rowNum) ? `${p._sheet}_${p._rowNum}` : null });
+                notGeocoded.push({ id: p.id, name: p.name, address: addr, uid: p._uid || (p._sheet && p._rowNum ? `${p._sheet}_${p._rowNum}` : (p.sheet && p.rowNum ? `${p.sheet}_${p.rowNum}` : null)) });
             }
             await new Promise(r => setTimeout(r, 100)); // Delay for API rate
         }
@@ -5691,38 +5881,175 @@ function applyOptimizedOrder(orderedPassengers, notGeocodedList) {
             if (item.uid) notGeocodedUids.add(item.uid);
         });
     }
-    
-    // Оновлюємо порядок в масиві packages
+
+    // Визначаємо чи це маршрутні посилки (route_*) чи основні
+    const isRouteData = orderedPassengers.some(op => {
+        const uid = op._uid || '';
+        return uid.startsWith('route_');
+    });
+    const targetApiUrl = isRouteData ? ROUTE_API_URL : API_URL;
+    const allPackagesList = isRouteData ? routePassengers : packages;
+
+    // Збираємо існуючі групи
+    const existingGroups = new Set();
+    allPackagesList.forEach(p => {
+        if (p.grupaOpt) {
+            const letter = p.grupaOpt.match(/^([A-Z])/);
+            if (letter) existingGroups.add(letter[1]);
+        }
+    });
+
+    // Визначаємо наступну вільну літеру для нової групи
+    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    let newGroupLetter = null;
+    for (let i = 0; i < alphabet.length; i++) {
+        if (!existingGroups.has(alphabet[i])) {
+            newGroupLetter = alphabet[i];
+            break;
+        }
+    }
+
+    // Якщо всі літери A-Z зайняті — очищаємо групи ТІЛЬКИ в поточному аркуші і починаємо з A
+    if (!newGroupLetter) {
+        // Визначаємо поточний аркуш
+        const currentSheet = isRouteData
+            ? (currentRouteVehicle?.routeSheet || currentRouteVehicle?.name || orderedPassengers[0]?._sheet || orderedPassengers[0]?.sheet || '')
+            : (orderedPassengers[0]?._sheet || orderedPassengers[0]?.sheet || '');
+
+        // Очищаємо grupaOpt тільки у записів поточного аркуша (в пам'яті)
+        allPackagesList.forEach(p => {
+            const pSheet = p._sheet || p.sheet || '';
+            if (pSheet === currentSheet && p.grupaOpt) p.grupaOpt = '';
+        });
+
+        // Очищаємо на сервері тільки конкретний аркуш
+        const clearPayload = { action: 'clearAllGrupaOpt' };
+        if (currentSheet) clearPayload.sheetName = currentSheet;
+        fetch(targetApiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify(clearPayload)
+        }).catch(err => console.error('clearAllGrupaOpt error:', err));
+
+        existingGroups.clear();
+        newGroupLetter = 'A';
+        showToast('🔄 Всі 26 груп використано — групи очищено, починаємо з A');
+    }
+
+    // Очищаємо grupaOpt ТІЛЬКИ у тих посилок, які потрапили в нову оптимізацію
+    orderedPassengers.forEach(op => {
+        const uid = op._uid || (op._sheet && op._rowNum ? `${op._sheet}_${op._rowNum}` : null);
+        if (!uid) return;
+        const p = findPackageByUid(uid);
+        if (p && p.grupaOpt) {
+            p.grupaOpt = '';
+        }
+    });
+
+    // Присвоюємо новий порядок з літерою групи (A1, A2, ... або B1, B2, ...)
     orderedPassengers.forEach((op, idx) => {
         const uid = op._uid || (op._sheet && op._rowNum ? `${op._sheet}_${op._rowNum}` : null);
         if (!uid) return;
-        
+
         const p = findPackageByUid(uid);
         if (p) {
             p.order = idx;
-            p.status = 'optimize';
             p._notGeocoded = notGeocodedUids.has(uid);
+            p.grupaOpt = newGroupLetter + String(idx + 1);
+
+            // Зберігаємо grupaOpt на правильний сервер
+            const sheet = p.sheet || p._sheet;
+            const rowNum = p.rowNum || p._rowNum;
+            if (sheet && rowNum) {
+                fetch(targetApiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify({
+                        action: 'updateField',
+                        sheet: sheet, rowNum: rowNum, field: 'grupaOpt', value: p.grupaOpt
+                    })
+                }).catch(err => console.error('grupaOpt save error:', err));
+            }
         }
     });
-    
+
+    lastOptimizedGroup = newGroupLetter;
     saveSettings();
-    refreshAfterAction();
+
+    // Рендеримо відповідний вид
+    if (isRouteData) {
+        renderRoutePassengers();
+    } else {
+        refreshAfterAction();
+    }
     updateAllCounts();
 }
 
 // Кнопка "Сортувати" у вікні результату оптимізації
 function applyOptimizedSort() {
-    // Закриваємо модалку оптимізації
     closeModal('optimizeModal');
 
-    // Виділення (selectedIds) вже збережене — не чіпаємо
-    // order та status='optimize' вже виставлені в applyOptimizedOrder()
-
-    // Перерендерюємо картки — тепер getFilteredData() сортує optimize по order
-    render();
+    const isRouteView = filters.statusFilter === 'route' && filters.routeVehicle;
+    if (isRouteView) {
+        renderRoutePassengers();
+    } else {
+        render();
+    }
     updateBulkBar();
-
     showToast('📊 Ліди відсортовані по оптимізованому маршруту');
+}
+
+// Закрити панель оптимізації
+function closeOptimization() {
+    document.getElementById('optimizationPanel')?.classList.remove('show');
+}
+
+// Відкрити Google Maps з оптимізованими точками
+function openGoogleMaps() {
+    const grp = lastOptimizedGroup;
+    const isRouteView = filters.statusFilter === 'route' && filters.routeVehicle;
+    const sourceList = isRouteView ? routePassengers : packages;
+    const optimized = sourceList.filter(p => p.grupaOpt && (!grp || p.grupaOpt.startsWith(grp)))
+        .sort((a, b) => {
+            const aNum = parseInt(a.grupaOpt.replace(/^[A-Z]/, '')) || 0;
+            const bNum = parseInt(b.grupaOpt.replace(/^[A-Z]/, '')) || 0;
+            return aNum - bNum;
+        });
+    if (!optimized.length) return showToast('⚠️ Немає оптимізованих заявок');
+
+    const addresses = optimized.map(p => p.address).filter(Boolean);
+    if (addresses.length === 0) return showToast('❌ Немає адрес');
+
+    const origin = encodeURIComponent(addresses[0]);
+    const destination = encodeURIComponent(addresses[addresses.length - 1]);
+    const waypoints = addresses.slice(1, -1).map(a => encodeURIComponent(a)).join('|');
+
+    let url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}`;
+    if (waypoints) url += `&waypoints=${waypoints}`;
+
+    window.open(url, '_blank');
+}
+
+// Підтвердити оптимізацію → перевести в маршрут
+function confirmOptimization() {
+    const grp = lastOptimizedGroup;
+    const isRouteView = filters.statusFilter === 'route' && filters.routeVehicle;
+    const sourceList = isRouteView ? routePassengers : packages;
+    const optimized = sourceList.filter(p => p.grupaOpt && (!grp || p.grupaOpt.startsWith(grp)));
+    if (!optimized.length) return showToast('⚠️ Немає оптимізованих заявок');
+
+    selectedIds.clear();
+    optimized.forEach(p => {
+        const uid = p._uid || (p._sheet && p._rowNum ? `${p._sheet}_${p._rowNum}` : null);
+        if (uid) selectedIds.add(uid);
+    });
+
+    if (selectedIds.size > 0) {
+        bulkMoveToRoute();
+    } else {
+        showToast('⚠️ Синхронізуй дані перед маршрутом');
+    }
+    closeOptimization();
 }
 
 // UNDO SYSTEM
@@ -6067,6 +6394,7 @@ function savePackage() {
         dateReg: document.getElementById('fDateReg').value,
         note: document.getElementById('fNote').value,
         smsNote: document.getElementById('fSmsNote')?.value || '',
+        grupaOpt: existingP?.grupaOpt || '',
         status: existingP?.status || '',
         isNew: !editingId,
         order: packages.length * 10
@@ -7125,10 +7453,10 @@ function openMapLocation(type) {
 // GOOGLE SHEETS API
 // ============================================
 // Посилки (основна таблиця даних)
-const API_URL = 'https://script.google.com/macros/s/AKfycbzMeU2UXqFW1JTj85yIvHeCt_9YyLW2i6CeBq6F6tWY3lYAKAT1X9Ne-N28aiY7dGHMQQ/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbwcDN56bo3y83T18u3ns2RF3yr7SUOLeXztgAJM1ust9yEuHVw6rPS3yIh7-J-SpDf8NQ/exec';
 
 // Маршрути посилок (окремий скрипт)
-const ROUTE_API_URL = 'https://script.google.com/macros/s/AKfycbwlo9O9RO_LUDmtTGD3GL8e1i1jkklM6heaypRGMZF_QidhBsDmagflqUhAMmwwguLYwg/exec';
+const ROUTE_API_URL = 'https://script.google.com/macros/s/AKfycbxRhO2tU2COaPbh7c-xp8VNY5B6PYLvTACBxjc3DDN_x4-2rK5AkfnTFncvUPmXaOZi3w/exec';
 
 // Архів v1.0
 const ARCHIVE_API_URL = 'https://script.google.com/macros/s/AKfycbwJLGZgYT333VdMW-nM5kPjYs2WIGGjfqkZnDJYjJxUt8nzE8GDGCPm7EzMHhcxNDOn/exec';
@@ -7251,10 +7579,11 @@ function savePackageToServer(pkg) {
             smsNote: pkg.smsNote || '',
             dateReceive: pkg.dateReceive || '',
             photo: pkg.photo || '',
+            grupaOpt: pkg.grupaOpt || '',
             status: pkg.status || ''
         }
     };
-    
+
     fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain' },
@@ -7324,6 +7653,7 @@ function updatePackageOnServer(pkg) {
             smsNote: pkg.smsNote || '',
             dateReceive: pkg.dateReceive || '',
             photo: pkg.photo || '',
+            grupaOpt: pkg.grupaOpt || '',
             status: pkg.status || '',
             vehicle: pkg.vehicle || ''
         }

@@ -56,9 +56,10 @@ var COL = {
   STATUS: 20,       // U — Статус (CRM: new/work/route/archived/refused/transferred/deleted)
   DATE_ARCHIVE: 21, // V — Дата архів
   ARCHIVE_ID: 22,   // W — ARCHIVE_ID (зв'язок з таблицею Архіви)
-  VEHICLE: 23       // X — Автомобіль
+  VEHICLE: 23,      // X — Автомобіль
+  GROUP_OPT: 24     // Y — Група ОПТ (група оптимізації)
 };
-var TOTAL_COLS = 24;
+var TOTAL_COLS = 25;
 
 // Статуси для архівації
 var ARCHIVE_STATUSES = ['archived', 'refused', 'deleted', 'transferred'];
@@ -102,7 +103,8 @@ var FIELD_MAP = {
   status: COL.STATUS,
   dateArchive: COL.DATE_ARCHIVE,
   archiveId: COL.ARCHIVE_ID,
-  vehicle: COL.VEHICLE
+  vehicle: COL.VEHICLE,
+  grupaOpt: COL.GROUP_OPT
 };
 
 // ============================================
@@ -155,6 +157,9 @@ function doPost(e) {
       // --- ДУБЛІКАТИ ---
       case 'checkDuplicates':
         return respond(checkDuplicates(data));
+
+      case 'clearAllGrupaOpt':
+        return respond(clearAllGrupaOpt(data));
 
       default:
         return respond({ success: false, error: 'Невідома дія: ' + action });
@@ -270,6 +275,7 @@ function getAllPackages() {
         dateArchive: formatDate(row[COL.DATE_ARCHIVE]),
         archiveId: String(row[COL.ARCHIVE_ID] || ''),
         vehicle: String(row[COL.VEHICLE] || ''),
+        grupaOpt: String(row[COL.GROUP_OPT] || ''),
 
         // Мета
         isNew: isNew24h,
@@ -524,6 +530,45 @@ function updateField(data) {
   writeLog('updateField', sheetName, rowNum, field, String(value));
 
   return { success: true, sheet: sheetName, rowNum: rowNum, field: field };
+}
+
+// ============================================
+// clearAllGrupaOpt — Очистити grupaOpt у всіх записах
+// ============================================
+function clearAllGrupaOpt(data) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var cleared = 0;
+
+  // Якщо передано sheetName — очищаємо тільки конкретний аркуш
+  var sheetsToClean = [];
+  if (data && data.sheetName) {
+    var sh = findSheet(ss, data.sheetName);
+    if (sh) sheetsToClean.push(sh);
+  } else {
+    var sh1 = findSheet(ss, SHEET_REG);
+    var sh2 = findSheet(ss, SHEET_COURIER);
+    if (sh1) sheetsToClean.push(sh1);
+    if (sh2) sheetsToClean.push(sh2);
+  }
+
+  for (var s = 0; s < sheetsToClean.length; s++) {
+    var sheet = sheetsToClean[s];
+    var lastRow = sheet.getLastRow();
+    if (lastRow < 2) continue;
+
+    var col = COL.GROUP_OPT + 1;
+    var range = sheet.getRange(2, col, lastRow - 1, 1);
+    var values = range.getValues();
+    var newValues = [];
+    for (var i = 0; i < values.length; i++) {
+      if (String(values[i][0] || '').trim() !== '') cleared++;
+      newValues.push(['']);
+    }
+    range.setValues(newValues);
+  }
+
+  writeLog('clearAllGrupaOpt', data && data.sheetName || 'all', 0, 'grupaOpt', 'cleared ' + cleared);
+  return { success: true, cleared: cleared };
 }
 
 // ============================================
