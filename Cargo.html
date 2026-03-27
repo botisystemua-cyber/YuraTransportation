@@ -2633,15 +2633,17 @@ function renderDashTabFor(type) {
         .map(([name, d]) => `<tr><td class="font-bold">${name}</td><td class="text-center">${d.count}</td><td class="text-right font-bold">&euro;${d.sum.toFixed(0)}</td></tr>`)
         .join('') || '<tr><td colspan="3" style="text-align:center;color:var(--text-secondary);">Немає даних</td></tr>';
 
-    // D. Vehicles - тільки авто з меню (vehicles масив)
+    // D. Vehicles — свій тип: тільки авто з меню, чужий тип: всі
+    const isOwnType = (!isPass && typeof packages !== 'undefined' && Array.isArray(packages)) ||
+                      (isPass && typeof passengers !== 'undefined' && Array.isArray(passengers));
     const vehMap = {};
     items.forEach(p => {
         const rawV = p.vehicle || '';
         if (!rawV) return;
         const veh = vehicles.find(v => v.id === rawV || v.name === rawV);
-        if (!veh) return; // ігноруємо невідомі авто
-        const displayName = veh.name;
-        if (!vehMap[displayName]) vehMap[displayName] = { name: displayName, count: 0, load: 0, sum: 0, limit: isPass ? (parseInt(veh.seats) || 8) : (parseInt(veh.maxWeight) || 2000) };
+        if (isOwnType && !veh) return; // свій тип: ігноруємо невідомі авто
+        const displayName = veh ? veh.name : rawV;
+        if (!vehMap[displayName]) vehMap[displayName] = { name: displayName, count: 0, load: 0, sum: 0, limit: isPass ? (veh ? parseInt(veh.seats) || 8 : 8) : (veh ? parseInt(veh.maxWeight) || 2000 : 2000) };
         vehMap[displayName].count++;
         vehMap[displayName].load += isPass ? (parseFloat(p.seats) || 1) : (parseFloat(p.weight) || 1);
         vehMap[displayName].sum += dashGetRevenue(p, typeKey);

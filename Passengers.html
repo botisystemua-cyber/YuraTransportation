@@ -2631,16 +2631,18 @@ function renderTabContent(containerId, data, type) {
         .map(([name, d]) => `<tr><td class="font-bold">${name}</td><td class="text-center">${d.count}</td><td class="text-right font-bold">&euro;${d.sum.toFixed(0)}</td></tr>`)
         .join('') || '<tr><td colspan="3" style="text-align:center;color:var(--text-secondary);">Немає даних</td></tr>';
 
-    // Тільки авто з меню (vehicles масив)
+    // Авто — свій тип: тільки з меню, чужий тип: всі
+    const isOwnType = (type === 'passengers' && typeof passengers !== 'undefined' && Array.isArray(passengers)) ||
+                      (type === 'cargo' && typeof packages !== 'undefined' && Array.isArray(packages));
     const vehMap = {};
     data.forEach(p => {
         const rawV = p.vehicle || '';
         if (!rawV) return;
         const veh = vehicles.find(v => v.id === rawV || v.name === rawV);
-        if (!veh) return; // ігноруємо невідомі авто
-        const displayName = veh.name;
+        if (isOwnType && !veh) return; // свій тип: ігноруємо невідомі авто
+        const displayName = veh ? veh.name : rawV;
         if (!vehMap[displayName]) {
-            vehMap[displayName] = { orders: 0, weight: 0, sum: 0, limit: type === 'cargo' ? (parseInt(veh.maxWeight) || 2000) : (parseInt(veh.seats) || 8) };
+            vehMap[displayName] = { orders: 0, weight: 0, sum: 0, limit: type === 'cargo' ? (veh ? parseInt(veh.maxWeight) || 2000 : 2000) : (veh ? parseInt(veh.seats) || 8 : 8) };
         }
         vehMap[displayName].orders++;
         if (type === 'cargo') {
