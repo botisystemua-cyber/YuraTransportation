@@ -2383,7 +2383,7 @@ function togglePcSidebar() {
 // ============================================
 // DASHBOARD - Owner Only
 // ============================================
-const USER_ACCESS = 'owner'; // 'owner' | 'admin' | 'dispatcher'
+const USER_ACCESS = (() => { try { const a = JSON.parse(sessionStorage.getItem('yura_auth') || '{}'); return (a.role === 'Власник') ? 'owner' : 'manager'; } catch(e) { return 'owner'; } })();
 const DASH_CARGO_API = 'https://script.google.com/macros/s/AKfycbwcDN56bo3y83T18u3ns2RF3yr7SUOLeXztgAJM1ust9yEuHVw6rPS3yIh7-J-SpDf8NQ/exec';
 const DASH_PASS_API = 'https://script.google.com/macros/s/AKfycbxYdvmKOtY6vG5Kc60g2g6MA5jLgF2S__JPFQ2g9hP0qCmDGAyt_FQ4O04DOAO_MLc1/exec';
 const DASH_PASS_ROUTE_API = 'https://script.google.com/macros/s/AKfycbz2qmOqa_CgBWxUgY7Hc9Ni_pWQ8gfOBjN7iYhC0UwJKK36ha6BNfaz4MWGdCFmjMmy/exec';
@@ -2399,13 +2399,16 @@ let dashDateFrom = '';
 let dashDateTo = '';
 
 function toggleDashboard() {
-    if (USER_ACCESS !== 'owner') return;
     const content = document.getElementById('dashboardContent');
     const header = document.querySelector('.dashboard-header');
     content.classList.toggle('collapsed');
     header.classList.toggle('collapsed');
     if (!content.classList.contains('collapsed')) {
-        dashShow();
+        if (USER_ACCESS === 'owner') {
+            dashShow();
+        } else {
+            renderManagerDashboard();
+        }
     }
 }
 
@@ -2489,6 +2492,27 @@ function dashPrefetch() {
     dashFetchAll().catch(() => {});
 }
 
+function renderManagerDashboard() {
+    const loader = document.getElementById('dashLoader');
+    const body = document.getElementById('dashBody');
+    loader.style.display = 'none';
+    body.style.display = 'block';
+    const local = typeof packages !== 'undefined' ? packages : (typeof passengers !== 'undefined' ? passengers : []);
+    const active = local.filter(p => !['archived','refused','deleted','transferred'].includes(p.status));
+    const total = active.length;
+    const rev = active.reduce((s, p) => {
+        const a = parseDashAmount(p.amount);
+        const pay = parseDashAmount(p.payment);
+        return s + (a || pay);
+    }, 0);
+    body.innerHTML = `
+        <div class="dash-kpi-row" style="grid-template-columns:1fr 1fr;">
+            <div class="dash-kpi"><div class="dash-kpi-value">${total}</div><div class="dash-kpi-label">Всього заявок</div></div>
+            <div class="dash-kpi"><div class="dash-kpi-value success">&euro;${rev.toFixed(0)}</div><div class="dash-kpi-label">Загальний дохід</div></div>
+        </div>
+    `;
+}
+
 function parseDashAmount(val) {
     const v = parseFloat(String(val || '0').replace(/[^0-9.,]/g, '').replace(',', '.')) || 0;
     return v >= 1000 ? 0 : v; // Ігноруємо помилкові суми 1000€+
@@ -2540,11 +2564,6 @@ function setDashTab(tab) {
 }
 
 function renderDashboard() {
-    if (USER_ACCESS !== 'owner') {
-        document.getElementById('dashboardPanel').style.display = 'none';
-        return;
-    }
-
     const excludeStatuses = ['archived', 'refused', 'deleted', 'transferred'];
     const allPass = dashPassengers.filter(p => !excludeStatuses.includes(p.status));
     const allPkg = dashPackages.filter(p => !excludeStatuses.includes(p.status));
