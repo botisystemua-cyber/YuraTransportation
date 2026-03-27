@@ -2381,8 +2381,11 @@ function toggleDashboard() {
     content.classList.toggle('collapsed');
     header.classList.toggle('collapsed');
     if (!content.classList.contains('collapsed')) {
-        // Спробувати кеш → показати миттєво, потім оновити у фоні
+        const loader = document.getElementById('dashLoader');
+        const body = document.getElementById('dashBody');
         if (dashLoadFromCache()) {
+            loader.style.display = 'none';
+            body.style.display = 'block';
             renderDashboard();
             dashRefreshInBackground();
         } else {
