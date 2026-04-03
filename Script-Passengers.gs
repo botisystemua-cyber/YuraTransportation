@@ -1630,12 +1630,12 @@ function resolveDriverStatus(row, bgColors) {
   if (markValue === 'cancelled' || markValue === 'відмова' || markValue === 'скасовано') return 'cancelled';
   if (markValue === 'archived' || markValue === 'архів') return 'archived';
 
-  // По кольору рядка
+  // По кольору рядка (STATUS_COLORS водія + ручні кольори Google Sheets)
   if (bgColors && bgColors[0]) {
     var color = bgColors[0].toLowerCase();
-    if (color === '#00ff00' || color === '#b6d7a8' || color === '#93c47d') return 'completed';
-    if (color === '#6fa8dc' || color === '#a4c2f4' || color === '#3d85c6') return 'in-progress';
-    if (color === '#e06666' || color === '#ea9999' || color === '#cc0000') return 'cancelled';
+    if (color === '#e8f5e9' || color === '#00ff00' || color === '#b6d7a8' || color === '#93c47d') return 'completed';
+    if (color === '#e3f2fd' || color === '#6fa8dc' || color === '#a4c2f4' || color === '#3d85c6') return 'in-progress';
+    if (color === '#ffebee' || color === '#e06666' || color === '#ea9999' || color === '#cc0000') return 'cancelled';
   }
 
   return 'pending';

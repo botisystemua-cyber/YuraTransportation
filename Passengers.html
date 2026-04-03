@@ -2310,6 +2310,71 @@ function silentSync() {
     .catch(err => {
         console.log('Silent sync failed:', err);
     });
+
+    // Тиха синхронізація маршрутів — якщо менеджер переглядає маршрут
+    if (filters.statusFilter === 'route' && routePassengers.length > 0) {
+        silentSyncRoutes();
+    }
+}
+
+// Тиха синхронізація маршрутних пасажирів (без loader)
+function silentSyncRoutes() {
+    if (document.getElementById('passengerModal')?.classList.contains('show')) return;
+
+    // Визначаємо які маршрути зараз відображаються
+    const sheetsToSync = [...new Set(routePassengers.map(p => p._vehicleName || p.sheet).filter(Boolean))];
+    if (sheetsToSync.length === 0) return;
+
+    const promises = sheetsToSync.map(sheetName =>
+        fetch(ROUTE_API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify({ action: 'getRoutePassengers', payload: { sheetName } })
+        })
+        .then(r => r.json())
+        .then(data => ({ sheetName, data }))
+        .catch(() => ({ sheetName, data: { success: false } }))
+    );
+
+    Promise.all(promises).then(results => {
+        let updated = [];
+        let newStats = { total: 0, pending: 0, inProgress: 0, completed: 0, cancelled: 0, archived: 0 };
+
+        for (const { sheetName, data } of results) {
+            if (!data.success || !data.passengers) continue;
+
+            const matchedVehicle = vehicles.find(v =>
+                v.routeSheet === sheetName || v.name === sheetName
+            ) || vehicles.find(v => sheetName.includes(v.name));
+
+            const mapped = data.passengers
+                .filter(p => (p.phone && p.phone.trim()) || (p.name && p.name.trim()) || (p.id && p.id.trim()))
+                .map((p, idx) => ({
+                    ...p,
+                    _uid: `route_${sheetName.replace(/\s+/g, '_')}_${idx}`,
+                    _isRouteData: true,
+                    _vehicleId: matchedVehicle?.id || sheetName,
+                    _vehicleName: matchedVehicle?.routeSheet || matchedVehicle?.name || sheetName,
+                    _vehicleDisplayName: matchedVehicle?.name || sheetName
+                }));
+            updated = updated.concat(mapped);
+
+            if (data.stats) {
+                newStats.total += data.stats.total || 0;
+                newStats.pending += data.stats.pending || 0;
+                newStats.inProgress += data.stats.inProgress || 0;
+                newStats.completed += data.stats.completed || 0;
+                newStats.cancelled += data.stats.cancelled || 0;
+                newStats.archived += data.stats.archived || 0;
+            }
+        }
+
+        if (updated.length > 0 || routePassengers.length > 0) {
+            routePassengers = updated;
+            routeStats = newStats;
+            renderRoutePassengers();
+        }
+    }).catch(err => console.log('Silent route sync failed:', err));
 }
 
 // Звук сповіщення для нових лідів
@@ -4907,6 +4972,26 @@ function executeCopyToRoute(byVehicle, withVehicle, conflictAction) {
             updateBulkBar();
             updateAllCounts();
 
+            // Синхронізуємо статус 'route' в основну таблицю пасажирів
+            const serverItems = withVehicle
+                .filter(p => (p._sheet || p.sheet) && (p._rowNum || p.rowNum))
+                .map(p => ({
+                    sheet: p._sheet || p.sheet,
+                    rowNum: p._rowNum || p.rowNum,
+                    status: 'route',
+                    mark: 'Маршрут'
+                }));
+            if (serverItems.length > 0) {
+                fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify({
+                        action: 'updateMultiple',
+                        payload: { passengers: serverItems }
+                    })
+                }).catch(err => console.error('Sync route status error:', err));
+            }
+
             let msg = `🚀 ${data.copied} записано в маршрут`;
             if (data.archived) msg += `, 📦 ${data.archived} архівовано`;
             if (data.cleared) msg += `, 🗑️ ${data.cleared} видалено`;
@@ -6913,31 +6998,36 @@ function updatePassengerOnServer(passenger) {
     const isRoute = !!passenger._isRouteData;
     const apiUrl = isRoute ? ROUTE_API_URL : API_URL;
 
+    // Для маршрутних пасажирів не відправляємо mark —
+    // він містить статус водія (completed/in-progress/cancelled) і не повинен перезаписуватись з CRM
+    const payloadData = {
+        sheet: pSheet,
+        rowNum: pRowNum,
+        date: passenger.date,
+        from: passenger.from,
+        to: passenger.to,
+        seats: passenger.seats,
+        name: passenger.name,
+        phone: passenger.phone,
+        phoneReg: passenger.phoneReg,
+        payment: passenger.payment,
+        percent: passenger.percent,
+        dispatcher: passenger.dispatcher,
+        weight: passenger.weight,
+        vehicle: passenger.vehicle,
+        timing: passenger.timing,
+        dateReg: passenger.dateReg,
+        note: passenger.note,
+        grupaOpt: passenger.grupaOpt || '',
+        status: passenger.status || '',
+        statusDate: passenger.statusDate || ''
+    };
+    if (!isRoute) {
+        payloadData.mark = passenger.mark || '';
+    }
     const payload = {
         action: 'updatePassenger',
-        payload: {
-            sheet: pSheet,
-            rowNum: pRowNum,
-            date: passenger.date,
-            from: passenger.from,
-            to: passenger.to,
-            seats: passenger.seats,
-            name: passenger.name,
-            phone: passenger.phone,
-            phoneReg: passenger.phoneReg,
-            mark: passenger.mark || '',
-            payment: passenger.payment,
-            percent: passenger.percent,
-            dispatcher: passenger.dispatcher,
-            weight: passenger.weight,
-            vehicle: passenger.vehicle,
-            timing: passenger.timing,
-            dateReg: passenger.dateReg,
-            note: passenger.note,
-            grupaOpt: passenger.grupaOpt || '',
-            status: passenger.status || '',
-            statusDate: passenger.statusDate || ''
-        }
+        payload: payloadData
     };
 
     fetch(apiUrl, {

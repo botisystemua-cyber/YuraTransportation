@@ -486,6 +486,7 @@ function copyToRoute(payload) {
         newRow[COL.NOTE] = pass.note || '';
         newRow[COL.STATUS] = 'new';
         newRow[COL.SOURCE_SHEET] = pass.sourceSheet || pass.sheet || '';
+        newRow[COL.GROUP_OPT] = pass.grupaOpt || '';
 
         rows.push(newRow);
       }
@@ -1461,9 +1462,10 @@ function resolveDriverStatus(row, bgColors) {
 
   if (bgColors && bgColors[0]) {
     var color = bgColors[0].toLowerCase();
-    if (color === '#00ff00' || color === '#b6d7a8' || color === '#93c47d') return 'completed';
-    if (color === '#6fa8dc' || color === '#a4c2f4' || color === '#3d85c6') return 'in-progress';
-    if (color === '#e06666' || color === '#ea9999' || color === '#cc0000') return 'cancelled';
+    // Кольори з STATUS_COLORS (водій) + ручні кольори з Google Sheets
+    if (color === '#e8f5e9' || color === '#00ff00' || color === '#b6d7a8' || color === '#93c47d') return 'completed';
+    if (color === '#e3f2fd' || color === '#6fa8dc' || color === '#a4c2f4' || color === '#3d85c6') return 'in-progress';
+    if (color === '#ffebee' || color === '#e06666' || color === '#ea9999' || color === '#cc0000') return 'cancelled';
   }
 
   return 'pending';
