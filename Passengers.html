@@ -5077,8 +5077,8 @@ function bulkArchive() {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain' },
                     body: JSON.stringify({
-                        action: 'bulkArchive',
-                        payload: { passengers: mainPassengers, user: 'crm', reason: 'bulk_archive' }
+                        action: 'archivePassengers',
+                        payload: { passengers: mainPassengers, note: '' }
                     })
                 }).then(r => r.json())
             );
@@ -5103,7 +5103,7 @@ function bulkArchive() {
             if (allSuccess) {
                 archiveLocally();
                 archiveLoaded = false; // Скидаємо кеш архіву для перезавантаження
-                const total = results.reduce((s, d) => s + (d.count || d.archived || 0), 0);
+                const total = results.reduce((s, d) => s + (d.changed || d.count || d.archived || 0), 0);
                 showToast(`📦 Архівовано: ${total}`);
             } else {
                 const errors = results.filter(d => !d.success).map(d => d.error).join('; ');
