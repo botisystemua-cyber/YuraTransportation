@@ -5066,55 +5066,34 @@ function bulkArchive() {
         renderCalendars();
     }
 
-    // Якщо є серверні дані — відправляємо на сервер
+    // Якщо є серверні дані — відправляємо на сервер (fire-and-forget,
+    // як у bulkDelete: локальний стан оновлюємо одразу, не чекаючи відповіді,
+    // бо Apps Script часто rejects fetch навіть коли запис у Sheets пройшов).
     if (mainPassengers.length > 0 || routePassengers.length > 0) {
-        showLoader('Архівую...', '');
-
-        const requests = [];
         if (mainPassengers.length > 0) {
-            requests.push(
-                fetch(API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain' },
-                    body: JSON.stringify({
-                        action: 'archivePassengers',
-                        payload: { passengers: mainPassengers, note: '' }
-                    })
-                }).then(r => r.json())
-            );
+            fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain' },
+                body: JSON.stringify({
+                    action: 'archivePassengers',
+                    payload: { passengers: mainPassengers, note: '' }
+                })
+            }).catch(err => console.warn('Archive (main) request error:', err));
         }
         if (routePassengers.length > 0) {
-            requests.push(
-                fetch(ROUTE_API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain' },
-                    body: JSON.stringify({
-                        action: 'archiveToExternal',
-                        payload: { passengers: routePassengers, user: 'crm', reason: 'bulk_archive' }
-                    })
-                }).then(r => r.json())
-            );
+            fetch(ROUTE_API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain' },
+                body: JSON.stringify({
+                    action: 'archiveToExternal',
+                    payload: { passengers: routePassengers, user: 'crm', reason: 'bulk_archive' }
+                })
+            }).catch(err => console.warn('Archive (route) request error:', err));
         }
 
-        Promise.all(requests)
-        .then(results => {
-            hideLoader();
-            const allSuccess = results.every(d => d.success);
-            if (allSuccess) {
-                archiveLocally();
-                archiveLoaded = false; // Скидаємо кеш архіву для перезавантаження
-                const total = results.reduce((s, d) => s + (d.changed || d.count || d.archived || 0), 0);
-                showToast(`📦 Архівовано: ${total}`);
-            } else {
-                const errors = results.filter(d => !d.success).map(d => d.error).join('; ');
-                showToast('❌ ' + errors);
-            }
-        })
-        .catch(err => {
-            hideLoader();
-            console.error('Archive error:', err);
-            showToast('❌ Помилка архівації');
-        });
+        archiveLocally();
+        archiveLoaded = false; // Скидаємо кеш архіву для перезавантаження
+        showToast(`📦 Архівовано: ${allFoundPassengers.length}`);
     } else {
         // Немає серверних даних — архівуємо тільки локально
         archiveLocally();
