@@ -1858,8 +1858,23 @@
 <!-- MODALS -->
 <div class="modal-overlay" id="packageModal" onclick="if(event.target===this)closeModal('packageModal')">
     <div class="modal">
-        <div class="modal-header"><span class="modal-title" id="packageModalTitle">📦 Додати посилку</span><button type="button" id="smsParserOpenBtn" onclick="openSmsParser()" style="margin-left:auto;margin-right:8px;background:#7c3aed;color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:13px;">📱 SMS</button><button class="modal-close" onclick="closeModal('packageModal')">×</button></div>
+        <div class="modal-header"><span class="modal-title" id="packageModalTitle">📦 Додати посилку</span><button class="modal-close" onclick="closeModal('packageModal')">×</button></div>
         <div class="modal-body">
+            <div class="form-group" style="border:2px solid #7c3aed;border-radius:8px;padding:0;overflow:hidden;background:linear-gradient(135deg,#faf5ff,#f3e8ff);margin-bottom:14px;">
+                <div onclick="toggleSmsParser()" style="padding:10px 14px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:white;user-select:none;">
+                    <span style="font-weight:600;font-size:14px;">🤖 Помічник — автозаповнення з тексту</span>
+                    <span id="smsParserToggle" style="font-size:13px;">Розгорнути ▼</span>
+                </div>
+                <div id="smsParserBody" style="display:none;padding:12px;">
+                    <p style="margin:0 0 8px 0;font-size:12px;color:#666;">Вставте текст повідомлення від клієнта — розпізнані поля підсвітяться зеленим.</p>
+                    <textarea id="smsInput" rows="4" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;font-family:inherit;box-sizing:border-box;font-size:13px;" placeholder="Іван Петров +380631234567 Київ-Цюріх, документи 2кг, 14:30 адреса: вул. Хрещатик 1"></textarea>
+                    <div style="display:flex;gap:8px;margin-top:8px;">
+                        <button type="button" onclick="parseSmsText()" style="flex:1;background:#7c3aed;color:white;border:none;padding:8px;border-radius:6px;cursor:pointer;font-weight:600;font-size:13px;">🔍 Розпізнати</button>
+                        <button type="button" onclick="clearSmsHighlights();document.getElementById('smsInput').value='';document.getElementById('smsParseResult').style.display='none';" style="background:#e5e7eb;color:#374151;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-size:13px;">Очистити</button>
+                    </div>
+                    <div id="smsParseResult" style="display:none;margin-top:8px;padding:8px;background:#dcfce7;color:#166534;border-radius:6px;font-size:12px;line-height:1.5;"></div>
+                </div>
+            </div>
             <div class="form-group">
                 <label>Напрямок</label>
                 <select id="fDirection" style="background:var(--bg-main);">
@@ -1879,18 +1894,6 @@
             <div class="form-group"><label>Примітка СМС</label><input type="text" id="fSmsNote"></div>
         </div>
         <div class="modal-footer"><button class="btn-cancel" onclick="closeModal('packageModal')">Скасувати</button><button class="btn-save" onclick="savePackage()">💾 Зберегти</button></div>
-    </div>
-</div>
-
-<div class="modal-overlay" id="smsParserModal" onclick="if(event.target===this)closeModal('smsParserModal')">
-    <div class="modal" style="max-width:520px;">
-        <div class="modal-header" style="background:linear-gradient(135deg,#7c3aed,#6d28d9);"><span class="modal-title" style="color:white;">📱 SMS-парсер</span><button class="modal-close" onclick="closeModal('smsParserModal')">×</button></div>
-        <div class="modal-body">
-            <p style="margin:0 0 8px 0;font-size:13px;color:#666;">Вставте текст повідомлення від клієнта — поля заповняться автоматично.</p>
-            <textarea id="smsInput" rows="6" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;font-family:inherit;box-sizing:border-box;" placeholder="Іван Петров +380631234567 Київ-Цюріх, документи 2кг, 14:30 адреса: вул. Хрещатик 1"></textarea>
-            <div id="smsParseResult" style="display:none;margin-top:8px;padding:8px;background:#dcfce7;color:#166534;border-radius:6px;font-size:13px;line-height:1.5;"></div>
-        </div>
-        <div class="modal-footer"><button class="btn-cancel" onclick="closeModal('smsParserModal')">Скасувати</button><button class="btn-save" onclick="parseSmsText()">🔍 Розпізнати</button></div>
     </div>
 </div>
 
@@ -7330,7 +7333,22 @@ function applyBulkDateReceive() {
     showToast(`📅 Дата отримання → ${cnt} посилок`);
 }
 
-function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+function closeModal(id) {
+    document.getElementById(id).classList.remove('show');
+    if (id === 'packageModal') {
+        if (typeof clearSmsHighlights === 'function') clearSmsHighlights();
+        const body = document.getElementById('smsParserBody');
+        if (body) {
+            body.style.display = 'none';
+            const btn = document.getElementById('smsParserToggle');
+            if (btn) btn.textContent = 'Розгорнути ▼';
+            const sms = document.getElementById('smsInput');
+            if (sms) sms.value = '';
+            const res = document.getElementById('smsParseResult');
+            if (res) res.style.display = 'none';
+        }
+    }
+}
 function showToast(m) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2000); }
 
 // DIRECTION FILTER
@@ -7997,15 +8015,40 @@ function closeOnboarding() {
 initOnboarding();
 
 // ================================================================
-// SMS PARSER — розпізнавання тексту повідомлення (порт з BotiLogistics)
+// ПОМІЧНИК — автозаповнення з тексту (порт з BotiLogistics)
 // ================================================================
-function openSmsParser() {
-    document.getElementById('smsInput').value = '';
-    const res = document.getElementById('smsParseResult');
-    res.style.display = 'none';
-    res.innerHTML = '';
-    document.getElementById('smsParserModal').classList.add('show');
-    setTimeout(() => document.getElementById('smsInput').focus(), 50);
+const _SMS_FIELDS = ['fDateReg','fPhone','fWeight','fDirection','fAddress','fTiming','fName'];
+
+function toggleSmsParser() {
+    const body = document.getElementById('smsParserBody');
+    const btn = document.getElementById('smsParserToggle');
+    if (!body) return;
+    if (body.style.display === 'none' || body.style.display === '') {
+        body.style.display = 'block';
+        btn.textContent = 'Згорнути ▲';
+        setTimeout(() => document.getElementById('smsInput')?.focus(), 50);
+    } else {
+        body.style.display = 'none';
+        btn.textContent = 'Розгорнути ▼';
+    }
+}
+
+function _highlightSmsField(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.style.border = '2px solid #16a34a';
+    el.style.backgroundColor = '#f0fdf4';
+    el.style.boxShadow = '0 0 0 2px rgba(22,163,74,0.15)';
+}
+
+function clearSmsHighlights() {
+    _SMS_FIELDS.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.style.border = '';
+        el.style.backgroundColor = '';
+        el.style.boxShadow = '';
+    });
 }
 
 const KNOWN_CITIES_EU = ['цюріх','цюріха','цюріху','женева','женеви','женеву','берн','берна','базель','базеля','люцерн','люцерна','лозанна','лозанни','лозанну','берлін','берліна','берліну','мюнхен','мюнхена','мюнхену','франкфурт','франкфурта','гамбург','гамбурга','відень','відня','відні','прага','праги','прагу','празі','варшава','варшави','варшаву','краків','кракова','вроцлав','вроцлава','братислава','братислави','братиславу','будапешт','будапешта','будапешту','бухарест','бухареста','мілан','мілана','рим','рима','риму','париж','парижа','парижу','амстердам','амстердама','брюссель','брюсселя','мадрид','мадрида','мадриду','мадрід','мадріда','барселона','барселони','барселону','лісабон','лісабона'];
@@ -8016,6 +8059,7 @@ function parseSmsText() {
     if (!raw) return;
     const text = raw.toLowerCase();
     const result = [];
+    clearSmsHighlights();
 
     // Дата → fDateReg
     const dateMatch = text.match(/(\d{1,2})[\.\/](\d{1,2})(?:[\.\/](\d{2,4}))?/);
@@ -8026,7 +8070,7 @@ function parseSmsText() {
         if (year.length === 2) year = '20' + year;
         const dateStr = year + '-' + month + '-' + day;
         const fDateReg = document.getElementById('fDateReg');
-        if (fDateReg) fDateReg.value = dateStr;
+        if (fDateReg) { fDateReg.value = dateStr; _highlightSmsField('fDateReg'); }
         result.push('📅 Дата: ' + day + '.' + month + '.' + year);
     }
 
@@ -8042,6 +8086,7 @@ function parseSmsText() {
     }
     if (phone.length >= 10) {
         document.getElementById('fPhone').value = phone;
+        _highlightSmsField('fPhone');
         result.push('📞 Телефон: ' + phone);
     }
 
@@ -8050,6 +8095,7 @@ function parseSmsText() {
     if (weightMatch) {
         const w = weightMatch[1].replace(',', '.');
         document.getElementById('fWeight').value = w;
+        _highlightSmsField('fWeight');
         result.push('⚖️ Вага: ' + w + ' кг');
     }
 
@@ -8058,7 +8104,7 @@ function parseSmsText() {
     if (timeMatch && parseInt(timeMatch[1]) < 24) {
         const t = timeMatch[1].padStart(2,'0') + ':' + timeMatch[2];
         const fTiming = document.getElementById('fTiming');
-        if (fTiming) fTiming.value = t;
+        if (fTiming) { fTiming.value = t; _highlightSmsField('fTiming'); }
         result.push('🕐 Час: ' + t);
     }
 
@@ -8098,7 +8144,7 @@ function parseSmsText() {
 
     if (direction) {
         const fDir = document.getElementById('fDirection');
-        if (fDir) fDir.value = direction;
+        if (fDir) { fDir.value = direction; _highlightSmsField('fDirection'); }
         result.push('🧭 Напрям: ' + (direction === 'ua-eu' ? 'UA→EU' : 'EU→UA'));
     }
 
@@ -8112,6 +8158,7 @@ function parseSmsText() {
     if (!address && toCity) address = toCity.charAt(0).toUpperCase() + toCity.slice(1);
     if (address) {
         document.getElementById('fAddress').value = address;
+        _highlightSmsField('fAddress');
         result.push('📍 Адреса: ' + address);
     }
 
@@ -8137,6 +8184,7 @@ function parseSmsText() {
         if (nameParts.length >= 1) {
             const fullName = nameParts.slice(0, 3).join(' ');
             document.getElementById('fName').value = fullName;
+            _highlightSmsField('fName');
             result.push('👤 ПІБ: ' + fullName);
         }
     }
@@ -8147,7 +8195,6 @@ function parseSmsText() {
         resEl.style.background = '#dcfce7';
         resEl.style.color = '#166534';
         resEl.innerHTML = '✅ Розпізнано:<br>' + result.join('<br>');
-        setTimeout(() => closeModal('smsParserModal'), 900);
     } else {
         resEl.style.display = 'block';
         resEl.style.background = '#fef2f2';
