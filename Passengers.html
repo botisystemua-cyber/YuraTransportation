@@ -1779,7 +1779,7 @@
 <!-- MODALS -->
 <div class="modal-overlay" id="passengerModal" onclick="if(event.target===this)closeModal('passengerModal')">
     <div class="modal">
-        <div class="modal-header"><span class="modal-title" id="passengerModalTitle">Додати</span><button class="modal-close" onclick="closeModal('passengerModal')">×</button></div>
+        <div class="modal-header"><span class="modal-title" id="passengerModalTitle">Додати</span><button type="button" id="smsParserOpenBtn" onclick="openSmsParser()" style="margin-left:auto;margin-right:8px;background:#7c3aed;color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:13px;">📱 SMS</button><button class="modal-close" onclick="closeModal('passengerModal')">×</button></div>
         <div class="modal-body">
             <div class="form-group">
                 <label>Напрямок</label>
@@ -1800,6 +1800,18 @@
             <div class="form-group"><label>Примітка</label><textarea id="fNote" rows="2"></textarea></div>
         </div>
         <div class="modal-footer"><button class="btn-cancel" onclick="closeModal('passengerModal')">Скасувати</button><button class="btn-save" onclick="savePassenger()">💾 Зберегти</button></div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="smsParserModal" onclick="if(event.target===this)closeModal('smsParserModal')">
+    <div class="modal" style="max-width:520px;">
+        <div class="modal-header" style="background:linear-gradient(135deg,#7c3aed,#6d28d9);"><span class="modal-title">📱 SMS-парсер</span><button class="modal-close" onclick="closeModal('smsParserModal')">×</button></div>
+        <div class="modal-body">
+            <p style="margin:0 0 8px 0;font-size:13px;color:#666;">Вставте текст повідомлення від клієнта — поля заповняться автоматично.</p>
+            <textarea id="smsInput" rows="6" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;font-family:inherit;box-sizing:border-box;" placeholder="Іван Петров +380631234567 25.12.2025 Київ-Цюріх 2 пасажири, 14:30 виїзд: вул. Хрещатик 1"></textarea>
+            <div id="smsParseResult" style="display:none;margin-top:8px;padding:8px;background:#dcfce7;color:#166534;border-radius:6px;font-size:13px;line-height:1.5;"></div>
+        </div>
+        <div class="modal-footer"><button class="btn-cancel" onclick="closeModal('smsParserModal')">Скасувати</button><button class="btn-save" onclick="parseSmsText()">🔍 Розпізнати</button></div>
     </div>
 </div>
 
@@ -7320,6 +7332,184 @@ document.addEventListener('click', e => {
     if (!e.target.closest('.card-vehicle-badge') && !e.target.closest('.vehicle-dropdown')) document.querySelectorAll('.vehicle-dropdown').forEach(d => d.classList.remove('show'));
     if (!e.target.closest('#navPassengers') && !e.target.closest('.direction-popup')) document.getElementById('directionPopup')?.classList.remove('show');
 });
+
+// ================================================================
+// SMS PARSER — розпізнавання тексту повідомлення (порт з BotiLogistics)
+// ================================================================
+function openSmsParser() {
+    document.getElementById('smsInput').value = '';
+    const res = document.getElementById('smsParseResult');
+    res.style.display = 'none';
+    res.innerHTML = '';
+    document.getElementById('smsParserModal').classList.add('show');
+    setTimeout(() => document.getElementById('smsInput').focus(), 50);
+}
+
+const KNOWN_CITIES_EU = ['цюріх','цюріха','цюріху','женева','женеви','женеву','берн','берна','базель','базеля','люцерн','люцерна','лозанна','лозанни','лозанну','берлін','берліна','берліну','мюнхен','мюнхена','мюнхену','франкфурт','франкфурта','гамбург','гамбурга','відень','відня','відні','прага','праги','прагу','празі','варшава','варшави','варшаву','краків','кракова','вроцлав','вроцлава','братислава','братислави','братиславу','будапешт','будапешта','будапешту','бухарест','бухареста','мілан','мілана','рим','рима','риму','париж','парижа','парижу','амстердам','амстердама','брюссель','брюсселя','мадрид','мадрида','мадриду','мадрід','мадріда','барселона','барселони','барселону','лісабон','лісабона'];
+const KNOWN_CITIES_UA = ['київ','києва','києву','києві','львів','львова','львову','львові','одеса','одеси','одесу','одесі','харків','харкова','харкову','харкові','дніпро','дніпра','запоріжжя','запоріжжі','вінниця','вінниці','вінницю','тернопіль','тернополя','тернополі','івано-франківськ','івано-франківська','рівне','рівного','луцьк','луцька','чернівці','чернівців','ужгород','ужгорода','мукачево','мукачева','хмельницький','хмельницького','полтава','полтави','полтаву','черкаси','черкас','житомир','житомира','суми','сум','миколаїв','миколаєва','херсон','херсона','кропивницький','кропивницького','чернігів','чернігова'];
+const NUM_WORDS = {'один':1,'одна':1,'одного':1,'два':2,'дві':2,'двох':2,'три':3,'трьох':3,'чотири':4,'чотирьох':4,"п'ять":5,'пять':5,'шість':6,'сім':7,'вісім':8,"дев'ять":9,'десять':10};
+
+function parseSmsText() {
+    const raw = document.getElementById('smsInput').value.trim();
+    if (!raw) return;
+    const text = raw.toLowerCase();
+    const result = [];
+
+    const dateMatch = text.match(/(\d{1,2})[\.\/](\d{1,2})(?:[\.\/](\d{2,4}))?/);
+    if (dateMatch) {
+        let day = dateMatch[1].padStart(2, '0');
+        let month = dateMatch[2].padStart(2, '0');
+        let year = dateMatch[3] || new Date().getFullYear().toString();
+        if (year.length === 2) year = '20' + year;
+        const dateStr = year + '-' + month + '-' + day;
+        const fDate = document.getElementById('fDate');
+        if (fDate) fDate.value = dateStr;
+        result.push('📅 Дата: ' + day + '.' + month + '.' + year);
+    }
+
+    let phone = '';
+    const intlMatch = raw.match(/(\+[\d\s\-()]{9,22})/);
+    const uaMatch = raw.match(/(?<!\d)\+?3?8?(0\d{9})(?!\d)/);
+    if (intlMatch) {
+        phone = intlMatch[1].replace(/[\s\-()]/g, '');
+        // Захист: міжнародний номер ≤ 15 цифр (E.164). Обрізаємо склеювання з датою.
+        if (phone.length > 14) phone = phone.slice(0, 13);
+    } else if (uaMatch) {
+        phone = '+380' + uaMatch[1].slice(1);
+    }
+    const phoneOk = phone.length >= 10;
+    if (phoneOk) {
+        document.getElementById('fPhone').value = phone;
+        result.push('📞 Телефон: ' + phone);
+    }
+
+    let seats = 1;
+    const seatsNumMatch = text.match(/(\d+)\s*(?:пасажир|місц|особ|людин|чоловік)/);
+    if (seatsNumMatch) {
+        seats = parseInt(seatsNumMatch[1]);
+    } else {
+        for (const [word, num] of Object.entries(NUM_WORDS)) {
+            if (text.includes(word + ' пасажир') || text.includes(word + ' місц') || text.includes(word + ' особ') || text.includes(word + ' людин')) {
+                seats = num; break;
+            }
+        }
+    }
+    if (seats > 1) {
+        const fSeats = document.getElementById('fSeats');
+        if (fSeats) fSeats.value = seats;
+        result.push('💺 Місць: ' + seats);
+    }
+
+    let fromCity = '', toCity = '', direction = '';
+    const routeMatch = text.match(/(?:з\s+)?(\S+)\s*[-–—→⟶>]+\s*(\S+)/);
+    const toMatch = text.match(/(?:до|в|на)\s+([а-яіїєґ']+)/i);
+    const fromMatch = text.match(/(?:з|від|із)\s+([а-яіїєґ']+)/i);
+    const foundEU = KNOWN_CITIES_EU.filter(c => text.includes(c));
+    const foundUA = KNOWN_CITIES_UA.filter(c => text.includes(c));
+
+    if (routeMatch) {
+        const c1 = routeMatch[1].replace(/[,.:]/g, '');
+        const c2 = routeMatch[2].replace(/[,.:]/g, '');
+        const c1isUA = KNOWN_CITIES_UA.some(c => c1.includes(c));
+        const c2isEU = KNOWN_CITIES_EU.some(c => c2.includes(c));
+        const c1isEU = KNOWN_CITIES_EU.some(c => c1.includes(c));
+        const c2isUA = KNOWN_CITIES_UA.some(c => c2.includes(c));
+        if (c1isUA && c2isEU) { fromCity = c1; toCity = c2; direction = 'ua-eu'; }
+        else if (c1isEU && c2isUA) { fromCity = c1; toCity = c2; direction = 'eu-ua'; }
+        else { fromCity = c1; toCity = c2; }
+    } else {
+        if (toMatch) toCity = toMatch[1];
+        if (fromMatch) fromCity = fromMatch[1];
+        if (!fromCity && foundUA.length > 0) fromCity = foundUA[0];
+        if (!toCity && foundEU.length > 0) toCity = foundEU[0];
+    }
+
+    if (!direction) {
+        const tcL = toCity.toLowerCase();
+        const fcL = fromCity.toLowerCase();
+        if (KNOWN_CITIES_EU.some(c => tcL.includes(c))) direction = 'ua-eu';
+        else if (KNOWN_CITIES_UA.some(c => tcL.includes(c))) direction = 'eu-ua';
+        else if (KNOWN_CITIES_UA.some(c => fcL.includes(c))) direction = 'ua-eu';
+        else if (KNOWN_CITIES_EU.some(c => fcL.includes(c))) direction = 'eu-ua';
+    }
+
+    if (direction) {
+        const fDir = document.getElementById('fDirection');
+        if (fDir) fDir.value = direction;
+        result.push('🧭 Напрям: ' + (direction === 'ua-eu' ? 'UA→EU' : 'EU→UA'));
+    }
+
+    let fromAddress = '', toAddress = '';
+    const addrFromMatch = raw.match(/(?:виїзд|відправ\w*|забрати|посадка|адреса\s+відправ\w*)\s*[:：]\s*(.+)/i);
+    const addrToMatch = raw.match(/(?:прибут\w*|доставк\w*|привезти|висадка|адреса\s+прибут\w*)\s*[:：]\s*(.+)/i);
+    const addrGenericMatch = !addrFromMatch && !addrToMatch ? raw.match(/адреса\s*[:：]\s*(.+)/i) : null;
+    if (addrFromMatch) fromAddress = addrFromMatch[1].replace(/[\+]?\d{10,}.*$/, '').replace(/\n.*$/, '').trim();
+    if (addrToMatch) toAddress = addrToMatch[1].replace(/[\+]?\d{10,}.*$/, '').replace(/\n.*$/, '').trim();
+    if (addrGenericMatch) fromAddress = addrGenericMatch[1].replace(/[\+]?\d{10,}.*$/, '').replace(/\n.*$/, '').trim();
+
+    if (fromCity || fromAddress) {
+        const v = fromAddress || (fromCity.charAt(0).toUpperCase() + fromCity.slice(1));
+        const fFrom = document.getElementById('fFrom');
+        if (fFrom) fFrom.value = v;
+        result.push('📍 Звідки: ' + v);
+    }
+    if (toCity || toAddress) {
+        const v = toAddress || (toCity.charAt(0).toUpperCase() + toCity.slice(1));
+        const fTo = document.getElementById('fTo');
+        if (fTo) fTo.value = v;
+        result.push('📍 Куди: ' + v);
+    }
+
+    const timeMatch = text.match(/(\d{1,2}):(\d{2})(?!\d)/);
+    if (timeMatch && parseInt(timeMatch[1]) < 24) {
+        const t = timeMatch[1].padStart(2,'0') + ':' + timeMatch[2];
+        const fTiming = document.getElementById('fTiming');
+        if (fTiming) fTiming.value = t;
+        result.push('🕐 Час: ' + t);
+    }
+
+    let rawForName = raw;
+    if (fromAddress) rawForName = rawForName.replace(fromAddress, '');
+    if (toAddress) rawForName = rawForName.replace(toAddress, '');
+    rawForName = rawForName.replace(/(?:виїзд|відправ\w*|забрати|прибут\w*|доставк\w*|привезти|посадка|висадка|адреса\w*)\s*[:：][^\n]*/gi, '');
+    const nameWords = rawForName.match(/[А-ЯІЇЄҐ][а-яіїєґ''\-]+/g);
+    let nameOk = false;
+    if (nameWords) {
+        const excludeExact = ['до','від','людини','людин','пасажир','пасажири','пасажирів','місць','місце','їхати','іхати','їду','потрібно'];
+        if (fromCity && fromCity.includes('-')) fromCity.split('-').forEach(p => { if (p.length >= 3) excludeExact.push(p); });
+        if (toCity && toCity.includes('-')) toCity.split('-').forEach(p => { if (p.length >= 3) excludeExact.push(p); });
+        const allCities = [...KNOWN_CITIES_EU, ...KNOWN_CITIES_UA];
+        if (fromCity) allCities.push(fromCity.toLowerCase());
+        if (toCity) allCities.push(toCity.toLowerCase());
+        const nameParts = nameWords.filter(w => {
+            const wl = w.toLowerCase();
+            if (wl.length <= 1) return false;
+            if (excludeExact.includes(wl)) return false;
+            if (allCities.includes(wl)) return false;
+            return true;
+        });
+        if (nameParts.length >= 1) {
+            const fullName = nameParts.slice(0, 3).join(' ');
+            document.getElementById('fName').value = fullName;
+            result.push('👤 ПІБ: ' + fullName);
+            nameOk = true;
+        }
+    }
+
+    const resEl = document.getElementById('smsParseResult');
+    if (result.length > 0) {
+        resEl.style.display = 'block';
+        resEl.style.background = '#dcfce7';
+        resEl.style.color = '#166534';
+        resEl.innerHTML = '✅ Розпізнано:<br>' + result.join('<br>');
+        setTimeout(() => closeModal('smsParserModal'), 900);
+    } else {
+        resEl.style.display = 'block';
+        resEl.style.background = '#fef2f2';
+        resEl.style.color = '#dc2626';
+        resEl.textContent = '⚠️ Не вдалось розпізнати дані. Заповніть форму вручну.';
+    }
+}
 </script>
 </body>
 </html>
