@@ -132,6 +132,82 @@ var ARCHIVE_TO_SOURCE = {
 var ARCHIVE_STATUSES = ['archived', 'refused', 'deleted', 'transferred', 'completed', 'cancelled'];
 
 // ============================================
+// ЗАГОЛОВКИ АРХІВНИХ АРКУШІВ
+// ============================================
+// Кожен заголовок = українська назва поля. Останні 5 — архівні мета.
+// Узгоджено з ARCHIVE_META: DATE_ARCHIVE, ARCHIVED_BY, ARCHIVE_REASON, SOURCE_SHEET, ARCHIVE_ID
+var ARCHIVE_HEADERS = {
+  posylky: [
+    'ВО',                  // A  0
+    'Номер',               // B  1
+    'ТТН',                 // C  2
+    'Вага',                // D  3
+    'Адреса',              // E  4
+    'Напрямок',            // F  5
+    'Телефон',             // G  6
+    'Сума',                // H  7
+    'Статус оплати',       // I  8
+    'Оплата',              // J  9
+    'Телефон реєстрації',  // K 10
+    'Примітка',            // L 11
+    'Статус посилки',      // M 12
+    'ID',                  // N 13
+    "Ім'я",                // O 14
+    'Дата реєстрації',     // P 15
+    'Тайминг',             // Q 16
+    'СМС примітка',        // R 17
+    'Дата отримання',      // S 18
+    'Фото',                // T 19
+    'Статус',              // U 20
+    'Дата архіву',         // V 21  meta DATE_ARCHIVE
+    'Архівовано ким',      // W 22  meta ARCHIVED_BY
+    'Причина архіву',      // X 23  meta ARCHIVE_REASON
+    'Лист-джерело',        // Y 24  meta SOURCE_SHEET
+    'ID архіву'            // Z 25  meta ARCHIVE_ID
+  ],
+  pasazhyry: [
+    'Дата',                // A  0
+    'Звідки',              // B  1
+    'Куди',                // C  2
+    'Місця',               // D  3
+    "Ім'я",                // E  4
+    'Телефон',             // F  5
+    'Мітка',               // G  6
+    'Оплата',              // H  7
+    'Відсоток',            // I  8
+    'Диспетчер',           // J  9
+    'ID',                  // K 10
+    'Телефон реєстрації',  // L 11
+    'Вага',                // M 12
+    'Авто',                // N 13
+    'Тайминг',             // O 14
+    'Дата реєстрації',     // P 15
+    'Примітка',            // Q 16
+    'Статус',              // R 17
+    'Дата архіву',         // S 18  meta DATE_ARCHIVE
+    'Архівовано ким',      // T 19  meta ARCHIVED_BY
+    'Причина архіву',      // U 20  meta ARCHIVE_REASON
+    'Лист-джерело',        // V 21  meta SOURCE_SHEET
+    'ID архіву'            // W 22  meta ARCHIVE_ID
+  ]
+};
+
+// Іменовані колонки дат для archiveByAge.
+// Ключі — для зручності з фронта/меню.
+var DATE_COLUMN_MAP = {
+  posylky: {
+    registration: 15, // P — Дата реєстрації
+    receipt: 18,      // S — Дата отримання
+    default: 15
+  },
+  pasazhyry: {
+    date: 0,          // A — Дата (поїздки)
+    registration: 15, // P — Дата реєстрації
+    default: 15
+  }
+};
+
+// ============================================
 // ГОЛОВНИЙ ОБРОБНИК — doPost
 // ============================================
 function doPost(e) {
@@ -171,6 +247,10 @@ function doPost(e) {
       case 'deleteFromArchive':
         return respond(deleteFromArchive(data));
 
+      // --- НАЛАШТУВАННЯ ---
+      case 'setupArchiveHeaders':
+        return respond(setupArchiveHeaders());
+
       default:
         return respond({ success: false, error: 'Невідома дія: ' + action });
     }
@@ -197,6 +277,9 @@ function doGet(e) {
 
       case 'getStats':
         return respond(getStats({}));
+
+      case 'setupArchiveHeaders':
+        return respond(setupArchiveHeaders());
 
       default:
         return respond({ success: false, error: 'Невідома GET дія: ' + action });
@@ -347,28 +430,55 @@ function archiveByAge(data) {
     sourceKeys = [sourceKey];
   }
 
+  // Можна передати:
+  //   data.dateColumn — числовий індекс (як було)
+  //   data.dateField  — іменований ключ: registration / receipt / date
   for (var s = 0; s < sourceKeys.length; s++) {
     var config = SOURCES[sourceKeys[s]];
     if (!config) continue;
 
-    // Колонка дати: для посилок це P(15)="дата оформлення", для пасажирів це P(15) теж
-    var dateCol = data.dateColumn || 15;
+    var dateCol;
+    if (typeof data.dateColumn === 'number') {
+      dateCol = data.dateColumn;
+    } else if (data.dateField && DATE_COLUMN_MAP[config.type] && DATE_COLUMN_MAP[config.type][data.dateField] !== undefined) {
+      dateCol = DATE_COLUMN_MAP[config.type][data.dateField];
+    } else {
+      dateCol = DATE_COLUMN_MAP[config.type].default;
+    }
+
+    var headerName = (ARCHIVE_HEADERS[config.type] && ARCHIVE_HEADERS[config.type][dateCol]) || ('col' + dateCol);
+
+    // Діагностика: рахуємо що було перевірено
+    var diag = { checked: 0, parsed: 0, matched: 0, emptyDate: 0, badDate: 0 };
 
     var sourceResult = archiveFromSource(config, function(row) {
+      diag.checked++;
       var dateVal = row[dateCol];
-      if (!dateVal) return false;
+      if (dateVal === '' || dateVal === null || dateVal === undefined) {
+        diag.emptyDate++;
+        return false;
+      }
 
       var rowDate = parseDate(dateVal);
-      if (!rowDate) return false;
+      if (!rowDate) {
+        diag.badDate++;
+        return false;
+      }
+      diag.parsed++;
 
-      return rowDate.getTime() < cutoffTime;
+      var match = rowDate.getTime() < cutoffTime;
+      if (match) diag.matched++;
+      return match;
     }, user, reason, deleteFromSource);
 
     totalArchived += sourceResult.archived;
     results.push({
       source: sourceKeys[s],
       name: config.name,
-      archived: sourceResult.archived
+      archived: sourceResult.archived,
+      dateColumn: dateCol,
+      dateColumnName: headerName,
+      diagnostics: diag
     });
   }
 
@@ -376,6 +486,8 @@ function archiveByAge(data) {
     success: true,
     totalArchived: totalArchived,
     days: days,
+    cutoffDate: Utilities.formatDate(cutoffDate, 'Europe/Kiev', 'yyyy-MM-dd'),
+    note: 'Архівуються записи СТАРШІ за cutoffDate (rowDate < cutoffDate)',
     results: results,
     timestamp: getNow()
   };
@@ -604,9 +716,21 @@ function getArchived(data) {
     return { success: true, records: [], total: 0 };
   }
 
-  var totalCols = sheet.getLastColumn();
+  // Тип архівного аркуша — для дефолтних заголовків
+  var archiveType = (archiveSheetName === ARCHIVE_SHEETS.PASAZHYRY ||
+                     archiveSheetName === ARCHIVE_SHEETS.PASAZHYRY_ROUTE) ? 'pasazhyry' : 'posylky';
+  var defaultHeaders = ARCHIVE_HEADERS[archiveType] || [];
+  var totalCols = Math.max(sheet.getLastColumn(), defaultHeaders.length);
+
   var allValues = sheet.getRange(2, 1, lastRow - 1, totalCols).getValues();
-  var headers = sheet.getRange(1, 1, 1, totalCols).getValues()[0];
+  var sheetHeaderRow = sheet.getRange(1, 1, 1, totalCols).getValues()[0];
+
+  // Якщо в аркуші заголовки порожні — підставляємо дефолтні з ARCHIVE_HEADERS
+  var headers = [];
+  for (var h = 0; h < totalCols; h++) {
+    var raw = String(sheetHeaderRow[h] || '').trim();
+    headers.push(raw || (defaultHeaders[h] || ('col' + h)));
+  }
 
   // Фільтруємо порожні рядки
   var records = [];
@@ -615,7 +739,7 @@ function getArchived(data) {
 
     var record = { rowNum: i + 2 };
     for (var c = 0; c < headers.length; c++) {
-      var key = String(headers[c] || '').trim();
+      var key = headers[c];
       if (key) {
         var val = allValues[i][c];
         record[key] = (val instanceof Date) ? formatDateValue(val) : String(val || '');
@@ -639,8 +763,48 @@ function getArchived(data) {
     total: total,
     limit: limit,
     offset: offset,
-    archiveSheet: archiveSheetName
+    archiveSheet: archiveSheetName,
+    headers: headers
   };
+}
+
+// ============================================
+// ВСТАНОВИТИ ЗАГОЛОВКИ АРХІВНИХ АРКУШІВ
+// Прописує перший рядок з українськими назвами полів,
+// щоб у Google Sheets було видно "Дата реєстрації", "Дата отримання", "Дата архіву" тощо.
+// ============================================
+function setupArchiveHeaders() {
+  var ss = SpreadsheetApp.openById(ARCHIVE_SS_ID);
+  var report = [];
+
+  var map = [
+    { name: ARCHIVE_SHEETS.POSYLKY,         type: 'posylky' },
+    { name: ARCHIVE_SHEETS.POSYLKY_ROUTE,   type: 'posylky' },
+    { name: ARCHIVE_SHEETS.PASAZHYRY,       type: 'pasazhyry' },
+    { name: ARCHIVE_SHEETS.PASAZHYRY_ROUTE, type: 'pasazhyry' }
+  ];
+
+  for (var i = 0; i < map.length; i++) {
+    var entry = map[i];
+    var sh = ss.getSheetByName(entry.name);
+    if (!sh) {
+      report.push('❌ ' + entry.name + ': аркуш не знайдено');
+      continue;
+    }
+
+    var headers = ARCHIVE_HEADERS[entry.type];
+    sh.getRange(1, 1, 1, headers.length).setValues([headers]);
+    sh.getRange(1, 1, 1, headers.length)
+      .setBackground('#1a3a5e')
+      .setFontColor('#ffffff')
+      .setFontWeight('bold')
+      .setHorizontalAlignment('center');
+    sh.setFrozenRows(1);
+
+    report.push('✅ ' + entry.name + ': ' + headers.length + ' заголовків');
+  }
+
+  return { success: true, report: report, timestamp: getNow() };
 }
 
 // ============================================
@@ -1197,8 +1361,15 @@ function onOpen() {
     .addItem('🔄 Архівувати за статусом (всі)', 'menuArchiveByStatus')
     .addItem('📅 Архівувати старі (60+ днів)', 'menuArchiveByAge')
     .addSeparator()
+    .addItem('🏷 Встановити заголовки архівних аркушів', 'menuSetupHeaders')
+    .addSeparator()
     .addItem('⚡ Автоархівація (повна)', 'runAutoArchive')
     .addToUi();
+}
+
+function menuSetupHeaders() {
+  var result = setupArchiveHeaders();
+  SpreadsheetApp.getUi().alert('🏷 Заголовки встановлено\n\n' + result.report.join('\n'));
 }
 
 // ============================================
@@ -1289,15 +1460,43 @@ function menuArchiveByAge() {
 
   if (confirm !== ui.Button.YES) return;
 
+  // Запитуємо яку колонку дати використовувати
+  var fieldResp = ui.prompt(
+    '📅 Яку дату використовувати?',
+    'Введи один з варіантів:\n' +
+    '• registration — Дата реєстрації (P) — для посилок та пасажирів\n' +
+    '• receipt — Дата отримання (S) — лише посилки\n' +
+    '• date — Дата поїздки (A) — лише пасажири\n\n' +
+    'Залиш порожнім для дефолту (registration)',
+    ui.ButtonSet.OK_CANCEL
+  );
+  if (fieldResp.getSelectedButton() !== ui.Button.OK) return;
+  var dateField = String(fieldResp.getResponseText() || '').trim().toLowerCase() || 'registration';
+
   var result = archiveByAge({
     source: 'ALL',
     days: days,
+    dateField: dateField,
     user: 'menu',
-    reason: 'manual_age_' + days + 'd',
+    reason: 'manual_age_' + days + 'd_' + dateField,
     deleteFromSource: true
   });
 
-  ui.alert('✅ Архівовано ' + result.totalArchived + ' записів старших за ' + days + ' днів');
+  var msg = '✅ Архівовано ' + result.totalArchived + ' записів старших за ' + days + ' днів\n';
+  msg += 'Дата-колонка: ' + dateField + '\n';
+  msg += 'Cutoff: ' + result.cutoffDate + ' (архівуються записи з датою < cutoff)\n\n';
+  for (var i = 0; i < result.results.length; i++) {
+    var r = result.results[i];
+    msg += '— ' + r.name + ' [' + r.dateColumnName + ']: ' + r.archived;
+    if (r.diagnostics) {
+      msg += ' (перевірено ' + r.diagnostics.checked +
+             ', розпізнано дат ' + r.diagnostics.parsed +
+             ', порожніх ' + r.diagnostics.emptyDate +
+             ', невалідних ' + r.diagnostics.badDate + ')';
+    }
+    msg += '\n';
+  }
+  ui.alert(msg);
 }
 
 // Тест здоров'я

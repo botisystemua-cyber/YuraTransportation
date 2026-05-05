@@ -854,10 +854,41 @@ function bulkArchive(data) {
       continue;
     }
 
-    var rowData = sheet.getRange(item.rowNum, 1, 1, TOTAL_COLS).getValues()[0];
+    var actualRowNum = item.rowNum;
+    var rowData = sheet.getRange(actualRowNum, 1, 1, TOTAL_COLS).getValues()[0];
+
+    // === ЗВІРКА ID ===
+    // Фронт може мати застарілий rowNum (після синхронізації / архівації інших).
+    // Якщо переданий item.id не збігається з rowData[COL.ID] — шукаємо правильний рядок по id.
+    var expectedId = item.id !== undefined && item.id !== null ? String(item.id).trim() : '';
+    if (expectedId) {
+      var actualId = String(rowData[COL.ID] || '').trim();
+      if (actualId !== expectedId) {
+        // Шукаємо рядок з потрібним id
+        var lr = sheet.getLastRow();
+        var foundRow = -1;
+        if (lr >= 2) {
+          var idCol = sheet.getRange(2, COL.ID + 1, lr - 1, 1).getValues();
+          for (var fi = 0; fi < idCol.length; fi++) {
+            if (String(idCol[fi][0] || '').trim() === expectedId) {
+              foundRow = fi + 2;
+              break;
+            }
+          }
+        }
+        if (foundRow === -1) {
+          errors.push({ sheet: item.sheet, rowNum: item.rowNum, id: expectedId,
+            error: 'ID не знайдено (рядок ' + item.rowNum + ' містить ID=' + actualId + ')' });
+          continue;
+        }
+        actualRowNum = foundRow;
+        rowData = sheet.getRange(actualRowNum, 1, 1, TOTAL_COLS).getValues()[0];
+      }
+    }
+
     var existingArchiveId = String(rowData[COL.ARCHIVE_ID] || '').trim();
     if (existingArchiveId) {
-      errors.push({ sheet: item.sheet, rowNum: item.rowNum, error: 'Вже архівовано' });
+      errors.push({ sheet: item.sheet, rowNum: actualRowNum, id: expectedId, error: 'Вже архівовано' });
       continue;
     }
 
@@ -876,7 +907,7 @@ function bulkArchive(data) {
     archiveRow.push(archiveId);     // AA - ARCHIVE_ID
 
     archiveRows.push(archiveRow);
-    successItems.push({ sheet: item.sheet, rowNum: item.rowNum, archiveId: archiveId, srcSheet: sheet });
+    successItems.push({ sheet: item.sheet, rowNum: actualRowNum, archiveId: archiveId, srcSheet: sheet });
   }
 
   if (archiveRows.length === 0) {

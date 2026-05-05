@@ -4695,7 +4695,7 @@ function bulkRestore() {
         const sheet = p._sheet || p.sheet;
         const rowNum = p._rowNum || p.rowNum;
         if (sheet && rowNum) {
-            const item = { sheet, rowNum };
+            const item = { sheet, rowNum, id: p.id };
             if (p._isRouteData) {
                 routePackages.push(item);
             } else {
@@ -5094,7 +5094,7 @@ function bulkArchive() {
         const sheet = p._sheet || p.sheet;
         const rowNum = p._rowNum || p.rowNum;
         if (sheet && rowNum) {
-            const item = { sheet, rowNum };
+            const item = { sheet, rowNum, id: p.id };
             if (p._isRouteData) {
                 routePackages.push(item);
             } else {
