@@ -438,6 +438,19 @@
             word-break: break-word;
             margin-bottom: 2px;
         }
+        .btn-edit-addr {
+            display: inline-block;
+            cursor: pointer;
+            padding: 1px 6px;
+            border-radius: 6px;
+            background: #fff3cd;
+            color: #856404;
+            font-size: 12px;
+            margin-left: 4px;
+            user-select: none;
+            border: 1px solid #ffe082;
+        }
+        .btn-edit-addr:hover { background: #ffe082; }
         .card-details-line {
             font-size: 11px;
             color: #555;
@@ -1544,7 +1557,7 @@
                 card.innerHTML = '<div class="card-row">' +
                         '<div class="delivery-number ' + (isNew ? 'new' : '') + '">' + (globalIndex + 1) + '</div>' +
                         '<div class="card-main-info">' +
-                            '<div class="card-address">' + (show('id') ? '#' + safeId + ' ' : '') + (show('vo') && delivery.vo ? escapeHtml(delivery.vo) + ' | ' : '') + (show('address') ? safeAddress : '') + '</div>' +
+                            '<div class="card-address">' + (show('id') ? '#' + safeId + ' ' : '') + (show('vo') && delivery.vo ? escapeHtml(delivery.vo) + ' | ' : '') + (show('address') ? safeAddress : '') + ' <span class="btn-edit-addr" onclick="event.stopPropagation();editDeliveryAddress(' + globalIndex + ')" title="Редагувати адресу">&#9999;&#65039;</span></div>' +
                             (show('name') && delivery.name ? '<div style="font-size:11px;color:#1a3a5e;font-weight:600;">' + escapeHtml(delivery.name) + '</div>' : '') +
                         '</div>' +
                         '<span style="font-size: 16px; font-weight: bold;">' + statusIcon + '</span>' +
@@ -1679,7 +1692,11 @@
                         '<div class="delivery-number ' + (isNew ? 'new' : '') + '">' + (index + 1) + '</div>' +
                         '<div class="card-main-info">' +
                             '<div class="card-address">' + routeBadge + safeName + '</div>' +
-                            '<div style="font-size:11px;color:#666;margin-top:2px;">&#128663; ' + safeFrom + ' &#8594; ' + safeTo + '</div>' +
+                            '<div style="font-size:11px;color:#666;margin-top:2px;">&#128663; ' + safeFrom +
+                                ' <span class="btn-edit-addr" onclick="event.stopPropagation();editPassengerAddress(' + index + ',\'from\')" title="Редагувати адресу відправлення">&#9999;&#65039;</span>' +
+                                ' &#8594; ' + safeTo +
+                                ' <span class="btn-edit-addr" onclick="event.stopPropagation();editPassengerAddress(' + index + ',\'to\')" title="Редагувати адресу прибуття">&#9999;&#65039;</span>' +
+                            '</div>' +
                         '</div>' +
                         '<span style="font-size:16px;font-weight:bold;">' + statusIcon + '</span>' +
                     '</div>' +
@@ -1762,6 +1779,120 @@
         }
         function callNumber(phone) {
             window.location.href = 'tel:' + phone;
+        }
+        function showAddressEditModal(title, currentValue, onSave) {
+            var existing = document.getElementById('addressEditModal');
+            if (existing) existing.remove();
+            var modal = document.createElement('div');
+            modal.className = 'password-modal-overlay';
+            modal.id = 'addressEditModal';
+            modal.innerHTML = '<div class="password-modal-box">' +
+                '<div class="password-modal-header"><h2>' + escapeHtml(title) + '</h2></div>' +
+                '<div class="password-modal-body">' +
+                    '<input type="text" id="addressEditInput" class="password-input" placeholder="Вставте адресу">' +
+                '</div>' +
+                '<div class="password-modal-footer">' +
+                    '<button class="password-btn password-btn-cancel" onclick="closeAddressEditModal()">Скасувати</button>' +
+                    '<button class="password-btn password-btn-submit" id="addressEditSaveBtn">Зберегти</button>' +
+                '</div>' +
+            '</div>';
+            document.body.appendChild(modal);
+            var input = document.getElementById('addressEditInput');
+            input.value = currentValue || '';
+            setTimeout(function() { input.focus(); input.select(); }, 50);
+            document.getElementById('addressEditSaveBtn').onclick = function() {
+                var v = input.value.trim();
+                if (!v) { showToast('Введіть адресу'); return; }
+                if (v === (currentValue || '').trim()) { closeAddressEditModal(); return; }
+                closeAddressEditModal();
+                onSave(v);
+            };
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') document.getElementById('addressEditSaveBtn').click();
+                else if (e.key === 'Escape') closeAddressEditModal();
+            });
+            modal.addEventListener('click', function(e) { if (e.target === modal) closeAddressEditModal(); });
+        }
+        function closeAddressEditModal() {
+            var m = document.getElementById('addressEditModal');
+            if (m) m.remove();
+        }
+        function editDeliveryAddress(globalIndex) {
+            var d = deliveries[globalIndex];
+            if (!d) return showToast('Запис не знайдено');
+            if (!currentSheet) return showToast('Маршрут не визначено');
+            showAddressEditModal('Редагувати адресу', d.address || '', function(newAddr) {
+                var oldAddr = d.address;
+                d.address = newAddr;
+                renderDeliveries();
+                showToast('&#9203; Збереження...');
+                fetch(CONFIG.DELIVERY_API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify({
+                        action: 'updateField',
+                        sheet: currentSheet,
+                        rowNum: d.rowNum,
+                        field: 'address',
+                        value: newAddr
+                    })
+                })
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (data && data.success) {
+                        showToast('Адресу оновлено');
+                    } else {
+                        d.address = oldAddr;
+                        renderDeliveries();
+                        showToast('Помилка: ' + ((data && data.error) || 'збереження'));
+                    }
+                })
+                .catch(function(err) {
+                    d.address = oldAddr;
+                    renderDeliveries();
+                    showToast('Помилка: ' + err.message);
+                });
+            });
+        }
+        function editPassengerAddress(index, field) {
+            var p = deliveries[index];
+            if (!p) return showToast('Запис не знайдено');
+            var routeName = (isUnifiedView && p._sourceRoute) ? p._sourceRoute : currentSheet;
+            if (!routeName) return showToast('Маршрут не визначено');
+            var current = field === 'to' ? (p.to || '') : (p.from || '');
+            var label = field === 'to' ? 'Редагувати адресу прибуття' : 'Редагувати адресу відправлення';
+            showAddressEditModal(label, current, function(newVal) {
+                var oldVal = current;
+                if (field === 'to') p.to = newVal; else p.from = newVal;
+                renderDeliveries();
+                showToast('&#9203; Збереження...');
+                fetch(CONFIG.PASSENGER_API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify({
+                        action: 'updateField',
+                        sheet: routeName,
+                        rowNum: p.rowNum,
+                        field: field,
+                        value: newVal
+                    })
+                })
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (data && data.success) {
+                        showToast('Адресу оновлено');
+                    } else {
+                        if (field === 'to') p.to = oldVal; else p.from = oldVal;
+                        renderDeliveries();
+                        showToast('Помилка: ' + ((data && data.error) || 'збереження'));
+                    }
+                })
+                .catch(function(err) {
+                    if (field === 'to') p.to = oldVal; else p.from = oldVal;
+                    renderDeliveries();
+                    showToast('Помилка: ' + err.message);
+                });
+            });
         }
         function showCancelReason(uid, itemId) {
             var expandBlock = document.getElementById('expand-' + uid);
