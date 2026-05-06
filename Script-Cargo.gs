@@ -405,6 +405,20 @@ function addPackage(data) {
     }
   }
 
+  // Автопідстановка адреси: якщо нову адресу не передали, але є телефон —
+  // беремо останню відому адресу того самого ліда (по телефону)
+  var autofilledAddress = '';
+  if (!String(newRow[COL.ADDRESS] || '').trim()) {
+    var phoneForLookup = String(newRow[COL.PHONE] || '').trim();
+    if (phoneForLookup) {
+      var lastAddr = findLastAddressByPhone(ss, phoneForLookup);
+      if (lastAddr) {
+        newRow[COL.ADDRESS] = lastAddr;
+        autofilledAddress = lastAddr;
+      }
+    }
+  }
+
   // Автозаповнення
   if (!newRow[COL.DATE_REG]) {
     newRow[COL.DATE_REG] = Utilities.formatDate(new Date(), 'Europe/Kiev', 'yyyy-MM-dd');
@@ -424,6 +438,7 @@ function addPackage(data) {
 
   writeLog('addPackage', sheetName, newRowNum, 'new',
     'ПіБ: ' + (fields.name || '') + ' | ТТН: ' + (fields.ttn || '') + ' | Тел: ' + (fields.phone || '') +
+    (autofilledAddress ? ' | AUTOFILL ADDRESS' : '') +
     (duplicates.length > 0 ? ' | FORCE (дублікат ігноровано)' : ''));
 
   return {
@@ -432,8 +447,45 @@ function addPackage(data) {
     rowNum: newRowNum,
     id: newRow[COL.ID],
     direction: direction,
-    duplicatesIgnored: duplicates.length
+    duplicatesIgnored: duplicates.length,
+    autofilledAddress: autofilledAddress || null
   };
+}
+
+// ============================================
+// findLastAddressByPhone — знаходить останню (найсвіжішу) адресу
+// для вказаного телефону у листах "Реєстрація ТТН" / "Виклик курєра".
+// Архівовані/видалені рядки ігноруються.
+// ============================================
+function findLastAddressByPhone(ss, phone) {
+  var key = String(phone || '').trim();
+  if (!key) return '';
+  var sheets = [findSheet(ss, SHEET_REG), findSheet(ss, SHEET_COURIER)];
+  var bestRowNum = -1;
+  var bestAddr = '';
+  for (var s = 0; s < sheets.length; s++) {
+    var sh = sheets[s];
+    if (!sh) continue;
+    var lastRow = sh.getLastRow();
+    if (lastRow < 2) continue;
+    var values = sh.getRange(2, 1, lastRow - 1, TOTAL_COLS).getValues();
+    for (var r = values.length - 1; r >= 0; r--) {
+      var row = values[r];
+      var rowPhone = String(row[COL.PHONE] || '').trim();
+      if (rowPhone !== key) continue;
+      var rowStatus = String(row[COL.STATUS] || '').toLowerCase().trim();
+      if (ARCHIVE_STATUSES.indexOf(rowStatus) !== -1) continue;
+      var rowAddr = String(row[COL.ADDRESS] || '').trim();
+      if (!rowAddr) continue;
+      var actualRow = r + 2;
+      if (actualRow > bestRowNum) {
+        bestRowNum = actualRow;
+        bestAddr = rowAddr;
+      }
+      break; // у цьому листі знайшли найсвіжіший — далі не йдемо
+    }
+  }
+  return bestAddr;
 }
 
 // ============================================

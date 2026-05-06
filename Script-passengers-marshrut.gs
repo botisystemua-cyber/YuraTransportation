@@ -650,7 +650,86 @@ function updateField(payload) {
   sheet.getRange(rowNum, FIELD_MAP[field] + 1).setValue(value);
   writeLog('updateField', sheetName, rowNum, field, String(value));
 
-  return { success: true, sheet: sheetName, rowNum: rowNum, field: field };
+  var propagated = null;
+  if (field === 'from' || field === 'to') {
+    try {
+      var rowVals = sheet.getRange(rowNum, 1, 1, sheet.getLastColumn()).getValues()[0];
+      var srcSheetHint = str(rowVals[COL.SOURCE_SHEET] || '');
+      propagated = propagateAddressToMainPassengers({
+        id: str(rowVals[COL.ID]),
+        phone: str(rowVals[COL.PHONE]),
+        name: str(rowVals[COL.NAME]),
+        field: field,
+        value: value,
+        sourceSheet: srcSheetHint
+      });
+    } catch (errProp) {
+      propagated = { success: false, error: String(errProp) };
+    }
+  }
+
+  return { success: true, sheet: sheetName, rowNum: rowNum, field: field, propagated: propagated };
+}
+
+// ============================================
+// propagateAddressToMainPassengers — пише from/to в основну таблицю "Бот Пасажири"
+// ============================================
+var MAIN_PAS_SS_ID = '1U1deQJvMPZ9fctIEoHCXr8cFQmgWLVe2VRhlzb5IpjI';
+var MAIN_PAS_SHEET_UA_EU = 'Україна-єв';
+var MAIN_PAS_SHEET_EU_UA = 'Європа-ук';
+// Колонки основної таблиці "Бот Пасажири" (Script-Passengers.gs)
+var MAIN_PAS_COL = { FROM: 1, TO: 2, NAME: 4, PHONE: 5, ID: 10 };
+var MAIN_PAS_TOTAL_COLS = 21;
+
+function propagateAddressToMainPassengers(ctx) {
+  if (!ctx || !ctx.value) return { success: false, error: 'no value' };
+  var idKey = (ctx.id || '').trim();
+  var phoneKey = (ctx.phone || '').trim();
+  var nameKey = (ctx.name || '').trim().toLowerCase();
+  if (!idKey && !phoneKey) return { success: false, error: 'no key' };
+
+  var mainSS;
+  try { mainSS = SpreadsheetApp.openById(MAIN_PAS_SS_ID); }
+  catch (e) { return { success: false, error: 'open main: ' + e }; }
+
+  var sheetsOrder = [];
+  if (ctx.sourceSheet === MAIN_PAS_SHEET_UA_EU || ctx.sourceSheet === MAIN_PAS_SHEET_EU_UA) {
+    sheetsOrder.push(ctx.sourceSheet);
+    sheetsOrder.push(ctx.sourceSheet === MAIN_PAS_SHEET_UA_EU ? MAIN_PAS_SHEET_EU_UA : MAIN_PAS_SHEET_UA_EU);
+  } else {
+    sheetsOrder = [MAIN_PAS_SHEET_UA_EU, MAIN_PAS_SHEET_EU_UA];
+  }
+
+  var targetCol = ctx.field === 'to' ? MAIN_PAS_COL.TO : MAIN_PAS_COL.FROM;
+  var updated = 0;
+  for (var i = 0; i < sheetsOrder.length; i++) {
+    var sh = mainSS.getSheetByName(sheetsOrder[i]);
+    if (!sh) continue;
+    var lastRow = sh.getLastRow();
+    if (lastRow < 2) continue;
+    var width = Math.min(sh.getLastColumn(), MAIN_PAS_TOTAL_COLS);
+    var values = sh.getRange(2, 1, lastRow - 1, width).getValues();
+    for (var r = 0; r < values.length; r++) {
+      var row = values[r];
+      var rowId = String(row[MAIN_PAS_COL.ID] || '').trim();
+      var rowPhone = String(row[MAIN_PAS_COL.PHONE] || '').trim();
+      var rowName = String(row[MAIN_PAS_COL.NAME] || '').trim().toLowerCase();
+
+      var match = false;
+      if (idKey && rowId && idKey === rowId) match = true;
+      else if (phoneKey && rowPhone && phoneKey === rowPhone && nameKey && rowName && nameKey === rowName) match = true;
+
+      if (match) {
+        sh.getRange(r + 2, targetCol + 1).setValue(ctx.value);
+        updated++;
+      }
+    }
+    if (updated > 0) {
+      writeLog('propagateAddress', sheetsOrder[i], 0, ctx.field + ' updated ' + updated, ctx.value);
+      return { success: true, sheet: sheetsOrder[i], updated: updated };
+    }
+  }
+  return { success: false, error: 'no match in main passengers' };
 }
 
 // ============================================

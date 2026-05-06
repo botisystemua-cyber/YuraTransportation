@@ -711,7 +711,90 @@ function updateField(payload) {
   sheet.getRange(rowNum, FIELD_MAP[field] + 1).setValue(value);
   writeLog('updateField', sheetName, rowNum, field, String(value));
 
-  return { success: true, sheet: sheetName, rowNum: rowNum, field: field };
+  var propagated = null;
+  if (field === 'address') {
+    try {
+      var rowVals = sheet.getRange(rowNum, 1, 1, sheet.getLastColumn()).getValues()[0];
+      var srcSheetHint = str(rowVals[COL.SOURCE_SHEET] || '');
+      propagated = propagateAddressToMainCargo({
+        id: str(rowVals[COL.ID]),
+        ttn: str(rowVals[COL.TTN]),
+        phone: str(rowVals[COL.PHONE]),
+        name: str(rowVals[COL.NAME]),
+        address: value,
+        sourceSheet: srcSheetHint
+      });
+    } catch (errProp) {
+      propagated = { success: false, error: String(errProp) };
+    }
+  }
+
+  return { success: true, sheet: sheetName, rowNum: rowNum, field: field, propagated: propagated };
+}
+
+// ============================================
+// propagateAddressToMainCargo — записує нову адресу в основну таблицю "Бот Посилки"
+// (щоб виправлена водієм адреса була видима в CRM і використовувалась при автопідстановці
+//  для нових заявок того ж ліда)
+// ============================================
+var MAIN_CARGO_SS_ID = '1RyWJ-ZQ-OQbeD65fZXR-WEwP_kwuNllikiA3Q1rjtlo';
+var MAIN_CARGO_SHEET_REG = 'Реєстрація ТТН';
+var MAIN_CARGO_SHEET_COURIER = 'Виклик курєра';
+// Колонки основної таблиці "Бот Посилки" (Script-Cargo.gs)
+var MAIN_CARGO_COL = { TTN: 2, ADDRESS: 4, PHONE: 6, ID: 13, NAME: 14 };
+var MAIN_CARGO_TOTAL_COLS = 25;
+
+function propagateAddressToMainCargo(ctx) {
+  if (!ctx || !ctx.address) return { success: false, error: 'no address' };
+  var idKey = (ctx.id || '').trim();
+  var ttnKey = (ctx.ttn || '').trim();
+  var phoneKey = (ctx.phone || '').trim();
+  var nameKey = (ctx.name || '').trim().toLowerCase();
+  if (!idKey && !ttnKey && !phoneKey) return { success: false, error: 'no key' };
+
+  var mainSS;
+  try { mainSS = SpreadsheetApp.openById(MAIN_CARGO_SS_ID); }
+  catch (e) { return { success: false, error: 'open main: ' + e }; }
+
+  var sheetsOrder = [];
+  if (ctx.sourceSheet === MAIN_CARGO_SHEET_REG || ctx.sourceSheet === MAIN_CARGO_SHEET_COURIER) {
+    sheetsOrder.push(ctx.sourceSheet);
+    sheetsOrder.push(ctx.sourceSheet === MAIN_CARGO_SHEET_REG ? MAIN_CARGO_SHEET_COURIER : MAIN_CARGO_SHEET_REG);
+  } else {
+    sheetsOrder = [MAIN_CARGO_SHEET_REG, MAIN_CARGO_SHEET_COURIER];
+  }
+
+  var updated = 0;
+  for (var i = 0; i < sheetsOrder.length; i++) {
+    var sh = mainSS.getSheetByName(sheetsOrder[i]);
+    if (!sh) continue;
+    var lastRow = sh.getLastRow();
+    if (lastRow < 2) continue;
+    var width = Math.min(sh.getLastColumn(), MAIN_CARGO_TOTAL_COLS);
+    var values = sh.getRange(2, 1, lastRow - 1, width).getValues();
+    for (var r = 0; r < values.length; r++) {
+      var row = values[r];
+      var rowId = String(row[MAIN_CARGO_COL.ID] || '').trim();
+      var rowTtn = String(row[MAIN_CARGO_COL.TTN] || '').trim();
+      var rowPhone = String(row[MAIN_CARGO_COL.PHONE] || '').trim();
+      var rowName = String(row[MAIN_CARGO_COL.NAME] || '').trim().toLowerCase();
+
+      var match = false;
+      if (idKey && rowId && idKey === rowId) match = true;
+      else if (ttnKey && rowTtn && ttnKey === rowTtn) match = true;
+      else if (phoneKey && rowPhone && phoneKey === rowPhone && nameKey && rowName && nameKey === rowName) match = true;
+
+      if (match) {
+        sh.getRange(r + 2, MAIN_CARGO_COL.ADDRESS + 1).setValue(ctx.address);
+        updated++;
+      }
+    }
+    if (updated > 0) {
+      writeLog('propagateAddress', sheetsOrder[i], 0, 'updated ' + updated, ctx.address);
+      return { success: true, sheet: sheetsOrder[i], updated: updated };
+    }
+  }
+  return { success: false, error: 'no match in main cargo' };
 }
 
 // ============================================

@@ -435,6 +435,23 @@ function addPassenger(payload) {
     newRow[COL.SEATS] = payload.seats || 1;
     newRow[COL.NAME] = payload.name || '';
     newRow[COL.PHONE] = payload.phone || '';
+
+    // Автопідстановка адрес: якщо from/to не вказано, але є телефон —
+    // беремо останні відомі адреси того ж ліда
+    var autofilledFrom = '';
+    var autofilledTo = '';
+    var phoneForLookup = String(newRow[COL.PHONE] || '').trim();
+    if (phoneForLookup && (!String(newRow[COL.FROM] || '').trim() || !String(newRow[COL.TO] || '').trim())) {
+      var lastAddrs = findLastAddressesByPhone(ss, phoneForLookup);
+      if (!String(newRow[COL.FROM] || '').trim() && lastAddrs.from) {
+        newRow[COL.FROM] = lastAddrs.from;
+        autofilledFrom = lastAddrs.from;
+      }
+      if (!String(newRow[COL.TO] || '').trim() && lastAddrs.to) {
+        newRow[COL.TO] = lastAddrs.to;
+        autofilledTo = lastAddrs.to;
+      }
+    }
     newRow[COL.MARK] = payload.mark || '';
     newRow[COL.PAYMENT] = payload.payment || '';
     newRow[COL.PERCENT] = payload.percent || '';
@@ -453,6 +470,7 @@ function addPassenger(payload) {
 
     writeLog('addPassenger', sheetName, newRowNum, 'new',
       'ПіБ: ' + (payload.name || '') + ' | Тел: ' + (payload.phone || '') +
+      ((autofilledFrom || autofilledTo) ? ' | AUTOFILL ' + (autofilledFrom ? 'FROM' : '') + (autofilledTo ? ' TO' : '') : '') +
       (duplicates.length > 0 ? ' | FORCE (дублікат ігноровано)' : ''));
 
     return {
@@ -461,11 +479,51 @@ function addPassenger(payload) {
       rowNum: newRowNum,
       id: newId,
       direction: direction,
-      duplicatesIgnored: duplicates.length
+      duplicatesIgnored: duplicates.length,
+      autofilledFrom: autofilledFrom || null,
+      autofilledTo: autofilledTo || null
     };
   } catch (err) {
     return { success: false, error: err.toString() };
   }
+}
+
+// ============================================
+// findLastAddressesByPhone — знаходить останні відомі from/to для телефону
+// у листах "Україна-єв" / "Європа-ук". Архівовані пропускаються.
+// ============================================
+function findLastAddressesByPhone(ss, phone) {
+  var key = String(phone || '').trim();
+  if (!key) return { from: '', to: '' };
+  var sheets = [ss.getSheetByName(SHEET_UA_EU), ss.getSheetByName(SHEET_EU_UA)];
+  var bestRowNum = -1;
+  var bestFrom = '';
+  var bestTo = '';
+  for (var s = 0; s < sheets.length; s++) {
+    var sh = sheets[s];
+    if (!sh) continue;
+    var lastRow = sh.getLastRow();
+    if (lastRow < 2) continue;
+    var values = sh.getRange(2, 1, lastRow - 1, TOTAL_COLS).getValues();
+    for (var r = values.length - 1; r >= 0; r--) {
+      var row = values[r];
+      var rowPhone = String(row[COL.PHONE] || '').trim();
+      if (rowPhone !== key) continue;
+      var rowStatus = String(row[COL.STATUS] || '').toLowerCase().trim();
+      if (ARCHIVE_STATUSES.indexOf(rowStatus) !== -1) continue;
+      var rowFrom = String(row[COL.FROM] || '').trim();
+      var rowTo = String(row[COL.TO] || '').trim();
+      if (!rowFrom && !rowTo) continue;
+      var actualRow = r + 2;
+      if (actualRow > bestRowNum) {
+        bestRowNum = actualRow;
+        bestFrom = rowFrom;
+        bestTo = rowTo;
+      }
+      break;
+    }
+  }
+  return { from: bestFrom, to: bestTo };
 }
 
 // ============================================
